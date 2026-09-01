@@ -1,0 +1,49 @@
+# The build-context filter for deploy/images/Dockerfile.
+#
+# BuildKit reads `<dockerfile>.dockerignore` beside the Dockerfile in preference to a `.dockerignore` at the context
+# root (the context is the repository root, the Dockerfile lives in deploy/images/). A plain `.dockerignore` placed
+# here, beside the Dockerfile, would be silently ignored, and the whole repository would be sent to the builder.
+# Verify with the `context` target; see deploy/README.md.
+
+# Build output and caches: the image builds its own jar.
+**/build
+**/.gradle
+**/.kotlin
+**/out
+**/*.class
+**/*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Frontend and everything else the JVM build does not need.
+**/node_modules
+**/dist
+**/.pnpm-store
+apps/web
+apps/admin-web
+docs
+infra
+tasks
+deploy
+.github
+.git
+.gitignore
+*.md
+
+# Anything that could carry a secret or a local setting.
+**/.env
+**/.env.*
+**/application-local.yml
+**/application-local.yaml
+**/*.pem
+**/*.key
+**/*.tfvars
+**/*.tfstate*
+CLAUDE.local.md
+.claude
+compose.yaml
+
+# Editors and operating system.
+.idea
+.vscode
+**/*.iml
+.DS_Store

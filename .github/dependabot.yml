@@ -1,0 +1,68 @@
+# Version-bump pull requests for every ecosystem the repository builds with.
+#
+# Grouping: minor and patch updates arrive as ONE pull request per ecosystem; a major update is never
+# grouped, so it gets its own pull request and its own review. Without grouping, the volume gets the
+# automation switched off.
+#
+# Not watched: the container image tags run by docker in .github/workflows/ci.yml
+# (ghcr.io/google/osv-scanner, and the TruffleHog image pinned by `version:`). Dependabot's `docker`
+# ecosystem reads Dockerfiles and compose files, not workflow steps — bump those by hand with the action.
+# (The Dockerfile's base images, deploy/images/Dockerfile, ARE watched: see the docker entry below.)
+version: 2
+updates:
+  # For this ecosystem Dependabot always scans .github/workflows/; "/" is the only value that works.
+  # Every action is pinned to a tag or a commit SHA (trufflesecurity/trufflehog: SHA with the version in
+  # a comment), which is what lets Dependabot bump it; a branch ref such as `@main` it cannot.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # gradle/libs.versions.toml is the single version source (CLAUDE.md), so this entry must raise the
+  # catalog, never a module build file. Dependabot updates a version catalog at the default location.
+  # The Gradle wrapper (gradle-wrapper.properties) is covered by this ecosystem too.
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+    # jacksonFloor (gradle/libs.versions.toml) is a security floor over Spring Boot's managed Jackson, so it must stay on
+    # Boot's minor line: a 3.2 bump changes deserialization behaviour and broke apps/admin's tests. Patch bumps only.
+    ignore:
+      - dependency-name: "tools.jackson:jackson-bom"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+    groups:
+      gradle-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # pnpm workspace at the repository root (apps/web, apps/admin-web); Dependabot reads pnpm-lock.yaml.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # The base images in deploy/images/Dockerfile (the only place a container base-image version is written).
+  - package-ecosystem: "docker"
+    directory: "/deploy/images"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "build"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]

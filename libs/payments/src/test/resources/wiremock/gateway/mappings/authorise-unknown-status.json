@@ -1,0 +1,19 @@
+{
+  "name": "unknown-status",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-mystery')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "mystery",
+      "reference": "gw_test_0009"
+    }
+  }
+}

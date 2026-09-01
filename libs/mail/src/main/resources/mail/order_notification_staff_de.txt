@@ -1,0 +1,7 @@
+Subject: Neue Bestellung {{orderNumber}}
+
+Eine neue Bestellung ist eingegangen.
+
+Bestellung: {{orderNumber}}
+Kunde: {{customerName}}
+Gesamtbetrag: {{total}}

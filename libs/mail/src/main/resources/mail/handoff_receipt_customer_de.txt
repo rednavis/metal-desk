@@ -1,0 +1,9 @@
+Subject: Wir haben Ihre Bestellanfrage {{reference}} erhalten
+
+Guten Tag {{name}},
+
+Ihre Bestellung liegt über der Grenze, bis zu der wir automatisch kalkulieren. Ein Mitarbeiter legt daher den Endpreis und die Bedingungen fest und meldet sich bei Ihnen. Es wurde noch nichts abgebucht.
+
+Ihre Referenznummer lautet {{reference}}. Bitte geben Sie sie bei Rückfragen an.
+
+Metal Desk

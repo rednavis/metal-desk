@@ -1,0 +1,9 @@
+Subject: Bestellung {{orderNumber}} bestätigt
+
+Guten Tag {{name}},
+
+vielen Dank für Ihre Bestellung. Ihre Bestellnummer lautet {{orderNumber}}, der Gesamtbetrag beträgt {{total}}.
+
+Wir informieren Sie, sobald sie versandt wird.
+
+Metal Desk

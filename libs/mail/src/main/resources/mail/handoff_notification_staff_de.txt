@@ -1,0 +1,14 @@
+Subject: Manager-Übergabe {{reference}}: Grenze überschritten ({{ceiling}})
+
+Für eine Bestellung müssen Preis und Bedingungen manuell festgelegt werden.
+
+Referenz: {{reference}}
+Kunde: {{customerName}}
+E-Mail des Kunden: {{customerEmail}}
+Überschrittene Grenze: {{ceiling}}
+Lieferadresse: {{destination}}
+Warenwert ohne Steuer: {{exTaxValue}}
+Gesamtgewicht: {{weight}}
+
+Positionen:
+{{lines}}

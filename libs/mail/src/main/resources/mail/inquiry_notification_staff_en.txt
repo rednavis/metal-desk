@@ -1,0 +1,9 @@
+Subject: New inquiry from {{customerName}}: {{topic}}
+
+A customer sent a message.
+
+From: {{customerName}} <{{customerEmail}}>
+Reference: {{reference}}
+Topic: {{topic}}
+
+{{message}}

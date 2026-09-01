@@ -1,0 +1,63 @@
+name: Infra
+
+# Static checks for the Terraform under infra/. They need no cloud credentials and no state (`init -backend=false`),
+# so anyone can review a change. Nothing here plans or applies. See infra/README.md.
+
+on:
+  push:
+    branches: [master]
+    paths: ["infra/**", ".github/workflows/infra.yml"]
+  pull_request:
+    paths: ["infra/**", ".github/workflows/infra.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  terraform:
+    name: Terraform checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          # One of two places that state the Terraform version: the other is `required_version` in
+          # infra/terraform/envs/*/versions.tf. This is an exact release inside that `~>` range; edit both.
+          terraform_version: 1.16.4
+          terraform_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.64.0
+
+      - name: Format
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive -diff
+
+      # dev, staging and prod must declare the same modules and differ only in values (values.tf, backend, tfvars example).
+      - name: Environment roots are in parity
+        run: infra/scripts/check-env-parity.sh
+
+      - name: Validate every directory that holds Terraform
+        working-directory: infra/terraform
+        run: |
+          set -euo pipefail
+          mapfile -t dirs < <(find . -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u)
+          [ "${#dirs[@]}" -gt 0 ] || { echo "no Terraform found" >&2; exit 1; }
+          for dir in "${dirs[@]}"; do
+            echo "::group::validate $dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            echo "::endgroup::"
+          done
+
+      - name: Lint
+        working-directory: infra/terraform
+        run: |
+          tflint --init
+          tflint --recursive --format compact

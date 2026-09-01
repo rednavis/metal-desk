@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="metal-desk"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+  <description>
+    Every PMD 7 Java category ruleset, enabled in full, minus the few rules below that contradict
+    a convention this repo already enforces elsewhere. To relax another rule, add an
+    &lt;exclude name="..."/&gt; under its category, with a comment saying why.
+  </description>
+
+  <rule ref="category/java/bestpractices.xml">
+    <!-- Context-load smoke tests (@SpringBootTest) have no assertion; startup failing is the test. -->
+    <exclude name="UnitTestShouldIncludeAssert"/>
+    <!-- Parameterized and multi-branch validation tests (e.g. each validation branch of a value
+         type) legitimately assert several related facts about one behaviour. -->
+    <exclude name="UnitTestContainsTooManyAsserts"/>
+    <!-- assertEquals(expected, actual) already prints both values on failure; a message on every
+         assertion is noise. -->
+    <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+    <!-- Configured separately below to allow ArchUnit's JavaClasses. -->
+    <exclude name="LooseCoupling"/>
+  </rule>
+  <rule ref="category/java/codestyle.xml">
+    <!-- Lombok's @RequiredArgsConstructor generates the constructor, which PMD can't see. -->
+    <exclude name="AtLeastOneConstructor"/>
+    <!-- googleJavaFormat() never adds `final` to parameters; the repo doesn't use that style. -->
+    <exclude name="MethodArgumentCouldBeFinal"/>
+  </rule>
+  <rule ref="category/java/design.xml">
+    <!-- Configured separately below: suppressed in test classes only. -->
+    <exclude name="LawOfDemeter"/>
+    <exclude name="TooManyMethods"/>
+    <!-- Checks that code stays inside packages or classes it is told to; with neither property set it
+         has nothing to check, and PMD drops it with a "misconfigured rule" warning on every run. Add it
+         back, with `packages`, if a real coupling boundary is ever to be enforced here (ArchUnit
+         already owns the module boundaries). -->
+    <exclude name="LoosePackageCoupling"/>
+  </rule>
+  <rule ref="category/java/documentation.xml">
+    <!-- Checkstyle's MissingJavadocType/MissingJavadocMethod already own "what needs Javadoc",
+         with a deliberately chosen scope (config/checkstyle/checkstyle.xml). -->
+    <exclude name="CommentRequired"/>
+  </rule>
+  <rule ref="category/java/documentation.xml/CommentSize">
+    <properties>
+      <property name="maxLineLength" value="100"/>
+      <!-- Checkstyle's MissingJavadocType makes Javadoc mandatory, and the domain types' Javadoc
+           states what a type is, what it refuses and which requirement it serves; the default
+           of 6 lines cannot hold that. -->
+      <property name="maxLines" value="40"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/ShortMethodName">
+    <properties>
+      <!-- Money.of(...), Weight.of(...) etc.: the standard Java static-factory name. -->
+      <property name="minimum" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/LongVariable">
+    <properties>
+      <!-- Enum constant names come from the documents and cannot be shortened to suit the limit:
+           OrderStatus.AWAITING_MANAGER_QUOTE is Architecture section 6, and the MailTemplate
+           constants (ORDER_CONFIRMATION_CUSTOMER ...) are the names task T-020 fixes. Everything
+           else keeps the default limit of 17. Also exempt: the record component
+           `privacyPolicyAccepted`, whose name BRD FR-4.3's task pins as the distinct, single-purpose
+           privacy consent, and which a shorter name would make less clear. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::*[self::EnumConstant or (self::RecordComponent and .//VariableId[@Name = 'privacyPolicyAccepted'])]"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/ShortVariable">
+    <properties>
+      <!-- Customer.id, Order.id ...: `id` is the domain's standard name for an aggregate's identity
+           and renaming it to `customerId` inside `Customer` only adds noise. -->
+      <property name="minimum" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/errorprone.xml">
+    <!-- The libs/*/*Module marker classes are private-constructor placeholders until Phase 2. -->
+    <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+  </rule>
+  <rule ref="category/java/bestpractices.xml/AvoidUsingHardCodedIP">
+    <properties>
+      <!-- Test classes only: the tests of address handling and of the trusted-proxy check need
+           literal addresses (documentation ranges), and production code stays subject to it. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/multithreading.xml">
+    <exclude name="DoNotUseThreads"/>
+  </rule>
+  <rule ref="category/java/performance.xml"/>
+  <rule ref="category/java/security.xml"/>
+</ruleset>

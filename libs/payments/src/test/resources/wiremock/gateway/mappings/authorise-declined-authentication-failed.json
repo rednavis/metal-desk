@@ -1,0 +1,19 @@
+{
+  "name": "declined-authentication-failed",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-authentication_failed')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "authentication_failed"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+Subject: Your price and terms for order {{reference}}
+
+Hello {{name}},
+
+We have set the final price and terms for your order {{reference}}.
+
+Delivery price: {{deliveryPrice}}
+Order total including delivery: {{total}}
+Delivery time: {{transit}}
+This offer is valid until {{validUntil}}.
+
+Terms:
+{{terms}}
+
+No payment has been taken. You can now continue to payment.
+
+Metal Desk

@@ -27,6 +27,7 @@ depends on it) is structurally prevented rather than relying on discipline to av
 | [Modernization Plan](modernization-plan.md) | The build order — from an empty repository to a deployed system — and the standards held constant across every phase. |
 | [Lessons Learned](lessons-learned.md) | The engineering failure modes this design exists to prevent, stated generally rather than as a specific case study. |
 | [ADRs](adr/) | The decisions that were actually weighed against an alternative, with their accepted costs written down alongside their benefits. |
+| [Meeting Notes](meetings/) | Executive summaries and action items from project meetings — the process decision record, alongside the ADRs' architecture decision record. |
 
 ## Provenance
 

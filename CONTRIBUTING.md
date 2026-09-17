@@ -29,6 +29,23 @@ contributions are as likely to be to the docs as to code — both are equally we
   version of something the rest of the system has moved past — see
   [Lessons Learned](docs/lessons-learned.md#prefer-fix-forward-over-pinning-back-when-unifying-versions).
 
+## AI-assisted development
+
+This project is built with [Claude Code](https://claude.com/claude-code) rather than by hand — see
+the [2026-09-17 kickoff notes](docs/meetings/2026-09-17-kickoff.md) for the decision. In practice:
+
+- Implementation changes are made by directing Claude Code, not by hand-authoring code, so that the
+  reasoning behind a change is captured in the prompt/session rather than only in the diff.
+- The legacy per-client repositories some contributors have access to (e.g. a prior Dealboard
+  delivery) may be added to Claude Code's context with `claude --add-dir` purely as
+  behavioral/requirements reference — to see how a similar system was built — but code, data, and
+  configuration must never be copied from them. Their IP belongs to that former client under the
+  original delivery contract; this repository re-implements requirements from scratch (see the
+  [README provenance note](README.md#provenance)).
+- One pull request per [Modernization Plan](docs/modernization-plan.md) phase, and each PR is
+  reviewed with Claude Code before the human reviewer approves it — on top of, not instead of, the
+  one-reviewer-approval rule above.
+
 ## Code style
 
 Not yet enforced by tooling — no code exists yet, and wiring this in is part of Modernization Plan

@@ -1,0 +1,5 @@
+packages:
+  - "apps/web"
+  - "apps/admin-web"
+minimumReleaseAgeExclude:
+  - prettier@3.9.8

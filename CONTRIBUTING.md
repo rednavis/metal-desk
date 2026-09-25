@@ -48,8 +48,8 @@ the [2026-09-17 kickoff notes](docs/meetings/2026-09-17-kickoff.md) for the deci
 
 ## Code style
 
-Not yet enforced by tooling — no code exists yet, and wiring this in is part of Modernization Plan
-Phase 1 — but stated here so early code lands consistent from the first PR:
+Enforced by tooling as of Modernization Plan Phase 1 — `./gradlew build` runs Spotless/Checkstyle/SpotBugs
+for the JVM modules, `pnpm run lint` / `pnpm run format:check` cover the frontend apps:
 
 - **Java** — Google Java Style, applied via Spotless; Lombok limited to
   `@RequiredArgsConstructor` and `@Slf4j` if used at all — prefer records and constructor injection

@@ -1,0 +1,9 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: metal-admin
+  threads:
+    virtual:
+      enabled: true

@@ -4,6 +4,7 @@ Thumbs.db
 
 # JVM / Gradle
 .gradle/
+.kotlin/
 build/
 out/
 *.class
@@ -14,6 +15,7 @@ out/
 node_modules/
 dist/
 .pnpm-store/
+*.tsbuildinfo
 
 # Jekyll
 docs/_site/
@@ -29,6 +31,9 @@ docs/.jekyll-metadata
 .idea/
 .vscode/
 *.iml
+
+# Claude Code
+CLAUDE.local.md
 
 # Terraform
 **/.terraform/

@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+build-logic/build
+.gradle
+.kotlin
+pnpm-lock.yaml
+*.tsbuildinfo
+
+# CONTRIBUTING.md scopes Prettier to TypeScript/React only — leave Markdown/docs untouched.
+*.md
+docs

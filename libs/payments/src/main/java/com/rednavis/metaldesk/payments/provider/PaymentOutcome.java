@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.payments.provider;
 
+import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
 import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.net.URI;
@@ -37,6 +38,25 @@ public sealed interface PaymentOutcome
         PaymentOutcome.DocumentIssued,
         PaymentOutcome.Declined,
         PaymentOutcome.Failed {
+
+  /**
+   * Returns the status a payment holds after this outcome, so the mapping is written once for every
+   * caller. Only {@link Captured} means the funds were received: a redirect or an embedded element
+   * is still pending, and so is an invoice, which is a promise to pay rather than a capture.
+   *
+   * @return {@link PaymentStatus#CAPTURED} for {@code Captured}, {@link PaymentStatus#PENDING} for
+   *     {@code RedirectRequired}, {@code ElementRequired} and {@code DocumentIssued}, {@link
+   *     PaymentStatus#DECLINED} for {@code Declined} and {@link PaymentStatus#FAILED} for {@code
+   *     Failed}
+   */
+  default PaymentStatus status() {
+    return switch (this) {
+      case Captured _ -> PaymentStatus.CAPTURED;
+      case RedirectRequired _, ElementRequired _, DocumentIssued _ -> PaymentStatus.PENDING;
+      case Declined _ -> PaymentStatus.DECLINED;
+      case Failed _ -> PaymentStatus.FAILED;
+    };
+  }
 
   /**
    * The funds were received.

@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.payments.gateway;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.rednavis.metaldesk.payments.http.HttpEndpoint;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.net.URI;
 import java.time.Duration;
@@ -29,7 +30,7 @@ class GatewayConfigurationTest {
     assertEquals(URI.create("https://gateway.example/api"), configuration.baseUrl());
     assertEquals(
         URI.create("https://gateway.example/api/v1/payments"),
-        configuration.resolve("/v1/payments"));
+        configuration.endpoint().resolve("/v1/payments"));
   }
 
   @ParameterizedTest
@@ -37,7 +38,7 @@ class GatewayConfigurationTest {
   void baseUrlMustBeAbsoluteWebUriWithHost(String uri) {
     final URI bad = URI.create(uri);
     assertEquals(
-        "gateway-configuration.base-url-invalid",
+        "http-endpoint.base-url-invalid",
         assertThrows(
                 ValidationException.class,
                 () -> new GatewayConfiguration(bad, Duration.ofSeconds(1), 0))
@@ -47,7 +48,7 @@ class GatewayConfigurationTest {
   @Test
   void missingBaseUrlIsRefused() {
     assertEquals(
-        "gateway-configuration.base-url-invalid",
+        "http-endpoint.base-url-invalid",
         assertThrows(
                 ValidationException.class,
                 () -> new GatewayConfiguration(null, Duration.ofSeconds(1), 0))
@@ -59,7 +60,7 @@ class GatewayConfigurationTest {
   void timeoutMustBePositiveAndAtMostTheLimit(String iso) {
     final Duration bad = Duration.parse(iso);
     assertEquals(
-        "gateway-configuration.timeout-invalid",
+        "http-endpoint.timeout-invalid",
         assertThrows(ValidationException.class, () -> new GatewayConfiguration(BASE, bad, 0))
             .code());
   }
@@ -67,16 +68,16 @@ class GatewayConfigurationTest {
   @Test
   void missingTimeoutIsRefused() {
     assertEquals(
-        "gateway-configuration.timeout-invalid",
+        "http-endpoint.timeout-invalid",
         assertThrows(ValidationException.class, () -> new GatewayConfiguration(BASE, null, 0))
             .code());
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {-1, GatewayConfiguration.MAX_RETRY_BUDGET + 1})
+  @ValueSource(ints = {-1, HttpEndpoint.MAX_RETRY_BUDGET + 1})
   void retryBudgetMustBeInRange(int budget) {
     assertEquals(
-        "gateway-configuration.retry-budget-invalid",
+        "http-endpoint.retry-budget-invalid",
         assertThrows(
                 ValidationException.class,
                 () -> new GatewayConfiguration(BASE, Duration.ofSeconds(1), budget))

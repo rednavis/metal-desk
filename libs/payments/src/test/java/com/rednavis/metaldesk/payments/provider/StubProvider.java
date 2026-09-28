@@ -7,6 +7,7 @@ import com.rednavis.metaldesk.share.domain.money.Money;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Set;
 import reactor.core.publisher.Mono;
 
@@ -38,7 +39,8 @@ public final class StubProvider implements PaymentProvider {
         PaymentMethod.CARD,
         new CustomerId("c-1"),
         URI.create("https://shop.example/return"),
-        URI.create("https://shop.example/cancel"));
+        URI.create("https://shop.example/cancel"),
+        Locale.ENGLISH);
   }
 
   /**

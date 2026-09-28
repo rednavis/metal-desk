@@ -1,0 +1,19 @@
+{
+  "name": "declined-account-closed",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-account_closed')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "account_closed"
+    }
+  }
+}

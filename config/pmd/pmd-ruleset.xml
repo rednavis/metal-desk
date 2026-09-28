@@ -19,6 +19,16 @@
     <!-- assertEquals(expected, actual) already prints both values on failure; a message on every
          assertion is noise. -->
     <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+    <!-- Configured separately below to allow ArchUnit's JavaClasses. -->
+    <exclude name="LooseCoupling"/>
+  </rule>
+  <rule ref="category/java/bestpractices.xml/LooseCoupling">
+    <properties>
+      <!-- ArchUnit's ArchRule.check(...) takes a JavaClasses, which is itself a collection, so the
+           architecture tests cannot declare it as an interface. Every other implementation type
+           is still flagged. -->
+      <property name="allowedTypes" value="java.util.Properties,com.tngtech.archunit.core.domain.JavaClasses"/>
+    </properties>
   </rule>
   <rule ref="category/java/codestyle.xml">
     <!-- Lombok's @RequiredArgsConstructor generates the constructor, which PMD can't see. -->

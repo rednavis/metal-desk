@@ -125,6 +125,29 @@ tasks.named("check") {
     dependsOn(tasks.named("jacocoTestReport"))
 }
 
-// The "no domain type outside libs/share" rule from Architecture §8 is enforced in CI starting
-// Modernization Plan Phase 2, once libs/share actually has a domain package to police. Not wired
-// in here.
+// The "no domain type outside libs/share" rule (Architecture section 8) is enforced by ArchUnit as
+// part of every module's ordinary `test` task, and `check` (and so `build`) depends on `test`.
+//
+// It is wired here, in the one convention plugin every JVM module applies, so that no module can
+// opt out and a module added later inherits the rule without editing its own build file. The
+// rules and their test are written once, in libs/share, and compiled into every other module's
+// tests below; each module then checks the classes on its own classpath. Running the check only in
+// libs/share would be vacuous: libs/share cannot see the classes of the modules that might violate
+// the rule.
+dependencies {
+    add("testImplementation", libs.findLibrary("archunit-junit5").get())
+}
+
+if (project.path != ":libs:share") {
+    val sharedTests = rootProject.layout.projectDirectory.dir("libs/share/src/test/java")
+    tasks.named<JavaCompile>("compileTestJava") {
+        source(
+            fileTree(sharedTests) {
+                include(
+                    "**/architecture/DomainBoundaryTest.java",
+                    "**/architecture/DomainBoundaryRules.java",
+                )
+            },
+        )
+    }
+}

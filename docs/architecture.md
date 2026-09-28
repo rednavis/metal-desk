@@ -236,9 +236,27 @@ apps/admin-web         ← pnpm workspace — see ADR-0005
 apps/web               ← pnpm workspace, kept separate from the JVM build graph
 ```
 
-An architectural rule enforces the domain-model boundary in CI, not just in a code review comment:
+An architectural rule enforces the domain-model boundary in the build, not just in a code review comment:
 no type outside `libs/share` may declare a class in the shared domain package — see
 [Lessons Learned](lessons-learned.md) for why that rule exists at all.
+
+**Where it is enforced.** The rules are ArchUnit tests in `libs/share`
+(`share/architecture/DomainBoundaryRules` and `DomainBoundaryTest`). The `metaldesk.quality-conventions`
+plugin, which every JVM module applies, compiles them into that module's tests, so they run in each module's
+`test` task and therefore in `./gradlew build`. That placement is what makes them non-vacuous — `libs/share`
+cannot see the classes of the modules that might violate the rule — and it means a module added later
+inherits the rule without editing its own build file. There are three rules:
+
+1. No class outside `libs/share` may be declared in the shared domain package. "Declared in `libs/share`" is
+   judged from where the class file was loaded, not from its package name, which is what a copy would keep.
+2. The domain (`share.domain`, `share.error`) may not depend on Spring, a service or app module,
+   `libs/payments` or `libs/mail`: it is the leaf of the graph.
+3. No class named `Order`, `Customer`, `Product`, `OrderLine`, `PaymentRecord`, `FulfillmentTier` or
+   `DeliveryQuote` may exist outside `libs/share`.
+
+`DomainBoundaryViolationTest` compiles deliberate violations at test time and asserts each rule rejects them, so
+the rules are known to fail as well as to pass. The Phase 4 workflow will run `./gradlew build` on every pull
+request; until then the local build is the gate.
 
 ---
 

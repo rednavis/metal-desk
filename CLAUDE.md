@@ -62,6 +62,12 @@ repositories.
 - PMD runs every Java category ruleset (`config/pmd/pmd-ruleset.xml`) with `ignoreFailures = false`;
   the few rules that contradict Checkstyle/Google Java Format/Lombok are `<exclude>`d there with a
   reason. Relax rules there, not with `@SuppressWarnings("PMD.*")` annotations in Java files.
+- **Architecture rule (ArchUnit).** `DomainBoundaryTest` fails the build if a class is declared in
+  `com.rednavis.metaldesk.share.domain..` outside `libs/share`, if the domain depends on Spring or another
+  module, or if a class named `Order`, `Customer`, `Product`, `OrderLine`, `PaymentRecord`,
+  `FulfillmentTier` or `DeliveryQuote` exists outside `libs/share`. It lives once in `libs/share`'s tests and
+  `metaldesk.quality-conventions` compiles it into every module's tests — don't add a per-module copy, and a
+  new module gets it for free. The domain model belongs in `libs/share`; reuse it, never copy it.
 - Jacoco produces reports but **no** coverage threshold is wired (`jacocoTestCoverageVerification`
   is never invoked). Coverage can be 0% and `build` still passes.
 - **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a

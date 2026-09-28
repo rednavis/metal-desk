@@ -97,6 +97,12 @@ Three modeling decisions carry the rest of the design:
    charge ID, invoice number). This makes the NFR in the BRD ("platform itself never stores raw
    card data") a data-model-level guarantee, not just a policy.
 
+The one pricing formula lives in `libs/share` (`PriceDerivation`), so `services/api` and
+`services/pricing-bridge` cannot disagree. BR-3 says only "reference price plus margin"; the
+implemented basis is the value of the product's *fine weight* — reference price per gram × (weight in
+grams × fineness ÷ 1000) — times `1 + margin`, rounded once at the end. The BRD does not state the
+purity basis; if this reading is wrong, BR-3 needs amending, not the code tweaking.
+
 ## 4. Payments as a provider abstraction
 
 ```

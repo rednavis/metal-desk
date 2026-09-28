@@ -5,12 +5,19 @@ import com.rednavis.metaldesk.share.domain.catalog.Metal;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import com.rednavis.metaldesk.share.domain.customer.Address;
 import com.rednavis.metaldesk.share.domain.customer.AddressKind;
+import com.rednavis.metaldesk.share.domain.fulfillment.DeliveryQuote;
+import com.rednavis.metaldesk.share.domain.fulfillment.TransitTime;
 import com.rednavis.metaldesk.share.domain.id.CategoryId;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
+import com.rednavis.metaldesk.share.domain.id.FulfillmentTierId;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.id.ProductId;
 import com.rednavis.metaldesk.share.domain.money.Currency;
 import com.rednavis.metaldesk.share.domain.money.Money;
+import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
+import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
+import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
+import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import com.rednavis.metaldesk.share.domain.pricing.Margin;
 import com.rednavis.metaldesk.share.domain.pricing.PriceRule;
 import com.rednavis.metaldesk.share.domain.pricing.ReferencePrice;
@@ -106,5 +113,31 @@ public final class OrderFixtures {
         deliveryAddress(),
         lines,
         CREATED_AT);
+  }
+
+  /**
+   * Builds a delivery quote for a cost.
+   *
+   * @param cost the decimal text of the cost, in euro
+   * @return the quote
+   */
+  public static DeliveryQuote deliveryQuote(String cost) {
+    return new DeliveryQuote(
+        new FulfillmentTierId("tier-1"), eur(cost), new TransitTime(1, 3), CREATED_AT);
+  }
+
+  /**
+   * Builds a captured card payment for an amount.
+   *
+   * @param amount the decimal text of the amount, in euro
+   * @return the payment record
+   */
+  public static PaymentRecord paymentRecord(String amount) {
+    return new PaymentRecord(
+        "mock-gateway",
+        PaymentMethod.CARD,
+        PaymentStatus.CAPTURED,
+        new ProviderReference("ch_test_0001"),
+        eur(amount));
   }
 }

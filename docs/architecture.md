@@ -103,6 +103,14 @@ implemented basis is the value of the product's *fine weight* — reference pric
 grams × fineness ÷ 1000) — times `1 + margin`, rounded once at the end. The BRD does not state the
 purity basis; if this reading is wrong, BR-3 needs amending, not the code tweaking.
 
+Delivery tiers are evaluated by one pure function in `libs/share` (`TierSelector`) over the tiers
+staff have configured, on the order value **before tax** (FR-5.1, BR-8). The BRD leaves two things
+open, so the implemented rules are stated here: when several tiers in a region qualify, **the cheapest
+delivery price wins** (ties go to the faster tier, then the lower tier id, so the result never depends
+on list order); and when no tier qualifies, the outcome names the region's most permissive tier and
+the ceiling exceeded, with **value taking precedence when both are exceeded**. A region with no
+configured tier is its own outcome, never a zero-cost quote.
+
 ## 4. Payments as a provider abstraction
 
 ```

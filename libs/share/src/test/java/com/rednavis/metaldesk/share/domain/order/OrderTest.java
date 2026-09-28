@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.rednavis.metaldesk.share.domain.fulfillment.DeliveryQuote;
-import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +27,7 @@ class OrderTest {
         created.deliveryAddress(),
         created.lines(),
         Optional.of(quote),
-        Optional.of(new PaymentRecord(eur("4261.94"))),
+        Optional.of(OrderFixtures.paymentRecord("4261.94")),
         OrderStatus.AWAITING_PAYMENT,
         created.createdAt(),
         created.updatedAt());
@@ -51,7 +50,7 @@ class OrderTest {
 
   @Test
   void totalsUseTheQuotedDeliveryCost() {
-    final OrderTotals totals = withQuote(new DeliveryQuote(eur("25.00"))).totals();
+    final OrderTotals totals = withQuote(OrderFixtures.deliveryQuote("25.00")).totals();
     assertEquals(eur("25.00"), totals.delivery());
     assertEquals(eur("4261.94"), totals.grandTotal());
   }

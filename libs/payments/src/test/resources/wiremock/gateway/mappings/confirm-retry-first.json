@@ -1,0 +1,18 @@
+{
+  "name": "confirm-retry-first",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments/gw_test_0004/confirm"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 3000,
+    "bodyFileName": "captured.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  "scenarioName": "confirm-retry",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "recovered"
+}

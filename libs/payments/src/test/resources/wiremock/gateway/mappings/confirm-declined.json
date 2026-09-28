@@ -1,0 +1,14 @@
+{
+  "name": "confirm-declined",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments/gw_test_0003/confirm"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "insufficient_funds"
+    }
+  }
+}

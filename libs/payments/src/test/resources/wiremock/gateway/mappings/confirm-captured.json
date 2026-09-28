@@ -1,0 +1,14 @@
+{
+  "name": "confirm-captured",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments/gw_test_0002/confirm"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "captured",
+      "reference": "gw_test_0002"
+    }
+  }
+}

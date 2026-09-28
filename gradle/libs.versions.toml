@@ -29,6 +29,8 @@ wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref
 mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodbReactive" }
 reactor-core = { module = "io.projectreactor:reactor-core" }
 reactor-test = { module = "io.projectreactor:reactor-test" }
+jackson-databind = { module = "tools.jackson.core:jackson-databind" }
+slf4j-api = { module = "org.slf4j:slf4j-api" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }

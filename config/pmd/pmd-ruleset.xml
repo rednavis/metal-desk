@@ -27,6 +27,8 @@
     <exclude name="MethodArgumentCouldBeFinal"/>
     <!-- Configured separately below with a lower minimum for the `of(...)` factory idiom. -->
     <exclude name="ShortMethodName"/>
+    <!-- Configured separately below with a lower minimum for the aggregate `id` idiom. -->
+    <exclude name="ShortVariable"/>
   </rule>
   <rule ref="category/java/design.xml"/>
   <rule ref="category/java/documentation.xml">
@@ -50,6 +52,13 @@
   <rule ref="category/java/codestyle.xml/ShortMethodName">
     <properties>
       <!-- Money.of(...), Weight.of(...) etc.: the standard Java static-factory name. -->
+      <property name="minimum" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/ShortVariable">
+    <properties>
+      <!-- Customer.id, Order.id ...: `id` is the domain's standard name for an aggregate's identity
+           and renaming it to `customerId` inside `Customer` only adds noise. -->
       <property name="minimum" value="2"/>
     </properties>
   </rule>

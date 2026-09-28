@@ -29,6 +29,8 @@
     <exclude name="ShortMethodName"/>
     <!-- Configured separately below with a lower minimum for the aggregate `id` idiom. -->
     <exclude name="ShortVariable"/>
+    <!-- Configured separately below with a higher limit for the fixed Architecture §6 state names. -->
+    <exclude name="LongVariable"/>
   </rule>
   <rule ref="category/java/design.xml"/>
   <rule ref="category/java/documentation.xml">
@@ -53,6 +55,14 @@
     <properties>
       <!-- Money.of(...), Weight.of(...) etc.: the standard Java static-factory name. -->
       <property name="minimum" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/LongVariable">
+    <properties>
+      <!-- OrderStatus.AWAITING_MANAGER_QUOTE (22 characters) is a state name fixed by Architecture
+           section 6 and BR-10; the default limit of 17 would force a name the docs do not use. The
+           limit stays tight for everything else. -->
+      <property name="minimum" value="22"/>
     </properties>
   </rule>
   <rule ref="category/java/codestyle.xml/ShortVariable">

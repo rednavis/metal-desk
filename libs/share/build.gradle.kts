@@ -16,4 +16,9 @@ dependencies {
     // declaring the dependency themselves. The annotation-processing step itself is wired up in
     // metaldesk.java-conventions.gradle.kts — see the comment there for why that can't live here.
     compileOnlyApi(libs.lombok)
+
+    // Gradle 9 no longer supplies the JUnit Platform launcher itself. The Spring modules get it
+    // through spring-boot-starter-test; this module has no Spring, so it declares it directly
+    // (version managed by the junit-bom from metaldesk.java-conventions).
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

@@ -13,12 +13,20 @@
   <rule ref="category/java/bestpractices.xml">
     <!-- Context-load smoke tests (@SpringBootTest) have no assertion; startup failing is the test. -->
     <exclude name="UnitTestShouldIncludeAssert"/>
+    <!-- Parameterized and multi-branch validation tests (e.g. each validation branch of a value
+         type) legitimately assert several related facts about one behaviour. -->
+    <exclude name="UnitTestContainsTooManyAsserts"/>
+    <!-- assertEquals(expected, actual) already prints both values on failure; a message on every
+         assertion is noise. -->
+    <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
   </rule>
   <rule ref="category/java/codestyle.xml">
     <!-- Lombok's @RequiredArgsConstructor generates the constructor, which PMD can't see. -->
     <exclude name="AtLeastOneConstructor"/>
     <!-- googleJavaFormat() never adds `final` to parameters; the repo doesn't use that style. -->
     <exclude name="MethodArgumentCouldBeFinal"/>
+    <!-- Configured separately below with a lower minimum for the `of(...)` factory idiom. -->
+    <exclude name="ShortMethodName"/>
   </rule>
   <rule ref="category/java/design.xml"/>
   <rule ref="category/java/documentation.xml">
@@ -33,6 +41,16 @@
   <rule ref="category/java/documentation.xml/CommentSize">
     <properties>
       <property name="maxLineLength" value="100"/>
+      <!-- Checkstyle's MissingJavadocType makes Javadoc mandatory, and the domain types' Javadoc
+           states what a type is, what it refuses and which requirement it serves; the default
+           of 6 lines cannot hold that. -->
+      <property name="maxLines" value="40"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/ShortMethodName">
+    <properties>
+      <!-- Money.of(...), Weight.of(...) etc.: the standard Java static-factory name. -->
+      <property name="minimum" value="2"/>
     </properties>
   </rule>
   <rule ref="category/java/errorprone.xml">

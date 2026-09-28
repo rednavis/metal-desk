@@ -1,0 +1,14 @@
+{
+  "name": "confirm-captured",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments/wl_test_0002/confirm"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "captured",
+      "reference": "wl_test_0002"
+    }
+  }
+}

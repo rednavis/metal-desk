@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.payments.gateway;
 
+import com.rednavis.metaldesk.payments.http.LogSafe;
 import com.rednavis.metaldesk.payments.provider.DeclineReason;
 import com.rednavis.metaldesk.payments.provider.PaymentOutcome;
 import java.util.Map;
@@ -18,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 final class GatewayDeclineMapper {
-
-  private static final int MAX_LOGGED_CODE_LENGTH = 40;
 
   private static final String OTHER_MESSAGE = "The payment was declined.";
 
@@ -50,16 +49,7 @@ final class GatewayDeclineMapper {
 
   private static void warnUnmapped(String code) {
     if (log.isWarnEnabled()) {
-      log.warn("Unmapped gateway decline code: {}", sanitise(code));
+      log.warn("Unmapped gateway decline code: {}", LogSafe.code(code));
     }
-  }
-
-  /**
-   * Makes a value safe to write to a log line: letters, digits, underscore and hyphen only, and
-   * short. The code came from outside, so it must not be able to break a log entry in two.
-   */
-  private static String sanitise(String code) {
-    final String cleaned = code == null ? "(none)" : code.replaceAll("[^A-Za-z0-9_-]", "?");
-    return cleaned.substring(0, Math.min(cleaned.length(), MAX_LOGGED_CODE_LENGTH));
   }
 }

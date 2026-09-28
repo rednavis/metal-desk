@@ -1,0 +1,19 @@
+{
+  "name": "declined-account-blocked",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-account_blocked')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "account_blocked"
+    }
+  }
+}

@@ -13,6 +13,7 @@ import com.rednavis.metaldesk.share.error.ValidationException;
 import java.lang.reflect.RecordComponent;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,9 @@ class PaymentIntentTest {
         "payment-intent.amount-invalid",
         assertThrows(
                 ValidationException.class,
-                () -> new PaymentIntent(ORDER, zero, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD))
+                () ->
+                    new PaymentIntent(
+                        ORDER, zero, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD, Locale.ENGLISH))
             .code());
   }
 
@@ -68,13 +71,17 @@ class PaymentIntentTest {
         "payment-intent.uri-invalid",
         assertThrows(
                 ValidationException.class,
-                () -> new PaymentIntent(ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, bad, GOOD))
+                () ->
+                    new PaymentIntent(
+                        ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, bad, GOOD, Locale.ENGLISH))
             .code());
     assertEquals(
         "payment-intent.uri-invalid",
         assertThrows(
                 ValidationException.class,
-                () -> new PaymentIntent(ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, bad))
+                () ->
+                    new PaymentIntent(
+                        ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, bad, Locale.ENGLISH))
             .code());
   }
 
@@ -84,13 +91,37 @@ class PaymentIntentTest {
         "payment-intent.field-missing",
         assertThrows(
                 ValidationException.class,
-                () -> new PaymentIntent(null, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD))
+                () ->
+                    new PaymentIntent(
+                        null, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD, Locale.ENGLISH))
             .code());
     assertEquals(
         "payment-intent.uri-invalid",
         assertThrows(
                 ValidationException.class,
-                () -> new PaymentIntent(ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, null, GOOD))
+                () ->
+                    new PaymentIntent(
+                        ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, null, GOOD, Locale.ENGLISH))
+            .code());
+  }
+
+  @Test
+  void localeMustBePresentAndHaveLanguage() {
+    assertEquals(
+        "payment-intent.locale-invalid",
+        assertThrows(
+                ValidationException.class,
+                () ->
+                    new PaymentIntent(
+                        ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD, null))
+            .code());
+    assertEquals(
+        "payment-intent.locale-invalid",
+        assertThrows(
+                ValidationException.class,
+                () ->
+                    new PaymentIntent(
+                        ORDER, AMOUNT, PaymentMethod.CARD, CUSTOMER, GOOD, GOOD, Locale.ROOT))
             .code());
   }
 }

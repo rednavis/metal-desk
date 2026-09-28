@@ -6,6 +6,7 @@ import com.rednavis.metaldesk.share.domain.money.Money;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.net.URI;
+import java.util.Locale;
 
 /**
  * What checkout asks a provider for: take this amount, for this order, by this method.
@@ -34,13 +35,14 @@ public record PaymentIntent(
     PaymentMethod method,
     CustomerId customerId,
     URI returnUri,
-    URI cancelUri) {
+    URI cancelUri,
+    Locale locale) {
 
   /**
    * Validates the fields.
    *
-   * @throws ValidationException if a field is null, the amount is not greater than zero, or a URI
-   *     is not absolute {@code http} or {@code https}
+   * @throws ValidationException if a field is null, the amount is not greater than zero, a URI is
+   *     not absolute {@code http} or {@code https}, or the locale has no language
    */
   public PaymentIntent {
     if (orderId == null || method == null || customerId == null) {
@@ -59,5 +61,9 @@ public record PaymentIntent(
         cancelUri,
         "payment-intent.uri-invalid",
         "Payment cancel target must be an absolute http or https URI");
+    if (locale == null || locale.getLanguage().isEmpty()) {
+      throw new ValidationException(
+          "payment-intent.locale-invalid", "Payment locale must be present and have a language");
+    }
   }
 }

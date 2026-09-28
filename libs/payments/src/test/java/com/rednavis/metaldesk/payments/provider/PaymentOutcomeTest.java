@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
+import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Optional;
@@ -106,5 +108,23 @@ class PaymentOutcomeTest {
     assertEquals(
         target,
         new PaymentOutcome.RedirectRequired(StubProvider.reference(), target).redirectUri());
+  }
+
+  @Test
+  void statusFollowsTheOutcomeAndOnlyCapturedMeansPaid() {
+    final ProviderReference reference = StubProvider.reference();
+    assertEquals(PaymentStatus.CAPTURED, new PaymentOutcome.Captured(reference).status());
+    assertEquals(
+        PaymentStatus.PENDING,
+        new PaymentOutcome.RedirectRequired(reference, URI.create("https://pay.example/s"))
+            .status());
+    assertEquals(
+        PaymentStatus.PENDING,
+        new PaymentOutcome.ElementRequired(reference, "hdl_test_1").status());
+    assertEquals(PaymentStatus.PENDING, new PaymentOutcome.DocumentIssued(reference).status());
+    assertEquals(
+        PaymentStatus.DECLINED,
+        new PaymentOutcome.Declined(DeclineReason.EXPIRED, Optional.empty()).status());
+    assertEquals(PaymentStatus.FAILED, new PaymentOutcome.Failed("Try again").status());
   }
 }

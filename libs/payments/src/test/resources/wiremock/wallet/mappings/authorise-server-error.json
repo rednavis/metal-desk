@@ -1,0 +1,19 @@
+{
+  "name": "server-error",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-server-error')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 500,
+    "body": "upstream broke",
+    "headers": {
+      "Content-Type": "text/plain"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-package com.rednavis.metaldesk.payments.gateway;
+package com.rednavis.metaldesk.payments.wallet;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -13,16 +13,16 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Locale;
 
-/** Shared set-up for the gateway tests: a WireMock server and synthetic intents. */
-public final class GatewayFixtures {
+/** Shared set-up for the wallet tests: a WireMock server and synthetic intents. */
+public final class WalletFixtures {
 
   /** Far shorter than the stubs' fixed delay, so the client's own timeout is what fires. */
   public static final Duration SHORT_TIMEOUT = Duration.ofMillis(400);
 
-  private GatewayFixtures() {}
+  private WalletFixtures() {}
 
   /**
-   * Builds a WireMock extension serving the gateway stubs from the test classpath.
+   * Builds a WireMock extension serving the wallet stubs from the test classpath.
    *
    * @return the extension, to be registered as a static field
    */
@@ -31,7 +31,7 @@ public final class GatewayFixtures {
         .options(
             WireMockConfiguration.wireMockConfig()
                 .dynamicPort()
-                .usingFilesUnderClasspath("wiremock/gateway"))
+                .usingFilesUnderClasspath("wiremock/wallet"))
         .build();
   }
 
@@ -42,19 +42,19 @@ public final class GatewayFixtures {
    * @param retryBudget how many extra attempts a confirm call may make
    * @return the provider, with {@link #SHORT_TIMEOUT}
    */
-  public static GatewayProvider provider(WireMockExtension wireMock, int retryBudget) {
-    return new GatewayProvider(
-        new GatewayConfiguration(URI.create(wireMock.baseUrl()), SHORT_TIMEOUT, retryBudget));
+  public static WalletProvider provider(WireMockExtension wireMock, int retryBudget) {
+    return new WalletProvider(
+        new WalletConfiguration(URI.create(wireMock.baseUrl()), SHORT_TIMEOUT, retryBudget));
   }
 
   /**
-   * Builds a synthetic card payment intent for an order id, which is what the stubs match on.
+   * Builds a synthetic wallet payment intent for an order id, which is what the stubs match on.
    *
    * @param orderId the order id, such as {@code order-captured}
    * @return the intent
    */
   public static PaymentIntent intent(String orderId) {
-    return intent(orderId, PaymentMethod.CARD);
+    return intent(orderId, PaymentMethod.WALLET_ACCOUNT);
   }
 
   /**
@@ -76,12 +76,12 @@ public final class GatewayFixtures {
   }
 
   /**
-   * Builds a gateway payment reference.
+   * Builds a wallet payment reference.
    *
-   * @param suffix the part after {@code gw_test_}
+   * @param suffix the part after {@code wl_test_}
    * @return the reference
    */
   public static ProviderReference reference(String suffix) {
-    return new ProviderReference("gw_test_" + suffix);
+    return new ProviderReference("wl_test_" + suffix);
   }
 }

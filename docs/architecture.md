@@ -142,6 +142,15 @@ timeout does not prove the payment failed, and taking the money twice is worse t
 checkout. Confirmation only reads a payment's state, so it is retried on a transport failure up to the
 configured budget.
 
+The wallet adapter uses the same client and rules. **Invoice makes no outbound call at all**: it reads the
+order, splits its lines by the tax category snapshotted on each line, renders one document, or two when
+the cart mixes tax-exempt and taxable categories (FR-6.2), and reports `DocumentIssued`, whose status is
+`PENDING` — an invoice is a promise to pay, never a capture. The cap of two documents is tied to
+`TaxCategory` having exactly two members, so a third category would mean revisiting that rule. Both
+documents share one invoice number, derived from the order number, and the delivery cost is shown on the
+first, so the documents' totals add up to the order's. Invoice is the path for orders above the BR-9
+value ceiling; it is not a fallback.
+
 ## 5. Request flow & the reactive stack
 
 `controller → service → repository`, fully non-blocking end-to-end (reactive types throughout, no

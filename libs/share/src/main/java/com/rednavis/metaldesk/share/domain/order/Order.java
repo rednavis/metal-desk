@@ -20,7 +20,7 @@ import java.util.Optional;
  * <p>It composes; it does not orchestrate. It holds the immutable {@link OrderLine} snapshots that
  * make price finality true (BRD BR-2), and it delegates its totals to {@link OrderTotalsCalculator}
  * (BR-5). It has <strong>no</strong> methods that move it between statuses: which moves are legal
- * is the state machine of T-015, and a method here would put a second copy of that table in the
+ * is the {@link OrderStateMachine}, and a method here would put a second copy of that table in the
  * wrong place. Status is data on the order; changing it is done by building the order that results.
  *
  * <p>The quote and the payment are optional because they are genuinely absent early: a freshly

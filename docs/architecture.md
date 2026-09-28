@@ -149,6 +149,19 @@ The manager-handoff path (`AWAITING_MANAGER_QUOTE`) is a first-class state, not 
 which is what lets order history (FR-10.1) show a consistent status for every order regardless of
 which path it took.
 
+The diagram is implemented in `libs/share` (`OrderStateMachine`), keyed on *(status, trigger)* so the
+several roads into `CANCELLED` stay distinguishable. Two readings of the diagram are worth stating:
+
+- **`CANCELLED` has three causes and three edges.** Payment abandoned and customer cancellation
+  leave `AWAITING_PAYMENT`; quote declined leaves `AWAITING_MANAGER_QUOTE` (a declined quote
+  would otherwise strand the order).
+- **A single failed payment attempt does not cancel** (FR-6.3: the customer returns to payment
+  selection with everything intact). It is a `PAYMENT_FAILED` event that leaves the order in
+  `AWAITING_PAYMENT`; the diagram's "payment failure" cancellation is the separate case of the payment
+  being given up.
+
+`DELIVERED` and `CANCELLED` are terminal.
+
 ## 7. Reference deployment (GCP)
 
 | Component | Service | Notes |

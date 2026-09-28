@@ -73,7 +73,7 @@ class PaymentOutcomeValidationTest {
         assertThrows(ValidationException.class, () -> new PaymentOutcome.DocumentIssued(null))
             .code());
     assertEquals(
-        "payment-outcome.secret-blank",
+        "payment-outcome.handle-blank",
         assertThrows(
                 ValidationException.class, () -> new PaymentOutcome.ElementRequired(REFERENCE, " "))
             .code());

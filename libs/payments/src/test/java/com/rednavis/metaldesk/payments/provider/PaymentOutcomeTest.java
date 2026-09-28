@@ -93,10 +93,10 @@ class PaymentOutcomeTest {
   }
 
   @Test
-  void elementSecretDoesNotAppearInItsStringForm() {
+  void elementHandleDoesNotAppearInItsStringForm() {
     final PaymentOutcome element =
-        new PaymentOutcome.ElementRequired(StubProvider.reference(), "sec_live_abcdef");
-    assertFalse(element.toString().contains("sec_live_abcdef"));
+        new PaymentOutcome.ElementRequired(StubProvider.reference(), "hdl_test_abcdef");
+    assertFalse(element.toString().contains("hdl_test_abcdef"));
     assertTrue(element.toString().contains("ch_test_0001"));
   }
 

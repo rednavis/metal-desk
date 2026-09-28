@@ -1,0 +1,15 @@
+{
+  "name": "confirm-always-slow",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments/gw_test_0005/confirm"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 3000,
+    "bodyFileName": "captured.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

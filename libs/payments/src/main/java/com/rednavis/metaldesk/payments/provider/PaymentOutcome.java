@@ -81,38 +81,38 @@ public sealed interface PaymentOutcome
 
   /**
    * The customer completes the payment in an element the provider supplies inside the page: mount
-   * it with {@code clientSecret}, then confirm using {@code reference}.
+   * it with {@code clientHandle}, then confirm using {@code reference}.
    *
-   * <p>The secret is opaque and only for the customer's browser session. Its {@code toString} is
+   * <p>The handle is opaque and only for the customer's browser session. Its {@code toString} is
    * redacted so it does not reach a log by accident.
    *
    * @param reference the provider's handle for the pending payment, never null
-   * @param clientSecret the opaque secret that lets the element talk to the provider, never blank
+   * @param clientHandle the opaque handle that lets the element talk to the provider, never blank
    */
-  record ElementRequired(ProviderReference reference, String clientSecret)
+  record ElementRequired(ProviderReference reference, String clientHandle)
       implements PaymentOutcome {
 
     /**
      * Validates the fields.
      *
-     * @throws ValidationException if the reference is null or the secret is null or blank
+     * @throws ValidationException if the reference is null or the handle is null or blank
      */
     public ElementRequired {
       Checks.reference(reference);
-      if (clientSecret == null || clientSecret.isBlank()) {
+      if (clientHandle == null || clientHandle.isBlank()) {
         throw new ValidationException(
-            "payment-outcome.secret-blank", "Client secret must not be null or blank");
+            "payment-outcome.handle-blank", "Client handle must not be null or blank");
       }
     }
 
     /**
-     * Describes the outcome without the secret.
+     * Describes the outcome without the handle.
      *
-     * @return text naming the reference and hiding the secret
+     * @return text naming the reference and hiding the handle
      */
     @Override
     public String toString() {
-      return "ElementRequired[reference=" + reference + ", clientSecret=***]";
+      return "ElementRequired[reference=" + reference + ", clientHandle=***]";
     }
   }
 

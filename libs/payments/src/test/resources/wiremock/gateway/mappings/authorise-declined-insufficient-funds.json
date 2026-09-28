@@ -1,0 +1,19 @@
+{
+  "name": "declined-insufficient-funds",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-insufficient_funds')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "insufficient_funds"
+    }
+  }
+}

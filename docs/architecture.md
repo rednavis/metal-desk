@@ -136,6 +136,12 @@ or understood ends the `Mono` with `PaymentProviderException`, so "the bank said
 reach the bank" differ by type. The request type carries no instrument data, by the same rule as
 `PaymentRecord`.
 
+The gateway adapter (`GatewayProvider`) talks to a gateway whose address, timeout and retry budget are
+configuration. **An authorisation is never retried**: once the request may have reached the gateway, a
+timeout does not prove the payment failed, and taking the money twice is worse than a failed
+checkout. Confirmation only reads a payment's state, so it is retried on a transport failure up to the
+configured budget.
+
 ## 5. Request flow & the reactive stack
 
 `controller → service → repository`, fully non-blocking end-to-end (reactive types throughout, no

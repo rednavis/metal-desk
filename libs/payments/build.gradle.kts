@@ -17,8 +17,11 @@ dependencies {
     // is imported only for version alignment; nothing Spring is added to the classpath.
     implementation(platform(libs.spring.boot.dependencies))
     api(libs.reactor.core)
+    implementation(libs.jackson.databind)
+    implementation(libs.slf4j.api)
 
     testImplementation(libs.reactor.test)
+    testImplementation(libs.wiremock.standalone)
     // Gradle 9 no longer supplies the JUnit Platform launcher itself; see libs/share.
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

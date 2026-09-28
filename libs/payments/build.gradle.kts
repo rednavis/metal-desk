@@ -22,6 +22,4 @@ dependencies {
 
     testImplementation(libs.reactor.test)
     testImplementation(libs.wiremock.standalone)
-    // Gradle 9 no longer supplies the JUnit Platform launcher itself; see libs/share.
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

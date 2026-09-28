@@ -20,6 +20,4 @@ dependencies {
     implementation(libs.slf4j.api)
 
     testImplementation(libs.reactor.test)
-    // Gradle 9 no longer supplies the JUnit Platform launcher itself; see libs/share.
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

@@ -30,6 +30,13 @@ dependencies {
     testImplementation(platform(libs.findLibrary("junit-bom").get()))
     testImplementation("org.junit.jupiter:junit-jupiter")
 
+    // Gradle 9 no longer supplies the JUnit Platform launcher itself. The Spring modules get it
+    // through spring-boot-starter-test, but a module with no Spring would otherwise fail to start
+    // its tests at all, so it is declared here for every module rather than in each build file (the
+    // version comes from the junit-bom above). Without this a newly added module could not even run
+    // the architecture test that the quality conventions apply to it.
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     // Gradle never resolves annotationProcessor transitively (by design — see
     // https://github.com/gradle/gradle/issues/2510), so a dependency's compileOnlyApi/api Lombok
     // exposure alone isn't enough: every module that wants to actually use Lombok annotations

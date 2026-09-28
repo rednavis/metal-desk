@@ -25,8 +25,11 @@
  * <p><strong>Quantity (BRD FR-3.3).</strong> A line holds one to ten units of a product; the cap is
  * the BRD's illustrative figure.
  *
- * <p><strong>Status.</strong> {@link com.rednavis.metaldesk.share.domain.order.OrderStatus} lists
- * the states only. The legal moves between them are the state machine of T-015, so nothing in this
- * package changes an order's status.
+ * <p><strong>Status (Architecture section 6).</strong> {@link
+ * com.rednavis.metaldesk.share.domain.order.OrderStatus} lists the eight states, and {@link
+ * com.rednavis.metaldesk.share.domain.order.OrderStateMachine} is the one table of which {@link
+ * com.rednavis.metaldesk.share.domain.order.TransitionTrigger} moves an order from which status to
+ * which. {@code AWAITING_MANAGER_QUOTE} is a state, not a flag, so order history shows a consistent
+ * status whichever path an order took. {@code Order} itself has no method that changes its status.
  */
 package com.rednavis.metaldesk.share.domain.order;

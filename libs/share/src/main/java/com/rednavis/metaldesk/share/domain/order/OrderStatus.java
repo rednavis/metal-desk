@@ -4,10 +4,10 @@ package com.rednavis.metaldesk.share.domain.order;
  * Where an order is in its life (Architecture section 6), one of the eight states of the order
  * state machine.
  *
- * <p>This is only the set of states. Which edges between them are legal, and what triggers each, is
- * the state machine owned by T-015; nothing on {@link Order} moves it between states, so that table
- * stays in one place. {@link #AWAITING_MANAGER_QUOTE} is a state in its own right, not a flag, so
- * order history (BRD FR-10.1) shows a consistent status for every order whichever path it took.
+ * <p>This is the set of states. Which edges between them are legal, and what triggers each, is the
+ * {@link OrderStateMachine}; nothing on {@link Order} moves it between states, so that table stays
+ * in one place. {@link #AWAITING_MANAGER_QUOTE} is a state in its own right, not a flag, so order
+ * history (BRD FR-10.1) shows a consistent status for every order whichever path it took.
  */
 public enum OrderStatus {
 
@@ -33,5 +33,15 @@ public enum OrderStatus {
   DELIVERED,
 
   /** Abandoned before it was paid. */
-  CANCELLED
+  CANCELLED;
+
+  /**
+   * Tells whether the order can go no further: it is {@link #DELIVERED} or {@link #CANCELLED}. A
+   * terminal status accepts no trigger in the {@link OrderStateMachine}.
+   *
+   * @return {@code true} for {@code DELIVERED} and {@code CANCELLED}
+   */
+  public boolean isTerminal() {
+    return this == DELIVERED || this == CANCELLED;
+  }
 }

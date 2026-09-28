@@ -73,8 +73,8 @@ the original system got wrong (see [Lessons Learned](lessons-learned.md)). Its c
 Customer ──┬── Address (delivery / billing)
            └── AuthCredential
 
-Product ──── Category
-        └── PriceRule (margin %, tax category — BR-3, BR-4)
+Product ──── Category (tax category — BR-4)
+        └── PriceRule (margin % — BR-3)
 
 Order ──┬── OrderLine (product, qty, unit price at time of order)
         ├── DeliveryQuote (fulfillment tier applied, cost, ETA — BR-8)

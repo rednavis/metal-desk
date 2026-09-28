@@ -1,0 +1,8 @@
+Subject: Neue Anfrage von {{customerName}}: {{topic}}
+
+Ein Kunde hat eine Nachricht gesendet.
+
+Von: {{customerName}} <{{customerEmail}}>
+Thema: {{topic}}
+
+{{message}}

@@ -1,0 +1,6 @@
+Subject: Rechnung {{invoiceNumber}} zur Bestellung {{orderNumber}} ausgestellt
+
+{{customerName}} wurde eine Rechnung ausgestellt. Eine Kopie ist angehängt.
+
+Rechnung: {{invoiceNumber}}
+Bestellung: {{orderNumber}}

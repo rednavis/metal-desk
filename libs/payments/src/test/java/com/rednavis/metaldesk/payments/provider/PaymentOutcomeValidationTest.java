@@ -41,7 +41,7 @@ class PaymentOutcomeValidationTest {
 
   @Test
   void blankOrOverlongMessagesAreRefused() {
-    final String tooLong = "x".repeat(Checks.MAX_MESSAGE_LENGTH + 1);
+    final String tooLong = "x".repeat(Checks.MAX_MESSAGE_LEN + 1);
     assertEquals(
         "payment-outcome.message-blank",
         assertThrows(ValidationException.class, () -> new PaymentOutcome.Failed(" ")).code());

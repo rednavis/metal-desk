@@ -17,7 +17,7 @@ $ARGUMENTS
    touched, run `./gradlew build` / `pnpm -r run build`, check CI config triggers path-filtering by
    testing which jobs a scoped diff would trigger, etc. Prefer the `verify` skill for the build/run
    portions.
-4. Write results to an **untracked** `OUTPUT.md` at the repo root (do not `git add` it unless asked) —
+4. Write results to an **untracked** `result-modernization-phase.md` at the repo root (do not `git add` it unless asked) —
    a table of each condition, pass/fail, and the empirical evidence (command + output) for each. Note
    any doc/code inconsistencies found along the way as open items, without fixing them unless asked.
 5. Do not post the results as a GitHub issue comment unless explicitly asked to.

@@ -15,10 +15,11 @@ nav_order: 4
 
 ## Where this repository is today
 
-This repository currently holds documentation only: the [Business Requirements](business-requirements.md),
-the [Architecture](architecture.md), and the [Lessons Learned](lessons-learned.md) that shape it.
-No application code has been written yet. This page is the build plan for turning the architecture
-into a working system — the order of work, and the standards each piece is held to.
+This repository holds the [Business Requirements](business-requirements.md), the
+[Architecture](architecture.md), and the [Lessons Learned](lessons-learned.md) that shape it, plus
+the code built so far. [Phase 1](#phase-1--build-graph-and-conventions) (the Gradle/pnpm monorepo
+scaffolding) has merged; the later phases are still to come. This page is the build plan for turning
+the architecture into a working system — the order of work, and the standards each piece is held to.
 
 **This supersedes an earlier, unpublished plan** that would have imported a real prior codebase's
 git history wholesale into this repository. That approach was abandoned before anything was pushed

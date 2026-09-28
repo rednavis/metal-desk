@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="metal-desk"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+  <description>
+    Every PMD 7 Java category ruleset, enabled in full, minus the few rules below that contradict
+    a convention this repo already enforces elsewhere. To relax another rule, add an
+    &lt;exclude name="..."/&gt; under its category, with a comment saying why.
+  </description>
+
+  <rule ref="category/java/bestpractices.xml">
+    <!-- Context-load smoke tests (@SpringBootTest) have no assertion; startup failing is the test. -->
+    <exclude name="UnitTestShouldIncludeAssert"/>
+  </rule>
+  <rule ref="category/java/codestyle.xml">
+    <!-- Lombok's @RequiredArgsConstructor generates the constructor, which PMD can't see. -->
+    <exclude name="AtLeastOneConstructor"/>
+    <!-- googleJavaFormat() never adds `final` to parameters; the repo doesn't use that style. -->
+    <exclude name="MethodArgumentCouldBeFinal"/>
+  </rule>
+  <rule ref="category/java/design.xml"/>
+  <rule ref="category/java/documentation.xml">
+    <!-- Checkstyle's MissingJavadocType/MissingJavadocMethod already own "what needs Javadoc",
+         with a deliberately chosen scope (config/checkstyle/checkstyle.xml). -->
+    <exclude name="CommentRequired"/>
+    <!-- Default limit is 80 cols; the repo's Google Java Format wraps Javadoc at 100. -->
+    <exclude name="CommentSize"/>
+    <!-- Context-load smoke tests (@SpringBootTest) have an intentionally empty body. -->
+    <exclude name="UncommentedEmptyMethodBody"/>
+  </rule>
+  <rule ref="category/java/documentation.xml/CommentSize">
+    <properties>
+      <property name="maxLineLength" value="100"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/errorprone.xml">
+    <!-- The libs/*/*Module marker classes are private-constructor placeholders until Phase 2. -->
+    <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+  </rule>
+  <rule ref="category/java/multithreading.xml"/>
+  <rule ref="category/java/performance.xml"/>
+  <rule ref="category/java/security.xml"/>
+</ruleset>

@@ -1,0 +1,7 @@
+Subject: Manager handoff {{reference}}: {{ceiling}} ceiling exceeded
+
+An order needs a manager's price and terms.
+
+Reference: {{reference}}
+Customer: {{customerName}}
+Ceiling exceeded: {{ceiling}}

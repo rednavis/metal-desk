@@ -1,0 +1,9 @@
+Subject: Your Metal Desk verification code
+
+Hello {{name}},
+
+Your verification code is {{code}}.
+
+Enter it to verify your email address and unlock checkout. If you did not create an account, you can ignore this message.
+
+Metal Desk

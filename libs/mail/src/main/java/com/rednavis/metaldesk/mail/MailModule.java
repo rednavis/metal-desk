@@ -1,8 +1,8 @@
 package com.rednavis.metaldesk.mail;
 
 /**
- * Marks the {@code libs/mail} module boundary until Phase 2 adds the transactional mail
- * abstraction.
+ * Marks the {@code libs/mail} module boundary. The transactional mail abstraction itself is {@link
+ * MailSender} and the types beside it in this package.
  */
 public final class MailModule {
 

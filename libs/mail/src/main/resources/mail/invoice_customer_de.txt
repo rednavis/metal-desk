@@ -1,0 +1,7 @@
+Subject: Ihre Rechnung {{invoiceNumber}}
+
+Guten Tag {{name}},
+
+Ihre Rechnung {{invoiceNumber}} zur Bestellung {{orderNumber}} finden Sie im Anhang. Enthält Ihre Bestellung Artikel mit unterschiedlicher Besteuerung, sind mehrere Dokumente angehängt.
+
+Metal Desk

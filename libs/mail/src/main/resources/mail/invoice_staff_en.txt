@@ -1,0 +1,6 @@
+Subject: Invoice {{invoiceNumber}} issued for order {{orderNumber}}
+
+An invoice was issued to {{customerName}}. A copy is attached.
+
+Invoice: {{invoiceNumber}}
+Order: {{orderNumber}}

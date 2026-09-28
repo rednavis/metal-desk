@@ -14,7 +14,7 @@ import java.util.Locale;
 final class Checks {
 
   /** The longest allowed customer-safe message, in characters. */
-  /* default */ static final int MAX_MESSAGE_LENGTH = 200;
+  /* default */ static final int MAX_MESSAGE_LEN = 200;
 
   private Checks() {}
 
@@ -53,7 +53,7 @@ final class Checks {
 
   /**
    * Returns a message that is safe to show a customer: not blank, trimmed, and at most {@link
-   * #MAX_MESSAGE_LENGTH} characters.
+   * #MAX_MESSAGE_LEN} characters.
    *
    * @param message the candidate
    * @return the trimmed message
@@ -65,10 +65,10 @@ final class Checks {
           "payment-outcome.message-blank", "Message must not be null or blank");
     }
     final String stripped = message.strip();
-    if (stripped.length() > MAX_MESSAGE_LENGTH) {
+    if (stripped.length() > MAX_MESSAGE_LEN) {
       throw new ValidationException(
           "payment-outcome.message-too-long",
-          "Message must be at most " + MAX_MESSAGE_LENGTH + " characters");
+          "Message must be at most " + MAX_MESSAGE_LEN + " characters");
     }
     return stripped;
   }

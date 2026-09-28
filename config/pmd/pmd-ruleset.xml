@@ -59,10 +59,11 @@
   </rule>
   <rule ref="category/java/codestyle.xml/LongVariable">
     <properties>
-      <!-- OrderStatus.AWAITING_MANAGER_QUOTE (22 characters) is a state name fixed by Architecture
-           section 6 and BR-10; the default limit of 17 would force a name the docs do not use. The
-           limit stays tight for everything else. -->
-      <property name="minimum" value="22"/>
+      <!-- Enum constant names come from the documents and cannot be shortened to suit the limit:
+           OrderStatus.AWAITING_MANAGER_QUOTE is Architecture section 6, and the MailTemplate
+           constants (ORDER_CONFIRMATION_CUSTOMER ...) are the names task T-020 fixes. Everything
+           else keeps the default limit of 17. -->
+      <property name="violationSuppressXPath" value="./ancestor-or-self::EnumConstant"/>
     </properties>
   </rule>
   <rule ref="category/java/codestyle.xml/ShortVariable">

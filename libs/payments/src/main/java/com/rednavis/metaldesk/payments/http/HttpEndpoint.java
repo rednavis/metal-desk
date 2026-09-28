@@ -21,20 +21,20 @@ import java.util.Locale;
  * @param baseUrl where the provider is, absolute with an {@code http} or {@code https} scheme and a
  *     host; a trailing slash is dropped
  * @param timeout how long to wait for one call before it counts as timed out, greater than zero and
- *     at most {@value #MAX_TIMEOUT_SECONDS} seconds
+ *     at most {@value #MAX_TIMEOUT_SECS} seconds
  * @param retryBudget how many extra attempts an idempotent call may make after a transport failure,
  *     from 0 to {@value #MAX_RETRY_BUDGET}
  */
 public record HttpEndpoint(URI baseUrl, Duration timeout, int retryBudget) {
 
   /** The longest timeout accepted, in seconds. */
-  public static final long MAX_TIMEOUT_SECONDS = 60;
+  public static final long MAX_TIMEOUT_SECS = 60;
 
   /** The most extra attempts accepted for an idempotent call. */
   public static final int MAX_RETRY_BUDGET = 3;
 
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
-  private static final int DEFAULT_RETRY_BUDGET = 1;
+  private static final int DEFAULT_RETRIES = 1;
 
   /**
    * Validates the fields and drops a trailing slash from the base URL.
@@ -56,7 +56,7 @@ public record HttpEndpoint(URI baseUrl, Duration timeout, int retryBudget) {
    * @throws ValidationException if the base URL is not valid
    */
   public static HttpEndpoint withDefaults(URI baseUrl) {
-    return new HttpEndpoint(baseUrl, DEFAULT_TIMEOUT, DEFAULT_RETRY_BUDGET);
+    return new HttpEndpoint(baseUrl, DEFAULT_TIMEOUT, DEFAULT_RETRIES);
   }
 
   /**
@@ -88,10 +88,10 @@ public record HttpEndpoint(URI baseUrl, Duration timeout, int retryBudget) {
     if (timeout == null
         || timeout.isNegative()
         || timeout.isZero()
-        || timeout.compareTo(Duration.ofSeconds(MAX_TIMEOUT_SECONDS)) > 0) {
+        || timeout.compareTo(Duration.ofSeconds(MAX_TIMEOUT_SECS)) > 0) {
       throw new ValidationException(
           "http-endpoint.timeout-invalid",
-          "Timeout must be above zero and at most " + MAX_TIMEOUT_SECONDS + " seconds");
+          "Timeout must be above zero and at most " + MAX_TIMEOUT_SECS + " seconds");
     }
   }
 

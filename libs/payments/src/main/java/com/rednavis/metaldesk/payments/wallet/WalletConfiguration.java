@@ -18,7 +18,7 @@ import java.time.Duration;
  * @param baseUrl where the wallet provider is, absolute with an {@code http} or {@code https}
  *     scheme and a host; a trailing slash is dropped
  * @param timeout how long to wait for one call before it counts as timed out, greater than zero and
- *     at most {@value HttpEndpoint#MAX_TIMEOUT_SECONDS} seconds
+ *     at most {@value HttpEndpoint#MAX_TIMEOUT_SECS} seconds
  * @param retryBudget how many extra attempts a {@code confirm} call may make after a transport
  *     failure, from 0 to {@value HttpEndpoint#MAX_RETRY_BUDGET}
  */

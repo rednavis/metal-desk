@@ -128,6 +128,14 @@ exercised in CI without a real payment account. Swapping WireMock for a real pro
 deployment is purely a configuration change, not a code change, which is the point of the
 abstraction.
 
+The interface (`libs/payments`) is two reactive operations, `authorise` and `confirm`, each returning
+`Mono<PaymentOutcome>`. A **decline is a value, not an error**: `PaymentOutcome` is sealed
+(`Captured`, `RedirectRequired`, `ElementRequired`, `DocumentIssued`, `Declined`, `Failed`), and a
+`Declined` returns the customer to payment selection (FR-6.3). Only a provider that cannot be reached
+or understood ends the `Mono` with `PaymentProviderException`, so "the bank said no" and "we could not
+reach the bank" differ by type. The request type carries no instrument data, by the same rule as
+`PaymentRecord`.
+
 ## 5. Request flow & the reactive stack
 
 `controller → service → repository`, fully non-blocking end-to-end (reactive types throughout, no

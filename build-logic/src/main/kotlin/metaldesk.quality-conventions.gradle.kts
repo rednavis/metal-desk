@@ -9,6 +9,7 @@ plugins {
     id("com.diffplug.spotless")
     id("com.github.spotbugs")
     checkstyle
+    pmd
     jacoco
 }
 
@@ -91,6 +92,18 @@ tasks.withType<SpotBugsTask>().configureEach {
     reports.create("xml") {
         required = true
     }
+}
+
+// The Gradle default is ruleSets = ["category/java/errorprone.xml"], which is silently *added* to
+// ruleSetFiles — so it is cleared here, leaving config/pmd/pmd-ruleset.xml as the only source.
+pmd {
+    toolVersion = libs.findVersion("pmd").get().requiredVersion
+    ruleSets = emptyList()
+    ruleSetFiles = files(rootProject.layout.projectDirectory.file("config/pmd/pmd-ruleset.xml"))
+    isConsoleOutput = true
+    isIgnoreFailures = false
+    // Gradle's default is to fail only on priority 5 (lowest) and above, i.e. everything.
+    rulesMinimumPriority = 5
 }
 
 jacoco {

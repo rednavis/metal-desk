@@ -11,7 +11,8 @@ dependency mocked at the boundary, targeting GCP.
 
 **Status: documentation-first.** The [full requirements](docs/business-requirements.md),
 [architecture](docs/architecture.md), and [build plan](docs/modernization-plan.md) are written;
-application code has not been started yet. See the plan for the build order.
+implementation is under way, one PR per plan phase — Phase 1 (build graph and conventions) has
+merged. See the plan for the build order.
 
 📖 **[Read the docs](https://rednavis.github.io/metal-desk/)**
 

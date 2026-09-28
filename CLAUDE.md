@@ -9,9 +9,6 @@ is written before most code. Implementation proceeds one PR per `docs/modernizat
 All implementation code is authored by Claude Code from human direction, not hand-written — see
 `docs/meetings/2026-09-17-kickoff.md` and `CONTRIBUTING.md`.
 
-Known-stale: `README.md` and `docs/modernization-plan.md:18` still say no application code exists.
-Phase 1 has merged — don't trust those status lines over the tree.
-
 ## Module structure — Gradle vs pnpm boundary is deliberate
 
 JVM modules, all under group `com.rednavis.metaldesk`, listed in `settings.gradle.kts`:
@@ -62,6 +59,9 @@ repositories.
   Regexp rules that fail the build — use `@Slf4j`.
 - SpotBugs runs at `Effort.MAX` / `Confidence.LOW` with `ignoreFailures = false`, and
   `config/spotbugs/spotbugs_exclude.xml` is empty — any low-confidence finding fails.
+- PMD runs every Java category ruleset (`config/pmd/pmd-ruleset.xml`) with `ignoreFailures = false`;
+  the few rules that contradict Checkstyle/Google Java Format/Lombok are `<exclude>`d there with a
+  reason. Relax rules there, not with `@SuppressWarnings("PMD.*")` annotations in Java files.
 - Jacoco produces reports but **no** coverage threshold is wired (`jacocoTestCoverageVerification`
   is never invoked). Coverage can be 0% and `build` still passes.
 - **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a

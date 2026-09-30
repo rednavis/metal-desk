@@ -1,6 +1,6 @@
 package com.rednavis.metaldesk.api.cart;
 
-import com.rednavis.metaldesk.api.persistence.document.CartDocument;
+import com.rednavis.metaldesk.persistence.document.CartDocument;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import java.security.SecureRandom;
 import java.time.Clock;

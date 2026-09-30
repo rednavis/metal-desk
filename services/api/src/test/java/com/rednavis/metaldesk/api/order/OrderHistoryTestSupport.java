@@ -1,12 +1,12 @@
 package com.rednavis.metaldesk.api.order;
 
 import com.rednavis.metaldesk.api.cart.CartTestSupport;
-import com.rednavis.metaldesk.api.persistence.AccountFixtures;
-import com.rednavis.metaldesk.api.persistence.OrderFixtures;
-import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.api.persistence.repository.ShipmentRepository;
+import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
+import com.rednavis.metaldesk.persistence.fixtures.OrderFixtures;
+import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.order.Order;

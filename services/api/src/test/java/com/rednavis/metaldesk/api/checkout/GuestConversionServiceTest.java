@@ -13,7 +13,7 @@ import com.rednavis.metaldesk.api.account.verification.VerificationTicket;
 import com.rednavis.metaldesk.api.checkout.step1.CustomerDetails;
 import com.rednavis.metaldesk.api.checkout.step1.GuestConversion;
 import com.rednavis.metaldesk.api.checkout.step1.GuestConversionService;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.Region;
 import com.rednavis.metaldesk.share.domain.customer.Address;
 import com.rednavis.metaldesk.share.domain.customer.AddressKind;

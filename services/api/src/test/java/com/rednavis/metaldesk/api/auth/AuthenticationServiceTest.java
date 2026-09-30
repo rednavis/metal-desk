@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.rednavis.metaldesk.api.persistence.document.CredentialDocument;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.api.persistence.repository.CredentialRepository;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
+import com.rednavis.metaldesk.persistence.document.CredentialDocument;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.customer.AuthCredential;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;
 import java.time.Duration;

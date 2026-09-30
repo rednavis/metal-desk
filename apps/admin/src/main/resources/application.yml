@@ -7,3 +7,25 @@ spring:
   threads:
     virtual:
       enabled: true
+  mongodb:
+    # A local instance by default; a deployment supplies its own through MONGODB_URI. No credential
+    # belongs in this file (ADR-0002).
+    uri: ${MONGODB_URI:mongodb://localhost:27017/metaldesk}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+metaldesk:
+  admin:
+    staff:
+      # The header the Identity-Aware Proxy puts the signed-in staff member's identity in
+      # (Architecture section 7). The service is only reachable through the proxy in a deployment.
+      identity-header: X-Goog-Authenticated-User-Email
+      dev-identity:
+        # LOCAL DEVELOPMENT ONLY. When true, a request with no proxy header is treated as this
+        # identity. It is a complete authentication bypass: never enable it in a deployment.
+        enabled: false
+        email: ""

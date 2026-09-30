@@ -1,8 +1,8 @@
 package com.rednavis.metaldesk.api.checkout.delivery;
 
-import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.api.persistence.repository.ProductRepository;
+import com.rednavis.metaldesk.persistence.document.ProductDocument;
+import com.rednavis.metaldesk.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.share.domain.measure.Weight;
 import com.rednavis.metaldesk.share.domain.measure.WeightUnit;
 import com.rednavis.metaldesk.share.domain.money.Money;

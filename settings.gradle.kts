@@ -26,6 +26,7 @@ include(
     "libs:share",
     "libs:payments",
     "libs:mail",
+    "libs:persistence",
     "services:api",
     "services:pricing-bridge",
     "apps:admin",

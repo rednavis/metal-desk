@@ -1,7 +1,7 @@
 package com.rednavis.metaldesk.api.account;
 
-import com.rednavis.metaldesk.api.persistence.document.AccountGroupDocument;
 import com.rednavis.metaldesk.api.persistence.repository.AccountGroupRepository;
+import com.rednavis.metaldesk.persistence.document.AccountGroupDocument;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;

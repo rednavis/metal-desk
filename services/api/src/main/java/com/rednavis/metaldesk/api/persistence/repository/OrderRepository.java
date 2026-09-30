@@ -1,6 +1,6 @@
 package com.rednavis.metaldesk.api.persistence.repository;
 
-import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
+import com.rednavis.metaldesk.persistence.document.OrderDocument;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

@@ -1,8 +1,8 @@
 package com.rednavis.metaldesk.api.checkout.confirmation;
 
-import com.rednavis.metaldesk.api.persistence.document.NotificationDocument;
 import com.rednavis.metaldesk.api.persistence.repository.NotificationRepository;
 import com.rednavis.metaldesk.mail.MailTemplate;
+import com.rednavis.metaldesk.persistence.document.NotificationDocument;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import java.time.Clock;
 import lombok.RequiredArgsConstructor;

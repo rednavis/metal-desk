@@ -1,7 +1,7 @@
 package com.rednavis.metaldesk.api.account.verification;
 
-import com.rednavis.metaldesk.api.persistence.document.VerificationChallengeDocument;
 import com.rednavis.metaldesk.api.persistence.repository.VerificationChallengeRepository;
+import com.rednavis.metaldesk.persistence.document.VerificationChallengeDocument;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;

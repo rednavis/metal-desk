@@ -12,7 +12,9 @@ All implementation code is authored by Claude Code from human direction, not han
 ## Module structure — Gradle vs pnpm boundary is deliberate
 
 JVM modules, all under group `com.rednavis.metaldesk`, listed in `settings.gradle.kts`:
-- `libs:share`, `libs:payments`, `libs:mail` — shared domain/abstractions
+- `libs:share`, `libs:payments`, `libs:mail`, `libs:persistence` — shared domain/abstractions; `libs:persistence`
+  holds the Mongo documents and mappers only (no repositories, no driver: `services:api` has reactive
+  repositories over them, `apps:admin` blocking ones)
 - `services:api` (port 8082), `services:pricing-bridge` (port 8083), `apps:admin` (port 8081)
 
 `apps/web` and `apps/admin-web` (React 19/TS/Vite, pnpm workspace) are **intentionally excluded**
@@ -30,9 +32,9 @@ repositories.
 ## Build commands
 
 - Backend: `./gradlew build` (or `./gradlew clean build` for a full verification pass) — runs
-  Spotless, Checkstyle, SpotBugs, tests, and Jacoco for all 6 JVM modules via the `metaldesk.quality-conventions`
+  Spotless, Checkstyle, SpotBugs, tests, and Jacoco for all 7 JVM modules via the `metaldesk.quality-conventions`
   convention plugin.
-  `./gradlew projects` lists **9** projects, not 6 — `:apps`, `:libs`, `:services` are empty
+  `./gradlew projects` lists **10** projects, not 7 — `:apps`, `:libs`, `:services` are empty
   container projects with no build file. That is not a misconfiguration.
 - Fix formatting: `./gradlew spotlessApply` for Java, `pnpm run format` for TS/React. There is no
   single command — a full pass is both. Prettier deliberately skips `*.md` and `docs/`
@@ -70,9 +72,10 @@ repositories.
   new module gets it for free. The domain model belongs in `libs/share`; reuse it, never copy it.
 - Jacoco produces reports but **no** coverage threshold is wired (`jacocoTestCoverageVerification`
   is never invoked). Coverage can be 0% and `build` still passes.
-- `services:api` tests run against a real MongoDB through Testcontainers, so `./gradlew build` needs a
-  running Docker daemon. Every Mongo test extends `MongoTestSupport`, which shares one container per JVM —
-  don't start a container per class. On OrbStack, if Testcontainers can't find Docker, export
+- `services:api` and `apps:admin` tests run against a real MongoDB through Testcontainers, so `./gradlew build`
+  needs a running Docker daemon. Every Mongo test goes through `SharedMongo` (`libs:persistence` test fixtures),
+  which shares one container per JVM — don't start a container per class. `apps:admin` must never have WebFlux or
+  the reactive Mongo driver on its classpath (`AdminClasspathTest`); its `RestTestClient`, not `WebTestClient`. On OrbStack, if Testcontainers can't find Docker, export
   `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock` and
   `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`.
 - **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a

@@ -1,0 +1,17 @@
+Subject: Ihr Preis und Ihre Bedingungen für Bestellung {{reference}}
+
+Guten Tag {{name}},
+
+wir haben den Endpreis und die Bedingungen für Ihre Bestellung {{reference}} festgelegt.
+
+Versandkosten: {{deliveryPrice}}
+Gesamtbetrag inklusive Versand: {{total}}
+Lieferzeit: {{transit}}
+Dieses Angebot gilt bis {{validUntil}}.
+
+Bedingungen:
+{{terms}}
+
+Es wurde noch nichts abgebucht. Sie können jetzt mit der Zahlung fortfahren.
+
+Metal Desk

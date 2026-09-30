@@ -1,6 +1,6 @@
 package com.rednavis.metaldesk.api.persistence.repository;
 
-import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
+import com.rednavis.metaldesk.persistence.document.ProductDocument;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.repository.Query;

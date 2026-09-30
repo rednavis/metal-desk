@@ -2,10 +2,10 @@ package com.rednavis.metaldesk.api.cart;
 
 import com.rednavis.metaldesk.api.account.AccountTestSupport;
 import com.rednavis.metaldesk.api.catalog.CatalogSeed;
-import com.rednavis.metaldesk.api.persistence.AccountFixtures;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
+import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
+import com.rednavis.metaldesk.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Category;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import java.util.List;

@@ -161,12 +161,15 @@ subscriber — the container that most needs backpressure-aware I/O gets it for 
 whole stack share one execution model, instead of bolting reactive streams onto one service and
 blocking everywhere else.
 
-**Persistence** (task T-030) lives in `services/api` under `com.rednavis.metaldesk.api.persistence`, with
-`apps/admin` to share it through a `libs/persistence` extraction (T-040). The `libs/share` domain types carry
-no storage annotations (§8); the service has separate document types that carry them, and a hand-written
+**Persistence** (task T-030, extracted in T-040) is split by what is shared and what is not. The storage shape —
+the document types and their mappers — lives in `libs/persistence`, used by both `services/api` and `apps/admin`;
+the repositories do not, because a repository is an execution-model choice: `services/api` declares reactive ones,
+`apps/admin` (MVC on virtual threads) blocking ones over the same collections, and `libs/persistence` has no
+MongoDB driver on its classpath. The `libs/share` domain types carry
+no storage annotations (§8); `libs/persistence` has separate document types that carry them, and a hand-written
 mapper per aggregate converts in one direction each way, so a field added to an aggregate is a compile error
-in the mapper rather than a silently dropped column. Repositories are reactive Spring Data (`Mono`/`Flux`) and
-the blocking MongoDB driver is not on the classpath. The order number of BR-6 is allocated by one atomic
+in the mapper rather than a silently dropped column. In `services/api` repositories are reactive Spring Data (`Mono`/`Flux`) and
+the blocking MongoDB driver is not on its classpath; `apps/admin` has the blocking driver and no reactive one. The order number of BR-6 is allocated by one atomic
 `findAndModify` increment on a per-day counter, backed by a unique index on the order number; gaps are
 allowed, reuse is not.
 
@@ -305,6 +308,7 @@ applied uniformly, is itself part of the fix for the drift pattern in
 libs/share            ← domain model + shared exceptions/utils (§3) — every service depends on this
 libs/payments          ← PaymentProvider interface + adapters (§4)
 libs/mail              ← transactional mail abstraction
+libs/persistence       ← MongoDB documents and mappers shared by api and admin (no repositories, no driver)
 
 services/api
 services/pricing-bridge

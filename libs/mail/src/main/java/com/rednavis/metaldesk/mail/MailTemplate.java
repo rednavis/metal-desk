@@ -43,6 +43,12 @@ public enum MailTemplate {
   /** Tells staff an order went to manager handoff, with its context (BRD FR-5.3). */
   HANDOFF_NOTIFICATION_STAFF,
 
+  /**
+   * Tells the customer that staff have set the final delivery price and terms of a handed-off
+   * order, so they can now pay (BRD FR-5.3).
+   */
+  MANAGER_QUOTE_CUSTOMER,
+
   /** Confirms to the customer that their inquiry or message was received (BRD FR-9.1, FR-9.2). */
   INQUIRY_RECEIPT_CUSTOMER,
 

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.rednavis.metaldesk.api.persistence.document.CartDocument;
+import com.rednavis.metaldesk.persistence.document.CartDocument;
 import com.rednavis.metaldesk.share.domain.order.Quantity;
 import java.math.BigDecimal;
 import java.util.Locale;

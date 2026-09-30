@@ -1,9 +1,9 @@
 package com.rednavis.metaldesk.api.checkout.delivery;
 
-import com.rednavis.metaldesk.api.persistence.document.DeliveryDocument;
-import com.rednavis.metaldesk.api.persistence.document.HandoffDocument;
-import com.rednavis.metaldesk.api.persistence.document.QuoteDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.ValueMapper;
+import com.rednavis.metaldesk.persistence.document.DeliveryDocument;
+import com.rednavis.metaldesk.persistence.document.HandoffDocument;
+import com.rednavis.metaldesk.persistence.document.QuoteDocument;
+import com.rednavis.metaldesk.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.share.domain.fulfillment.DeliveryQuote;
 import com.rednavis.metaldesk.share.domain.fulfillment.TransitTime;
 import com.rednavis.metaldesk.share.domain.id.FulfillmentTierId;

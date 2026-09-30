@@ -1,7 +1,7 @@
 package com.rednavis.metaldesk.api.checkout;
 
 import com.rednavis.metaldesk.api.cart.CartId;
-import com.rednavis.metaldesk.api.persistence.document.CheckoutSessionDocument;
+import com.rednavis.metaldesk.persistence.document.CheckoutSessionDocument;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.domain.order.OrderLine;
 import com.rednavis.metaldesk.share.error.ConflictException;

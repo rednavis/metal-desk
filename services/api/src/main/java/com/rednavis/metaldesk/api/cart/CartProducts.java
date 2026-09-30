@@ -1,8 +1,8 @@
 package com.rednavis.metaldesk.api.cart;
 
-import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
 import com.rednavis.metaldesk.api.persistence.repository.ProductRepository;
 import com.rednavis.metaldesk.api.web.RequestIds;
+import com.rednavis.metaldesk.persistence.document.ProductDocument;
 import com.rednavis.metaldesk.share.domain.id.ProductId;
 import com.rednavis.metaldesk.share.error.NotFoundException;
 import com.rednavis.metaldesk.share.error.ValidationException;

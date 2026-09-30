@@ -1,10 +1,10 @@
 package com.rednavis.metaldesk.api.payments;
 
-import com.rednavis.metaldesk.api.persistence.document.InvoiceArchiveDocument;
-import com.rednavis.metaldesk.api.persistence.document.InvoiceFileDocument;
 import com.rednavis.metaldesk.api.persistence.repository.InvoiceArchiveRepository;
 import com.rednavis.metaldesk.payments.invoice.InvoiceDocument;
 import com.rednavis.metaldesk.payments.invoice.InvoiceNumber;
+import com.rednavis.metaldesk.persistence.document.InvoiceArchiveDocument;
+import com.rednavis.metaldesk.persistence.document.InvoiceFileDocument;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import java.util.Base64;
 import java.util.List;

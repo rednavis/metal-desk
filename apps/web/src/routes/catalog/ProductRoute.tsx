@@ -71,6 +71,11 @@ export function ProductRoute() {
         pricingMode={detail.pricingMode}
         stock={detail.stock}
       />
+      <p>
+        <Link to={{ pathname: "/inquiry", search: `?productId=${encodeURIComponent(detail.id)}` }}>
+          {t("product.ask")}
+        </Link>
+      </p>
       <RelatedProducts productId={detail.id} />
     </>
   );

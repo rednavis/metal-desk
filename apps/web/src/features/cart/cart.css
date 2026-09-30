@@ -51,3 +51,15 @@
   background: var(--color-bg);
   color: var(--color-fg);
 }
+
+.md-status {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
+.md-switcher {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}

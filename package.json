@@ -8,6 +8,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test:run",
     "lint": "eslint apps/web/src apps/admin-web/src",
     "lint:fix": "eslint apps/web/src apps/admin-web/src --fix",
     "format": "prettier --write .",

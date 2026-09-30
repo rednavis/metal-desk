@@ -40,7 +40,8 @@ repositories.
   single command — a full pass is both. Prettier deliberately skips `*.md` and `docs/`
   (`.prettierignore`), so `pnpm run format` will not touch documentation.
 - Frontend: `pnpm install` then `pnpm -r run build` (root scripts: `build`, `typecheck`, `lint`,
-  `lint:fix`, `format`, `format:check`). ESLint config is a single root `eslint.config.mjs` covering
+  `lint:fix`, `format`, `format:check`, `test`; `pnpm run test` runs each app's Vitest suite, which includes a
+  contract test that reads the Java DTOs — run it from the repo root, as it reads paths relative to it). ESLint config is a single root `eslint.config.mjs` covering
   both `apps/web/src` and `apps/admin-web/src` — don't add a per-app config, and don't run `eslint`
   from inside an app directory (flat config resolution is root-scoped here; always run from repo root).
 - Run a service: `./gradlew :apps:admin:bootRun` / `:services:api:bootRun` / `:services:pricing-bridge:bootRun`.

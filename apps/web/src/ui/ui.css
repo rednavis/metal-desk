@@ -1,0 +1,98 @@
+:root {
+  color-scheme: light dark;
+  --space: 0.75rem;
+  --radius: 0.375rem;
+  --border: color-mix(in srgb, currentColor 25%, transparent);
+  --accent: #1d4ed8;
+  --danger: #b91c1c;
+}
+
+.md-layout {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--space);
+}
+
+.md-layout__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space);
+}
+
+.md-layout__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space);
+}
+
+.md-button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+.md-button--secondary {
+  background: transparent;
+  color: inherit;
+  border-color: var(--border);
+}
+
+.md-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space);
+}
+
+.md-field__input {
+  font: inherit;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.md-field__error,
+.md-error-state {
+  color: var(--danger);
+}
+
+.md-empty-state,
+.md-error-state {
+  text-align: center;
+  padding: calc(var(--space) * 3) var(--space);
+}
+
+.md-spinner {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: md-spin 0.8s linear infinite;
+}
+
+@keyframes md-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-spinner {
+    animation-duration: 4s;
+  }
+}

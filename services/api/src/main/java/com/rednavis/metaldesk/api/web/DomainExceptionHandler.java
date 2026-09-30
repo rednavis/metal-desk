@@ -4,8 +4,6 @@ import com.rednavis.metaldesk.share.error.ConflictException;
 import com.rednavis.metaldesk.share.error.DomainException;
 import com.rednavis.metaldesk.share.error.NotFoundException;
 import com.rednavis.metaldesk.share.error.ValidationException;
-import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -34,8 +32,7 @@ import org.springframework.web.server.ServerWebInputException;
 @RestControllerAdvice
 public class DomainExceptionHandler {
 
-  private static final String HEADER = "X-Correlation-Id";
-  private static final Pattern SAFE_ID = Pattern.compile("[A-Za-z0-9._-]{1,64}");
+  private static final String HEADER = CorrelationId.HEADER;
 
   /**
    * Maps a validation failure to 400.
@@ -136,8 +133,6 @@ public class DomainExceptionHandler {
   }
 
   private static String correlationId(String supplied) {
-    return supplied != null && SAFE_ID.matcher(supplied).matches()
-        ? supplied
-        : UUID.randomUUID().toString();
+    return CorrelationId.choose(supplied);
   }
 }

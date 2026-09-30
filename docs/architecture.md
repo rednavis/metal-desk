@@ -182,6 +182,14 @@ keeps the last known prices rather than failing requests.
 with no shared session store. A bearer token is validated per request; CPU-bound crypto work is
 explicitly scheduled off the reactive event loop rather than blocking it.
 
+Concretely (task T-032): sign-in returns a 15-minute HS256 token carrying only the customer id and their
+verification state; a filter chain that is default-deny, with an explicit allowlist of public routes, validates
+signature, expiry, issuer and audience on every other request. Password hashing runs on the bounded-elastic
+scheduler inside one adapter. A failed sign-in is one response whatever the cause (BRD FR-2.2), and repeated
+failures from a source are throttled — by a per-instance, in-memory counter, which is weaker than the FR
+implies in a scaled deployment and needs a shared store before it is a real control. There are no refresh
+tokens and no revocation yet.
+
 ## 6. Order state machine
 
 ```

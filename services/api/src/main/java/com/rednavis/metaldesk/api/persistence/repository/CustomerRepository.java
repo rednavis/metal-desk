@@ -14,4 +14,15 @@ public interface CustomerRepository extends ReactiveMongoRepository<CustomerDocu
    * @return the customer, or empty
    */
   Mono<CustomerDocument> findByEmail(String email);
+
+  /**
+   * Finds a customer by normalised phone number, backed by the sparse index.
+   *
+   * <p>Phone numbers are not unique (T-033 decides whether they should be), so if several customers
+   * share one this returns an arbitrary one of them.
+   *
+   * @param phone the normalised phone number
+   * @return a customer with that number, or empty
+   */
+  Mono<CustomerDocument> findFirstByPhone(String phone);
 }

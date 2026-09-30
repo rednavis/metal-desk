@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.mongodb.reactive)
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.boot.starter.oauth2.resource.server)
 
     testImplementation(libs.spring.boot.starter.webflux.test)
     testImplementation(platform(libs.testcontainers.bom))

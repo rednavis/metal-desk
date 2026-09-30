@@ -12,6 +12,7 @@ lombok = "1.18.48"
 wiremock = "3.13.2"
 mongodbReactive = "5.11.1"
 archunit = "1.5.1"
+testcontainers = "2.0.5"
 
 [libraries]
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
@@ -32,6 +33,8 @@ reactor-core = { module = "io.projectreactor:reactor-core" }
 reactor-test = { module = "io.projectreactor:reactor-test" }
 jackson-databind = { module = "tools.jackson.core:jackson-databind" }
 slf4j-api = { module = "org.slf4j:slf4j-api" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]

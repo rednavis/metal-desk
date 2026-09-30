@@ -4,3 +4,12 @@ server:
 spring:
   application:
     name: metal-api
+  mongodb:
+    # A local instance by default; a deployment supplies its own through MONGODB_URI. No credential
+    # belongs in this file (ADR-0002).
+    uri: ${MONGODB_URI:mongodb://localhost:27017/metaldesk}
+  data:
+    mongodb:
+      # Indexes are declared on the documents; this is what makes the driver create them. An Atlas
+      # deployment that manages indexes itself should switch this off.
+      auto-index-creation: true

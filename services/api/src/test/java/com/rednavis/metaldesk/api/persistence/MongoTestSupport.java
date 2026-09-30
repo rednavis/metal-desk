@@ -39,6 +39,8 @@ public class MongoTestSupport {
   @DynamicPropertySource
   public static void mongoProperties(DynamicPropertyRegistry registry) {
     registry.add("spring.mongodb.uri", () -> MONGO.getConnectionString() + "/metaldesk");
+    // Tests put the reference prices they need into the cache themselves.
+    registry.add("metaldesk.market-data.refresh.enabled", () -> "false");
   }
 
   /** Creates the base; subclasses are the tests. */

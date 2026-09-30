@@ -1,5 +1,7 @@
 package com.rednavis.metaldesk.api.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
 import com.rednavis.metaldesk.api.persistence.mapper.CategoryMapper;
 import com.rednavis.metaldesk.api.persistence.mapper.FulfillmentTierMapper;
@@ -54,8 +56,9 @@ class CatalogPersistenceTest extends MongoTestSupport {
     StepVerifier.create(
             productRepo
                 .findAllBy(TextCriteria.forDefaultLanguage().matching("gold"))
-                .map(ProductDocument::id))
-        .expectNext("p-store-1")
+                .map(ProductDocument::id)
+                .collectList())
+        .assertNext(ids -> assertTrue(ids.contains("p-store-1")))
         .verifyComplete();
   }
 

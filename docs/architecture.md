@@ -170,6 +170,14 @@ the blocking MongoDB driver is not on the classpath. The order number of BR-6 is
 `findAndModify` increment on a per-day counter, backed by a unique index on the order number; gaps are
 allowed, reuse is not.
 
+**HTTP conventions** (task T-031): every error response is one envelope, `{code, message, correlationId}`, produced
+by a single `@RestControllerAdvice` in `api` (domain `ValidationException` → 400, `NotFoundException` → 404,
+`ConflictException` → 409, anything else → 500 with no detail). Responses are separate view types, never domain
+aggregates, so the wire format is not coupled to the domain and the margin behind a sellable price is not exposed.
+A product without a derivable price is `ON_REQUEST` and carries no price field. `api` reads reference prices
+through a `MarketDataClient` port, polled into an in-memory latest-and-previous cache; a stale or failing feed
+keeps the last known prices rather than failing requests.
+
 **Auth** is stateless JWT, not server-side sessions — deliberately, so `api` can scale horizontally
 with no shared session store. A bearer token is validated per request; CPU-bound crypto work is
 explicitly scheduled off the reactive event loop rather than blocking it.

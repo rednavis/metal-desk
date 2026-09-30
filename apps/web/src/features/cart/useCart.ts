@@ -1,17 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useApi } from "../../api/useApi";
-import { cartViewSchema } from "../../api/types";
-import { usePreferences } from "../../preferences/usePreferences";
+import { useContext } from "react";
+import { CartContext, type CartState } from "./CartContext";
 
-/**
- * The cart, in the customer's display currency. The currency is part of the query key, so a switch
- * is a different query and the cart is fetched again, converted by the server (BRD FR-1.8).
- */
-export function useCart() {
-  const client = useApi();
-  const { currency, locale } = usePreferences();
-  return useQuery({
-    queryKey: ["cart", currency, locale],
-    queryFn: () => client.get("/cart", { schema: cartViewSchema }),
-  });
+/** The customer's cart and the changes that can be made to it. Must be used under {@link CartProvider}. */
+export function useCart(): CartState {
+  const state = useContext(CartContext);
+  if (state === null) throw new Error("useCart must be used inside a CartProvider");
+  return state;
 }

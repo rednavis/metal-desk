@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createBrowserRouter, createMemoryRouter } from "react-router";
+import { isApiError } from "../api/errors";
 import { createApiClient, type ApiClientOptions } from "../api/client";
 import { createRequestContext } from "../api/requestContext";
 import { createMemoryTokenStore } from "../api/tokenStore";
@@ -39,7 +40,14 @@ export function createApp(options: AppOptions = {}) {
   // A 4xx will not get better by asking again; only transient failures are retried, and the
   // short refresh of FR-1.1 is a per-query `refetchInterval`, not a global default.
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: 1, staleTime: 5_000, refetchOnWindowFocus: false } },
+    defaultOptions: {
+      queries: {
+        retry: (failures, error) =>
+          failures < 1 && !(isApiError(error) && error.status >= 400 && error.status < 500),
+        staleTime: 5_000,
+        refetchOnWindowFocus: false,
+      },
+    },
   });
   return { router, client, tokenStore, queryClient, requestContext };
 }

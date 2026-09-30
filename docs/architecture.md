@@ -196,6 +196,12 @@ mechanism. Codes are stored hashed, expire, are single-use and limit attempts; e
 request that could reveal whether an address is registered, gets one indistinguishable answer. Switching account
 mints a new token for a permitted target rather than mutating the current one.
 
+The cart (task T-034) is not a domain aggregate and lives in `api`. It holds only products and quantities and
+derives every price on read, so it cannot go stale; price finality is applied when an order snapshots its lines.
+A cart is found by an opaque reference in a cookie that works as a capability, which is what lets it survive
+sign-out, and an anonymous cart is adopted or merged (once, atomically) into a customer's cart on first
+authenticated use. Checkout accepts a single `CheckoutBasket`, built from the cart or from a buy-now.
+
 ## 6. Order state machine
 
 ```

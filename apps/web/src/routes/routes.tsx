@@ -6,7 +6,10 @@ import { CatalogRoute } from "./catalog/CatalogRoute";
 import { CategoryRoute } from "./catalog/CategoryRoute";
 import { ProductRoute } from "./catalog/ProductRoute";
 import { SearchRoute } from "./catalog/SearchRoute";
-import { CheckoutPage, NotFoundPage, SignInPage } from "./pages/pages";
+import { CheckoutRoute } from "./checkout/CheckoutRoute";
+import { CheckoutStartRoute } from "./checkout/CheckoutStartRoute";
+import { PaymentCancelRoute, PaymentReturnRoute } from "./checkout/PaymentReturnRoute";
+import { NotFoundPage, SignInPage } from "./pages/pages";
 
 /** The storefront's routes. Every URL the app answers is listed here and only here. */
 export const appRoutes: RouteObject[] = [
@@ -20,7 +23,10 @@ export const appRoutes: RouteObject[] = [
       { path: "catalog/products/:productId", element: <ProductRoute /> },
       { path: "search", element: <SearchRoute /> },
       { path: "cart", element: <CartRoute /> },
-      { path: "checkout", element: <CheckoutPage /> },
+      { path: "checkout", element: <CheckoutStartRoute /> },
+      { path: "checkout/:checkoutId", element: <CheckoutRoute /> },
+      { path: "checkout/:checkoutId/return", element: <PaymentReturnRoute /> },
+      { path: "checkout/:checkoutId/cancel", element: <PaymentCancelRoute /> },
       { path: "sign-in", element: <SignInPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],

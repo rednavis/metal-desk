@@ -12,6 +12,8 @@ export interface RequestOptions<T> {
   /** If given, a success body must match it, or the call fails with `response.malformed`. */
   schema?: z.ZodType<T>;
   signal?: AbortSignal;
+  /** Use this correlation id instead of a fresh one, so the caller can show it if the call fails. */
+  correlationId?: string;
 }
 
 export interface ApiClientOptions {
@@ -47,7 +49,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   );
 
   async function send<T>(method: string, path: string, call: RequestOptions<T>): Promise<T> {
-    const correlationId = crypto.randomUUID();
+    const correlationId = call.correlationId ?? crypto.randomUUID();
     const headers: Record<string, string> = {
       Accept: "application/json",
       "X-Correlation-Id": correlationId,

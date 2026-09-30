@@ -4,4 +4,11 @@ An order needs a manager's price and terms.
 
 Reference: {{reference}}
 Customer: {{customerName}}
+Customer email: {{customerEmail}}
 Ceiling exceeded: {{ceiling}}
+Destination: {{destination}}
+Order value before tax: {{exTaxValue}}
+Total weight: {{weight}}
+
+Lines:
+{{lines}}

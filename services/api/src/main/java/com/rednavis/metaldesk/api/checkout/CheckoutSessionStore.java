@@ -7,6 +7,7 @@ import com.rednavis.metaldesk.share.domain.order.OrderLine;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -29,7 +30,9 @@ import reactor.util.retry.Retry;
 @RequiredArgsConstructor
 public class CheckoutSessionStore {
 
-  private static final int ATTEMPTS = 5;
+  private static final int ATTEMPTS = 8;
+  private static final Duration BACKOFF = Duration.ofMillis(10);
+  private static final Duration MAX_BACKOFF = Duration.ofMillis(100);
   private static final int REFERENCE_BYTES = 16;
 
   private final ReactiveMongoTemplate mongo;
@@ -63,10 +66,9 @@ public class CheckoutSessionStore {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-            0,
-            now,
-            now,
-            now.plus(properties.sessionTtl()));
+            Optional.empty(),
+            Optional.empty(),
+            Lifecycle.begin(now, properties.sessionTtl()));
     return mongo.insert(mapper.toDocument(session)).map(mapper::toDomain);
   }
 
@@ -95,7 +97,8 @@ public class CheckoutSessionStore {
   public Mono<CheckoutSession> update(String id, UnaryOperator<CheckoutSession> change) {
     return Mono.defer(() -> attempt(id, change))
         .retryWhen(
-            Retry.max(ATTEMPTS)
+            Retry.backoff(ATTEMPTS, BACKOFF)
+                .maxBackoff(MAX_BACKOFF)
                 .filter(OptimisticLockingFailureException.class::isInstance)
                 .onRetryExhaustedThrow(
                     (spec, signal) ->
@@ -108,23 +111,11 @@ public class CheckoutSessionStore {
   }
 
   private Mono<CheckoutSession> write(CheckoutSession read, CheckoutSession wanted) {
-    final Instant now = clock.instant();
     final CheckoutSession next =
-        new CheckoutSession(
-            wanted.id(),
-            wanted.owner(),
-            wanted.source(),
-            wanted.cart(),
-            wanted.lines(),
-            wanted.details(),
-            wanted.consent(),
-            wanted.conversion(),
-            read.version() + 1,
-            wanted.createdAt(),
-            now,
-            now.plus(properties.sessionTtl()));
+        wanted.withLifecycle(read.lifecycle().touched(clock.instant(), properties.sessionTtl()));
     final Query query =
-        Query.query(Criteria.where("_id").is(read.id()).and("version").is(read.version()));
+        Query.query(
+            Criteria.where("_id").is(read.id()).and("version").is(read.lifecycle().version()));
     return mongo
         .replace(query, mapper.toDocument(next))
         .flatMap(

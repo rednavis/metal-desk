@@ -1,13 +1,14 @@
 package com.rednavis.metaldesk.api.checkout;
 
 import com.rednavis.metaldesk.api.cart.CartId;
+import com.rednavis.metaldesk.api.checkout.delivery.DeliveryState;
+import com.rednavis.metaldesk.api.checkout.delivery.HandoffRecord;
 import com.rednavis.metaldesk.api.checkout.step1.ConsentRecord;
 import com.rednavis.metaldesk.api.checkout.step1.ConversionState;
 import com.rednavis.metaldesk.api.checkout.step1.CustomerDetails;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.domain.order.OrderLine;
 import com.rednavis.metaldesk.share.error.ValidationException;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,7 +16,8 @@ import java.util.stream.Stream;
 
 /**
  * The server-side state of one checkout: the basket it started from and what has been collected so
- * far. Later steps add the delivery quote and the chosen payment method.
+ * far, and, after delivery evaluation, the stage it permits. The payment method is added by the
+ * payment step.
  *
  * <p>It is persisted and found by an opaque id; see the package description for why that is not a
  * contradiction of the stateless-authentication decision. It is immutable: each change returns a
@@ -30,10 +32,9 @@ import java.util.stream.Stream;
  * @param details the step-1 customer and delivery data, once submitted
  * @param consent the privacy acceptance, once given
  * @param conversion the guest's quick registration, if they asked for one
- * @param version the change counter used for compare-and-set
- * @param createdAt when it started
- * @param updatedAt when it last changed
- * @param expiresAt when it is deleted
+ * @param delivery the outcome of the last delivery evaluation, empty before one
+ * @param handoff the manager handoff, empty unless the session was handed to staff
+ * @param lifecycle its version and times
  */
 public record CheckoutSession(
     String id,
@@ -44,10 +45,9 @@ public record CheckoutSession(
     Optional<CustomerDetails> details,
     Optional<ConsentRecord> consent,
     Optional<ConversionState> conversion,
-    long version,
-    Instant createdAt,
-    Instant updatedAt,
-    Instant expiresAt) {
+    Optional<DeliveryState> delivery,
+    Optional<HandoffRecord> handoff,
+    Lifecycle lifecycle) {
 
   /** Where the basket of a session came from. */
   public enum Source {
@@ -72,9 +72,9 @@ public record CheckoutSession(
             details,
             consent,
             conversion,
-            createdAt,
-            updatedAt,
-            expiresAt)
+            delivery,
+            handoff,
+            lifecycle)
         .anyMatch(Objects::isNull)) {
       throw new ValidationException(
           "checkout-session.field-missing", "A checkout session needs all of its fields");
@@ -92,7 +92,8 @@ public record CheckoutSession(
    * @param newDetails the validated customer and delivery data
    * @param newConsent the privacy acceptance
    * @param newConversion the guest's quick registration, or empty
-   * @return the session with step 1 done; going back and submitting again simply replaces it
+   * @return the session with step 1 done; going back and submitting again simply replaces it. The
+   *     delivery evaluation is dropped, because it was made for the old address.
    */
   public CheckoutSession withStep1(
       CustomerDetails newDetails,
@@ -107,10 +108,9 @@ public record CheckoutSession(
         Optional.of(newDetails),
         Optional.of(newConsent),
         newConversion,
-        version,
-        createdAt,
-        updatedAt,
-        expiresAt);
+        Optional.empty(),
+        handoff,
+        lifecycle);
   }
 
   /**
@@ -133,10 +133,65 @@ public record CheckoutSession(
                     Optional.of(
                         new ConversionState(
                             state.email(), state.reference(), state.customer(), true)),
-                    version,
-                    createdAt,
-                    updatedAt,
-                    expiresAt))
+                    delivery,
+                    handoff,
+                    lifecycle))
         .orElse(this);
+  }
+
+  /**
+   * Records a delivery evaluation, together with the basket lines it was evaluated on.
+   *
+   * @param newLines the lines as priced at the evaluation
+   * @param evaluation what the evaluation decided
+   * @return the session with the evaluation recorded
+   */
+  public CheckoutSession withDelivery(List<OrderLine> newLines, DeliveryState evaluation) {
+    return new CheckoutSession(
+        id,
+        owner,
+        source,
+        cart,
+        newLines,
+        details,
+        consent,
+        conversion,
+        Optional.of(evaluation),
+        handoff,
+        lifecycle);
+  }
+
+  /**
+   * Records the manager handoff, once: a session already handed off keeps its first handoff.
+   *
+   * @param record the handoff
+   * @return the session with the handoff recorded; this same session if it already has one
+   */
+  public CheckoutSession withHandoff(HandoffRecord record) {
+    return handoff.isPresent()
+        ? this
+        : new CheckoutSession(
+            id,
+            owner,
+            source,
+            cart,
+            lines,
+            details,
+            consent,
+            conversion,
+            delivery,
+            Optional.of(record),
+            lifecycle);
+  }
+
+  /**
+   * Gives the session new lifecycle values, as the store does on every write.
+   *
+   * @param next the lifecycle
+   * @return the same session with it
+   */
+  public CheckoutSession withLifecycle(Lifecycle next) {
+    return new CheckoutSession(
+        id, owner, source, cart, lines, details, consent, conversion, delivery, handoff, next);
   }
 }

@@ -49,3 +49,7 @@ metaldesk:
     policy-version: "2026-10"
     # An untouched checkout session is deleted after this long: it holds personal data.
     session-ttl: 24h
+    # Where a manager handoff (an order over a delivery-tier ceiling) is announced, and in what
+    # language.
+    staff-email: staff@metal-desk.example.test
+    staff-locale: en

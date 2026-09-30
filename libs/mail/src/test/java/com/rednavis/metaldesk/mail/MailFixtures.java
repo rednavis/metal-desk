@@ -38,6 +38,10 @@ public final class MailFixtures {
         Map.entry("ceiling", "value"),
         Map.entry("topic", "Gold bar 1 oz"),
         Map.entry("customerEmail", "ann@example.com"),
+        Map.entry("destination", "1 Main Street, 10115 Berlin, DE"),
+        Map.entry("exTaxValue", Money.of("25000.00", Currency.EUR)),
+        Map.entry("weight", "3110 g"),
+        Map.entry("lines", "- 2 x Gold bar 1 oz (1959.32 EUR each)"),
         Map.entry("message", "Do you have this in stock?"));
   }
 

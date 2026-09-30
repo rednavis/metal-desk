@@ -96,8 +96,11 @@
       <!-- Enum constant names come from the documents and cannot be shortened to suit the limit:
            OrderStatus.AWAITING_MANAGER_QUOTE is Architecture section 6, and the MailTemplate
            constants (ORDER_CONFIRMATION_CUSTOMER ...) are the names task T-020 fixes. Everything
-           else keeps the default limit of 17. -->
-      <property name="violationSuppressXPath" value="./ancestor-or-self::EnumConstant"/>
+           else keeps the default limit of 17. Also exempt: the record component
+           `privacyPolicyAccepted`, whose name BRD FR-4.3's task pins as the distinct, single-purpose
+           privacy consent, and which a shorter name would make less clear. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::*[self::EnumConstant or (self::RecordComponent and .//VariableId[@Name = 'privacyPolicyAccepted'])]"/>
     </properties>
   </rule>
   <rule ref="category/java/codestyle.xml/ShortVariable">

@@ -202,6 +202,12 @@ A cart is found by an opaque reference in a cookie that works as a capability, w
 sign-out, and an anonymous cart is adopted or merged (once, atomically) into a customer's cart on first
 authenticated use. Checkout accepts a single `CheckoutBasket`, built from the cart or from a buy-now.
 
+Checkout (task T-035) keeps its intermediate state in a persisted, expiring checkout session found by an opaque id.
+That is server-side state, but it does not contradict the stateless-authentication decision above: nothing about a
+checkout rides in the token, any instance can serve any step, and the customer can go back and edit an earlier one.
+Validation of a step reports every invalid field at once in the shared error envelope, and a guest's "remember me"
+reuses the verification primitive rather than verifying anything itself.
+
 ## 6. Order state machine
 
 ```

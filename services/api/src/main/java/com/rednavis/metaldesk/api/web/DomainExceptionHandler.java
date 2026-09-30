@@ -49,6 +49,26 @@ public class DomainExceptionHandler {
   }
 
   /**
+   * Maps a request with invalid fields to 400, listing every one of them.
+   *
+   * @param failure the failure
+   * @param supplied the caller's correlation id, if any
+   * @return the envelope response
+   */
+  @ExceptionHandler(FieldViolationsException.class)
+  public ResponseEntity<ApiErrorEnvelope> handleFields(
+      FieldViolationsException failure,
+      @RequestHeader(name = HEADER, required = false) String supplied) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorEnvelope(
+                FieldViolationsException.CODE,
+                failure.getMessage(),
+                correlationId(supplied),
+                failure.violations()));
+  }
+
+  /**
    * Maps a missing thing to 404.
    *
    * @param failure the failure

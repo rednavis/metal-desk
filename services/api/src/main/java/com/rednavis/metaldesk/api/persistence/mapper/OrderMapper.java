@@ -51,12 +51,32 @@ public class OrderMapper {
         OrderNumber.parse(document.number()),
         new CustomerId(document.customerId()),
         ValueMapper.addressToDomain(document.deliveryAddress()),
-        document.lines().stream().map(OrderMapper::orderLineToDomain).toList(),
+        document.lines().stream().map(OrderMapper::toDomain).toList(),
         Optional.ofNullable(document.quote()).map(OrderMapper::quoteToDomain),
         Optional.ofNullable(document.payment()).map(OrderMapper::paymentToDomain),
         document.status(),
         document.createdAt(),
         document.updatedAt());
+  }
+
+  /**
+   * Rebuilds one order line.
+   *
+   * @param document the stored line
+   * @return the line
+   */
+  public static OrderLine toDomain(OrderLineDocument document) {
+    final TaxDocument tax = document.tax();
+    return new OrderLine(
+        new ProductId(document.productId()),
+        document.productName(),
+        new Quantity(document.quantity()),
+        priceToDomain(document.price()),
+        document.taxCategory(),
+        new TaxAmount(
+            ValueMapper.moneyToDomain(tax.net()),
+            new TaxRate(new BigDecimal(tax.ratePercent())),
+            ValueMapper.moneyToDomain(tax.tax())));
   }
 
   /**
@@ -71,7 +91,7 @@ public class OrderMapper {
         order.number().format(),
         order.customerId().value(),
         ValueMapper.addressToDocument(order.deliveryAddress()),
-        order.lines().stream().map(OrderMapper::orderLineToDocument).toList(),
+        order.lines().stream().map(OrderMapper::toDocument).toList(),
         order.quote().map(OrderMapper::quoteToDocument).orElse(null),
         order.payment().map(OrderMapper::paymentToDocument).orElse(null),
         order.status(),
@@ -79,21 +99,13 @@ public class OrderMapper {
         order.updatedAt());
   }
 
-  private static OrderLine orderLineToDomain(OrderLineDocument document) {
-    final TaxDocument tax = document.tax();
-    return new OrderLine(
-        new ProductId(document.productId()),
-        document.productName(),
-        new Quantity(document.quantity()),
-        priceToDomain(document.price()),
-        document.taxCategory(),
-        new TaxAmount(
-            ValueMapper.moneyToDomain(tax.net()),
-            new TaxRate(new BigDecimal(tax.ratePercent())),
-            ValueMapper.moneyToDomain(tax.tax())));
-  }
-
-  private static OrderLineDocument orderLineToDocument(OrderLine line) {
+  /**
+   * Builds the document of one order line.
+   *
+   * @param line the line
+   * @return the document
+   */
+  public static OrderLineDocument toDocument(OrderLine line) {
     final TaxAmount tax = line.tax();
     return new OrderLineDocument(
         line.productId().value(),

@@ -43,3 +43,9 @@ metaldesk:
     # The cart reference cookie. A deployment behind TLS sets cookie-secure to true.
     cookie-max-age: 30d
     cookie-secure: false
+  checkout:
+    # The privacy policy version a customer must accept at step 1; an acceptance of another
+    # version is refused.
+    policy-version: "2026-10"
+    # An untouched checkout session is deleted after this long: it holds personal data.
+    session-ttl: 24h

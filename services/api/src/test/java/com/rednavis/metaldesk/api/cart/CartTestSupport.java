@@ -77,10 +77,10 @@ public class CartTestSupport extends AccountTestSupport {
    * @param body the response body, empty for a 204
    * @param cookie the cart cookie the response set, or null
    */
-  protected record Called(int status, Map<String, Object> body, String cookie) {
+  public record Called(int status, Map<String, Object> body, String cookie) {
 
     /** Copies the body, so the record cannot be changed through it. */
-    protected Called {
+    public Called {
       body = Map.copyOf(body);
     }
 
@@ -90,7 +90,7 @@ public class CartTestSupport extends AccountTestSupport {
      * @return the lines
      */
     @SuppressWarnings("unchecked")
-    protected List<Map<String, Object>> lines() {
+    public List<Map<String, Object>> lines() {
       return (List<Map<String, Object>>) body.get("lines");
     }
 
@@ -100,7 +100,7 @@ public class CartTestSupport extends AccountTestSupport {
      * @param productId the product
      * @return the quantity, or 0 if there is no such line
      */
-    protected int quantityOf(String productId) {
+    public int quantityOf(String productId) {
       return lines().stream()
           .filter(line -> productId.equals(line.get("productId")))
           .mapToInt(line -> (Integer) line.get("quantity"))

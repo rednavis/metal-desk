@@ -7,24 +7,14 @@ import com.rednavis.metaldesk.api.account.verification.VerificationOutcome;
 import com.rednavis.metaldesk.api.account.verification.VerificationPurpose;
 import com.rednavis.metaldesk.api.account.verification.VerificationService;
 import com.rednavis.metaldesk.api.account.verification.VerificationTicket;
-import com.rednavis.metaldesk.api.auth.PasswordEncoderAdapter;
-import com.rednavis.metaldesk.api.persistence.document.CredentialDocument;
 import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
-import com.rednavis.metaldesk.api.persistence.repository.CredentialRepository;
-import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
-import com.rednavis.metaldesk.share.domain.customer.AuthCredential;
-import com.rednavis.metaldesk.share.domain.customer.Customer;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.customer.PhoneNumber;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;
-import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -52,9 +42,7 @@ public class RegistrationService {
   private static final String ACCEPTED = "Check your email for a verification code";
   private static final int REFERENCE_BYTES = 16;
 
-  private final CustomerRepository customers;
-  private final CredentialRepository credentials;
-  private final PasswordEncoderAdapter encoder;
+  private final AccountCreation accounts;
   private final VerificationService verification;
   private final SecureRandom random = new SecureRandom();
 
@@ -77,14 +65,12 @@ public class RegistrationService {
             : new PhoneNumber(request.phone());
     final String password = PasswordPolicy.require(request.password());
     final Locale locale = LocaleParser.parse(request.locale());
-    return encoder
-        .encode(password)
+    return accounts
+        .hashPassword(password)
         .flatMap(
             hash ->
-                customers
-                    .findByEmail(email.value())
-                    .map(Optional::of)
-                    .defaultIfEmpty(Optional.empty())
+                accounts
+                    .find(email)
                     .flatMap(
                         existing ->
                             existing.isPresent()
@@ -108,52 +94,24 @@ public class RegistrationService {
         .flatMap(
             outcome ->
                 switch (outcome) {
-                  case VerificationOutcome.Confirmed confirmed -> markVerified(confirmed.subject());
+                  case VerificationOutcome.Confirmed confirmed ->
+                      accounts.markVerified(confirmed.subject());
                   case VerificationOutcome.Failed() -> Mono.error(VerificationFailure.create());
                 });
   }
 
-  private Mono<Void> markVerified(String customerId) {
-    return customers
-        .findById(customerId)
-        .switchIfEmpty(Mono.error(VerificationFailure.create()))
-        .flatMap(
-            found ->
-                customers.save(
-                    new CustomerDocument(
-                        found.id(),
-                        found.name(),
-                        found.email(),
-                        found.phone(),
-                        found.addresses(),
-                        VerificationState.VERIFIED)))
-        .then();
-  }
-
   private Mono<String> create(
       String name, EmailAddress email, PhoneNumber phone, String hash, Locale locale) {
-    final Customer customer =
-        new Customer(
-            new CustomerId(UUID.randomUUID().toString()),
-            name,
-            email,
-            phone,
-            List.of(),
-            VerificationState.UNVERIFIED);
-    final String id = customer.id().value();
-    return customers
-        .save(
-            new CustomerDocument(
-                id,
-                customer.name(),
-                email.value(),
-                phone == null ? null : phone.value(),
-                List.of(),
-                customer.verification()))
-        .then(credentials.save(new CredentialDocument(id, hash, AuthCredential.State.ACTIVE)))
-        .then(
-            verification.issue(
-                VerificationPurpose.REGISTRATION, id, email, customer.name(), locale))
+    return accounts
+        .create(name, email, phone, hash)
+        .flatMap(
+            customer ->
+                verification.issue(
+                    VerificationPurpose.REGISTRATION,
+                    customer.id(),
+                    email,
+                    customer.name(),
+                    locale))
         .map(VerificationTicket::reference)
         // A concurrent registration of the same address won the unique index: treat as existing.
         .onErrorResume(DuplicateKeyException.class, race -> Mono.just(dummyReference()));

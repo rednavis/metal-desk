@@ -225,7 +225,22 @@ the three adapters are wired in `api/payments`. A decline never cancels the orde
 it), a provider timeout is reported as "could not confirm", not as a decline, and editing an earlier step cancels the
 unpaid order and freezes nothing stale: delivery evaluation is not re-run once an order or handoff exists. A
 provider's return callback is only a claim: the server asks the provider to `confirm` the reference and ignores every
-query parameter. Settlement (`OrderSettlement`) and invoice delivery (`InvoiceSink`) are hooks that T-038 fills in.
+query parameter. Settlement (`OrderSettlement`) and invoice delivery (`InvoiceSink`) are the hooks the next paragraph fills in.
+
+Confirmation (task T-038) closes the checkout on every success path (a captured payment, an issued invoice, a manager
+handoff) and allocates no order number of its own: the order already has the one the payment step or the handoff gave
+it, so there is one number per order. The mails (order confirmation, order notification, and for an invoice the
+invoice to customer and staff) are claimed in a per-order-and-template ledger before they are sent, so a repeated
+confirmation, a duplicate callback or a reconciliation sends each once, and a failed send releases its claim so the next
+attempt delivers what is missing. The invoice documents are rendered during payment and archived then; confirmation
+attaches the archived documents and never renders again, so the mail cannot disagree with the payment record. A
+confirmation that cannot complete is an `OperationFailedException`: a 503 with a machine-readable code, and a correlation
+id that appears in both the response and the error log beside the order number. Order history is a read projection of
+the order's own snapshot, so a later price change cannot move a total (BR-2); every `OrderStatus` has a customer label;
+carrier and tracking come from a separate shipment record and are shown only from `SHIPPED` onward; another customer's
+order is a 404, never a 403. Inquiries (catalog, product, handoff) need no sign-in: the sender's email is validated,
+the inquiry is stored, and the customer and staff are mailed, with a handoff inquiry having to name the order and the
+email it was placed with.
 
 ## 6. Order state machine
 

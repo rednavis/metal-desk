@@ -4,6 +4,7 @@ import com.rednavis.metaldesk.api.persistence.document.SessionPaymentDocument;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
+import java.util.Locale;
 import java.util.Optional;
 
 /** Maps a session's payment state to its stored form and back. */
@@ -22,7 +23,8 @@ public final class PaymentMapping {
         Optional.ofNullable(document.method()).map(PaymentMethod::valueOf),
         Optional.ofNullable(document.orderId()).map(OrderId::new),
         Optional.ofNullable(document.reference()).map(ProviderReference::new),
-        PaymentPhase.valueOf(document.phase()));
+        PaymentPhase.valueOf(document.phase()),
+        document.locale() == null ? Locale.ENGLISH : Locale.forLanguageTag(document.locale()));
   }
 
   /**
@@ -36,6 +38,7 @@ public final class PaymentMapping {
         state.method().map(PaymentMethod::name).orElse(null),
         state.order().map(OrderId::value).orElse(null),
         state.reference().map(ProviderReference::value).orElse(null),
-        state.phase().name());
+        state.phase().name(),
+        state.locale().toLanguageTag());
   }
 }

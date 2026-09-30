@@ -8,9 +8,13 @@ import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -34,12 +38,20 @@ public class PaymentTestSupport extends DeliveryTestSupport {
   /** A product whose order is well under the BR-9 ceiling. */
   protected static final String SMALL = "pay-small";
 
-  private static final List<String> COUNTRIES =
+  private static final List<String> FIRST =
       List.of(
           "AD", "AE", "AF", "AG", "AL", "AM", "AO", "AR", "AU", "AZ", "BA", "BB", "BD", "BF", "BH",
           "BI", "BJ", "BN", "BO", "BR", "BS", "BT", "BW", "BY", "BZ", "CA", "CD", "CF", "CG", "CI",
           "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CY", "DJ", "DM", "DO", "DZ", "EC", "EG", "ER",
           "ET", "FJ", "GA", "GD", "GE");
+
+  /** Countries other tests configure tiers for, which a unique region here must not reuse. */
+  private static final Set<String> TAKEN =
+      Set.of(
+          "SI", "NL", "SE", "LT", "BE", "SK", "RO", "PT", "PL", "IT", "IE", "HU", "HR", "FR", "ES",
+          "CZ", "CH", "BG", "AT", "MT", "LV", "LU", "GR", "DE", "DK", "FI", "NO", "US", "GB", "EE");
+
+  private static final List<String> COUNTRIES = regionPool();
   private static final AtomicInteger NEXT = new AtomicInteger();
   private static final WireMockServer SERVER =
       new WireMockServer(WireMockConfiguration.options().dynamicPort());
@@ -87,6 +99,14 @@ public class PaymentTestSupport extends DeliveryTestSupport {
    */
   protected static String nextRegion() {
     return COUNTRIES.get(NEXT.getAndIncrement());
+  }
+
+  private static List<String> regionPool() {
+    final List<String> all = new ArrayList<>(FIRST);
+    Arrays.stream(Locale.getISOCountries())
+        .filter(code -> "GE".compareTo(code) < 0 && !TAKEN.contains(code))
+        .forEach(all::add);
+    return List.copyOf(all);
   }
 
   /** Seeds the catalog, a small product, and forgets earlier requests to the stub. */

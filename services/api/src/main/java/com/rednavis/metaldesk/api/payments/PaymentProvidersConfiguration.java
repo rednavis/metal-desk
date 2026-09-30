@@ -24,8 +24,8 @@ import reactor.core.publisher.Mono;
  * interface only; see the package description.
  *
  * <p>The invoice adapter makes no outbound call: it reads the order, renders the documents and
- * hands them to an {@link InvoiceSink}. The default sink only logs; confirmation (T-038) supplies
- * the one that mails them, and a bean of that type replaces this default.
+ * hands them to an {@link InvoiceSink}. The default sink archives them; confirmation (T-038) reads
+ * the archive to attach them to the mails, and a bean of that type replaces this default.
  */
 @Configuration
 @EnableConfigurationProperties(PaymentsProperties.class)
@@ -97,13 +97,14 @@ public class PaymentProvidersConfiguration {
   }
 
   /**
-   * The default invoice sink, which only logs; T-038 replaces it.
+   * The default invoice sink, which archives the documents for confirmation to attach.
    *
+   * @param archive where the documents are kept
    * @return the sink
    */
   @Bean
   @ConditionalOnMissingBean
-  public InvoiceSink invoiceSink() {
-    return new LoggingInvoiceSink();
+  public InvoiceSink invoiceSink(InvoiceArchive archive) {
+    return new ArchivingInvoiceSink(archive);
   }
 }

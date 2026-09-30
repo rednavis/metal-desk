@@ -2,6 +2,7 @@ package com.rednavis.metaldesk.api.checkout.payment;
 
 import com.rednavis.metaldesk.share.domain.order.Order;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -16,12 +17,12 @@ public class RecordingSettlement implements OrderSettlement {
   private final List<Order> billed = new CopyOnWriteArrayList<>();
 
   @Override
-  public Mono<Void> paid(Order order) {
+  public Mono<Void> paid(Order order, Locale locale) {
     return Mono.fromRunnable(() -> settled.add(order));
   }
 
   @Override
-  public Mono<Void> invoiceIssued(Order order) {
+  public Mono<Void> invoiceIssued(Order order, Locale locale) {
     return Mono.fromRunnable(() -> billed.add(order));
   }
 

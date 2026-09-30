@@ -4,6 +4,7 @@ import com.rednavis.metaldesk.api.account.LocaleParser;
 import com.rednavis.metaldesk.api.auth.AuthenticatedCustomer;
 import com.rednavis.metaldesk.api.checkout.CheckoutProperties;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
+import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
 import com.rednavis.metaldesk.api.checkout.delivery.PaymentGate;
 import com.rednavis.metaldesk.api.checkout.payment.dto.ExecutePaymentRequest;
 import com.rednavis.metaldesk.api.checkout.payment.dto.PaymentResultView;
@@ -42,6 +43,7 @@ public class PaymentExecutionService {
   private final ProviderRegistry registry;
   private final PaymentOutcomeHandler outcomes;
   private final CheckoutProperties properties;
+  private final CheckoutSessionStore store;
 
   /**
    * Pays for the checkout with the selected method.
@@ -64,7 +66,14 @@ public class PaymentExecutionService {
     return gate.require(id, customer)
         .flatMap(PaymentExecutionService::requireReady)
         .flatMap(session -> preparation.prepare(session, customer, confirmed))
-        .flatMap(prepared -> charge(prepared.session(), prepared.order(), locale));
+        .flatMap(
+            prepared ->
+                store
+                    .update(
+                        id,
+                        current ->
+                            current.withPayment(current.payment().orElseThrow().withLocale(locale)))
+                    .then(charge(prepared.session(), prepared.order(), locale)));
   }
 
   private Mono<PaymentResultView> charge(CheckoutSession session, Order order, Locale locale) {

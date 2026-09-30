@@ -2,6 +2,6 @@ Subject: We received your message about {{topic}}
 
 Hello {{name}},
 
-Thank you for getting in touch about {{topic}}. Our team has your message and will reply to you by email.
+Thank you for getting in touch about {{topic}}. Our team has your message and will reply to you by email. Your reference is {{reference}}; please quote it if you write to us again.
 
 Metal Desk

@@ -42,7 +42,18 @@
     <!-- Configured separately below with a higher limit for the fixed Architecture §6 state names. -->
     <exclude name="LongVariable"/>
   </rule>
-  <rule ref="category/java/design.xml"/>
+  <rule ref="category/java/design.xml">
+    <!-- Configured separately below: suppressed in test classes only. -->
+    <exclude name="LawOfDemeter"/>
+  </rule>
+  <rule ref="category/java/design.xml/LawOfDemeter">
+    <properties>
+      <!-- Test classes only. A WebTestClient or StepVerifier assertion is one fluent chain by
+           design, and the rule counts every link as a violation; main code stays subject to it. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+    </properties>
+  </rule>
   <rule ref="category/java/documentation.xml">
     <!-- Checkstyle's MissingJavadocType/MissingJavadocMethod already own "what needs Javadoc",
          with a deliberately chosen scope (config/checkstyle/checkstyle.xml). -->

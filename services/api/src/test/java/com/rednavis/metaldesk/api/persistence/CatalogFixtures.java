@@ -84,4 +84,17 @@ public final class CatalogFixtures {
         eur("12.50"),
         new TransitTime(2, 4));
   }
+
+  /** A product with the given name and price, so tests can search and price by name. */
+  public static Product namedProduct(
+      String id, String name, Category category, Optional<Money> price) {
+    return new Product(
+        new ProductId(id),
+        name,
+        new ProductSpecification(
+            Metal.GOLD, Purity.of("999.9"), Weight.of("100", WeightUnit.GRAM), Optional.empty()),
+        category,
+        StockStatus.IN_STOCK,
+        price);
+  }
 }

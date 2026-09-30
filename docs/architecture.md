@@ -208,6 +208,14 @@ checkout rides in the token, any instance can serve any step, and the customer c
 Validation of a step reports every invalid field at once in the shared error envelope, and a guest's "remember me"
 reuses the verification primitive rather than verifying anything itself.
 
+Delivery (task T-036) is evaluated against the fulfillment tiers as configured at that moment, from the destination
+region, the order value before tax and the total weight, and the outcome is a stage on the checkout session:
+payment allowed with an automatic quote, or handoff required (a ceiling exceeded, or no tier for the region) with a
+reason code. The refusal to take payment on a handoff session is enforced on the server by a gate every payment
+endpoint calls first, so a crafted request reaches no provider. A handoff creates the order and moves it to
+`AWAITING_MANAGER_QUOTE` through the state machine; the customer's reference is its order number, and staff are
+told everything they need to price it.
+
 ## 6. Order state machine
 
 ```

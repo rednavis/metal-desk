@@ -1,6 +1,7 @@
 package com.rednavis.metaldesk.api.checkout;
 
 import com.rednavis.metaldesk.api.cart.CartId;
+import com.rednavis.metaldesk.api.checkout.delivery.DeliveryMapping;
 import com.rednavis.metaldesk.api.checkout.step1.ConsentRecord;
 import com.rednavis.metaldesk.api.checkout.step1.ConversionState;
 import com.rednavis.metaldesk.api.checkout.step1.CustomerDetails;
@@ -8,6 +9,7 @@ import com.rednavis.metaldesk.api.persistence.document.CheckoutSessionDocument;
 import com.rednavis.metaldesk.api.persistence.document.ConsentDocument;
 import com.rednavis.metaldesk.api.persistence.document.ConversionDocument;
 import com.rednavis.metaldesk.api.persistence.document.CustomerDetailsDocument;
+import com.rednavis.metaldesk.api.persistence.document.Step1Document;
 import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.api.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
@@ -27,19 +29,21 @@ public class CheckoutSessionMapper {
    * @return the session
    */
   public CheckoutSession toDomain(CheckoutSessionDocument document) {
+    final Step1Document step1 =
+        document.step1() == null ? new Step1Document(null, null, null) : document.step1();
     return new CheckoutSession(
         document.id(),
         Optional.ofNullable(document.ownerId()).map(CustomerId::new),
         CheckoutSession.Source.valueOf(document.source()),
         Optional.ofNullable(document.cartId()).map(CartId::new),
         document.lines().stream().map(OrderMapper::toDomain).toList(),
-        Optional.ofNullable(document.details()).map(this::detailsOf),
-        Optional.ofNullable(document.consent()).map(CheckoutSessionMapper::consentOf),
-        Optional.ofNullable(document.conversion()).map(CheckoutSessionMapper::conversionOf),
-        document.version(),
-        document.createdAt(),
-        document.updatedAt(),
-        document.expiresAt());
+        Optional.ofNullable(step1.details()).map(this::detailsOf),
+        Optional.ofNullable(step1.consent()).map(CheckoutSessionMapper::consentOf),
+        Optional.ofNullable(step1.conversion()).map(CheckoutSessionMapper::conversionOf),
+        Optional.ofNullable(document.delivery()).map(DeliveryMapping::deliveryOf),
+        Optional.ofNullable(document.handoff()).map(DeliveryMapping::handoffOf),
+        new Lifecycle(
+            document.version(), document.createdAt(), document.updatedAt(), document.expiresAt()));
   }
 
   /**
@@ -55,13 +59,16 @@ public class CheckoutSessionMapper {
         session.source().name(),
         session.cart().map(CartId::value).orElse(null),
         session.lines().stream().map(OrderMapper::toDocument).toList(),
-        session.details().map(CheckoutSessionMapper::detailsDocument).orElse(null),
-        session.consent().map(CheckoutSessionMapper::consentDocument).orElse(null),
-        session.conversion().map(CheckoutSessionMapper::conversionDocument).orElse(null),
-        session.version(),
-        session.createdAt(),
-        session.updatedAt(),
-        session.expiresAt());
+        new Step1Document(
+            session.details().map(CheckoutSessionMapper::detailsDocument).orElse(null),
+            session.consent().map(CheckoutSessionMapper::consentDocument).orElse(null),
+            session.conversion().map(CheckoutSessionMapper::conversionDocument).orElse(null)),
+        session.delivery().map(DeliveryMapping::deliveryDocument).orElse(null),
+        session.handoff().map(DeliveryMapping::handoffDocument).orElse(null),
+        session.lifecycle().version(),
+        session.lifecycle().createdAt(),
+        session.lifecycle().updatedAt(),
+        session.lifecycle().expiresAt());
   }
 
   private CustomerDetails detailsOf(CustomerDetailsDocument document) {

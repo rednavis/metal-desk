@@ -4,6 +4,7 @@ import com.rednavis.metaldesk.api.cart.CartLine;
 import com.rednavis.metaldesk.api.cart.CartViews;
 import com.rednavis.metaldesk.api.cart.CheckoutBasket;
 import com.rednavis.metaldesk.api.cart.PricedLine;
+import com.rednavis.metaldesk.api.checkout.delivery.DeliveryViews;
 import com.rednavis.metaldesk.api.checkout.dto.ConsentView;
 import com.rednavis.metaldesk.api.checkout.dto.ConversionView;
 import com.rednavis.metaldesk.api.checkout.dto.DetailsView;
@@ -51,7 +52,8 @@ public final class CheckoutViews {
         CartViews.of(session.cart(), lines, basket),
         session.details().map(CheckoutViews::details).orElse(null),
         session.consent().map(CheckoutViews::consent).orElse(null),
-        session.conversion().map(CheckoutViews::conversion).orElse(null));
+        session.conversion().map(CheckoutViews::conversion).orElse(null),
+        DeliveryViews.evaluation(session).orElse(null));
   }
 
   /**

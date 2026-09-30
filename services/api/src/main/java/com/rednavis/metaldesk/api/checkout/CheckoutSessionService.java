@@ -92,7 +92,7 @@ public class CheckoutSessionService {
    * @throws NotFoundException {@code checkout.not-found}
    */
   public Mono<SessionView> get(String id, AuthenticatedCustomer customer) {
-    return load(id, customer).map(CheckoutViews::session);
+    return find(id, customer).map(CheckoutViews::session);
   }
 
   /**
@@ -110,10 +110,12 @@ public class CheckoutSessionService {
   public Mono<Step1Response> submitStep1(
       String id, AuthenticatedCustomer customer, Step1Request request) {
     final boolean guest = customer == null;
-    return load(id, customer)
+    return find(id, customer)
         .flatMap(
             session ->
-                requireVerified(customer).then(Mono.defer(() -> advance(session, guest, request))))
+                requireVerified(customer)
+                    .then(Mono.defer(() -> requireNotHandedOff(session)))
+                    .then(Mono.defer(() -> advance(session, guest, request))))
         .map(CheckoutViews::step1);
   }
 
@@ -130,7 +132,7 @@ public class CheckoutSessionService {
       String id, AuthenticatedCustomer customer, ConfirmEmailRequest request) {
     final String reference = request == null ? null : request.reference();
     final String code = request == null ? null : request.code();
-    return load(id, customer)
+    return find(id, customer)
         .filter(
             session ->
                 session
@@ -169,11 +171,28 @@ public class CheckoutSessionService {
                 current -> current.withStep1(valid.details(), valid.consent(), state)));
   }
 
+  private static Mono<Void> requireNotHandedOff(CheckoutSession session) {
+    return session.handoff().isPresent()
+        ? Mono.error(
+            new ConflictException(
+                "checkout.already-handed-off",
+                "This order was handed to our team; it can no longer be edited"))
+        : Mono.empty();
+  }
+
   private static boolean alreadyConverted(CheckoutSession session, String email) {
     return session.conversion().map(ConversionState::email).filter(email::equals).isPresent();
   }
 
-  private Mono<CheckoutSession> load(String id, AuthenticatedCustomer customer) {
+  /**
+   * Finds a session the caller may touch.
+   *
+   * @param id the session's id
+   * @param customer the signed-in customer, or null for a guest
+   * @return the session; a session that is not the customer's is the same 404 as a missing one
+   * @throws NotFoundException {@code checkout.not-found}
+   */
+  public Mono<CheckoutSession> find(String id, AuthenticatedCustomer customer) {
     RequestIds.require(id, "checkout");
     return store
         .find(id)
@@ -202,7 +221,14 @@ public class CheckoutSessionService {
     return result;
   }
 
-  private Mono<Void> requireVerified(AuthenticatedCustomer customer) {
+  /**
+   * Applies the verified-account gate (BRD FR-2.3).
+   *
+   * @param customer the signed-in customer, or null for a guest
+   * @return a signal that completes if they may check out
+   * @throws ConflictException {@code checkout.account-unverified}
+   */
+  public Mono<Void> requireVerified(AuthenticatedCustomer customer) {
     Mono<Void> gate = Mono.empty();
     if (customer != null && customer.verification() != VerificationState.VERIFIED) {
       gate =

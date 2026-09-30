@@ -95,6 +95,29 @@ public class AccountCreation {
   }
 
   /**
+   * Creates an {@code UNVERIFIED} customer with no credential: the contact record of a guest whose
+   * order needs a customer to belong to. It cannot sign in. The person can claim it later by
+   * verifying the address and choosing a password through a password reset, which creates the
+   * credential once they have proved they own the mailbox.
+   *
+   * @param name the customer's name
+   * @param email the email address
+   * @param phone the phone number
+   * @return the new customer; an error signal ({@code DuplicateKeyException}) if the address is
+   *     registered in the meantime
+   */
+  public Mono<CustomerDocument> createGuest(String name, EmailAddress email, PhoneNumber phone) {
+    return customers.save(
+        new CustomerDocument(
+            UUID.randomUUID().toString(),
+            name,
+            email.value(),
+            phone.value(),
+            List.of(),
+            VerificationState.UNVERIFIED));
+  }
+
+  /**
    * Marks a customer's email verified.
    *
    * @param customerId the customer's id

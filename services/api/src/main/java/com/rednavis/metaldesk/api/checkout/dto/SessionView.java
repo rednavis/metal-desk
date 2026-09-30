@@ -2,6 +2,7 @@ package com.rednavis.metaldesk.api.checkout.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rednavis.metaldesk.api.cart.dto.CartView;
+import com.rednavis.metaldesk.api.checkout.delivery.dto.DeliveryEvaluationView;
 
 /**
  * A checkout session as the client sees it.
@@ -12,6 +13,7 @@ import com.rednavis.metaldesk.api.cart.dto.CartView;
  * @param details the step-1 data; absent before step 1
  * @param consent the privacy acceptance; absent before step 1
  * @param conversion the guest's quick registration; absent unless asked for
+ * @param delivery the last delivery evaluation; absent before one
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record SessionView(
@@ -20,4 +22,5 @@ public record SessionView(
     CartView basket,
     DetailsView details,
     ConsentView consent,
-    ConversionView conversion) {}
+    ConversionView conversion,
+    DeliveryEvaluationView delivery) {}

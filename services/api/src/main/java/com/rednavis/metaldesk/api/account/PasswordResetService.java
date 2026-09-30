@@ -11,6 +11,7 @@ import com.rednavis.metaldesk.api.persistence.document.CredentialDocument;
 import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.api.persistence.repository.CredentialRepository;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
+import com.rednavis.metaldesk.share.domain.customer.AuthCredential;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;
 import com.rednavis.metaldesk.share.error.ValidationException;
@@ -95,17 +96,18 @@ public class PasswordResetService {
   }
 
   private Mono<Void> change(String customerId, String password) {
-    return credentials
-        .findById(customerId)
-        .switchIfEmpty(Mono.error(VerificationFailure.create()))
+    return encoder
+        .encode(password)
         .flatMap(
-            existing ->
-                encoder
-                    .encode(password)
-                    .flatMap(
-                        hash ->
-                            credentials.save(
-                                new CredentialDocument(existing.id(), hash, existing.state()))))
+            hash ->
+                credentials
+                    .findById(customerId)
+                    .map(existing -> new CredentialDocument(customerId, hash, existing.state()))
+                    // A customer with no credential is a guest's contact record: proving control
+                    // of the mailbox by this reset is what lets them claim it with a password.
+                    .defaultIfEmpty(
+                        new CredentialDocument(customerId, hash, AuthCredential.State.ACTIVE))
+                    .flatMap(credentials::save))
         .then(challenges.invalidatePending(VerificationPurpose.PASSWORD_RESET, customerId));
   }
 }

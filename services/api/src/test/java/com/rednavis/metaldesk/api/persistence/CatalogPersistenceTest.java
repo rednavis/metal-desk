@@ -64,12 +64,12 @@ class CatalogPersistenceTest extends MongoTestSupport {
 
   @Test
   void tierIsFoundByRegion() {
-    final FulfillmentTier tier = CatalogFixtures.tier("t-store-1", "AT");
+    final FulfillmentTier tier = CatalogFixtures.tier("t-store-1", "XA");
 
     StepVerifier.create(
             tierRepo
                 .save(tiers.toDocument(tier))
-                .thenMany(tierRepo.findByRegion("AT"))
+                .thenMany(tierRepo.findByRegion("XA"))
                 .map(tiers::toDomain))
         .expectNext(tier)
         .verifyComplete();

@@ -211,7 +211,8 @@ class CheckoutGuestConversionTest extends CheckoutTestSupport {
     final CheckoutSessionDocument stored =
         Objects.requireNonNull(mongo.findById(checkout, CheckoutSessionDocument.class).block());
     assertNull(
-        stored.conversion().customerId(), "an order must not be attributed to their account");
+        stored.step1().conversion().customerId(),
+        "an order must not be attributed to their account");
     assertEquals(2, mailTo(email).size(), "the owner is sent a fresh code");
   }
 

@@ -21,4 +21,5 @@ dependencies {
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.mongodb)
     testImplementation(libs.reactor.test)
+    testImplementation(libs.wiremock.standalone)
 }

@@ -18,9 +18,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @param source {@code CART} or {@code BUY_NOW}
  * @param cartId the cart it was started from, or null
  * @param lines the basket lines as quoted when the session started
- * @param details the step-1 customer and delivery data, or null before step 1
- * @param consent the privacy acceptance, or null before step 1
- * @param conversion the guest's quick registration, or null
+ * @param step1 what step 1 collected, or null before it
+ * @param delivery the last delivery evaluation, or null before one
+ * @param handoff the manager handoff, or null if the session was not handed off
  * @param version the change counter used for compare-and-set
  * @param createdAt when the session started
  * @param updatedAt when it last changed
@@ -33,9 +33,9 @@ public record CheckoutSessionDocument(
     String source,
     String cartId,
     List<OrderLineDocument> lines,
-    CustomerDetailsDocument details,
-    ConsentDocument consent,
-    ConversionDocument conversion,
+    Step1Document step1,
+    DeliveryDocument delivery,
+    HandoffDocument handoff,
     long version,
     Instant createdAt,
     Instant updatedAt,

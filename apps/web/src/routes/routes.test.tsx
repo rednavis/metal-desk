@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/errors";
 import { createFakeServer } from "../test/fakeServer";
+import { createShop } from "../test/shopServer";
 import { json, memoryStorage, renderApp, renderWithPreferences } from "../test/render";
 import { ErrorState } from "../ui";
 
@@ -13,10 +14,10 @@ describe("the storefront's routes", () => {
     expect(screen.getByRole("heading", { name: "MetalDesk" })).toBeInTheDocument();
   });
 
-  it("shows an explicit empty cart", () => {
-    renderApp({ path: "/cart" });
+  it("shows an explicit empty cart", async () => {
+    renderApp({ path: "/cart", fetchImpl: createShop({ products: [] }).fetchImpl });
 
-    expect(screen.getByRole("heading", { name: "Your cart is empty" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your cart is empty" })).toBeInTheDocument();
   });
 
   it("answers an unknown URL with a not-found page, not a blank one", () => {
@@ -26,11 +27,15 @@ describe("the storefront's routes", () => {
   });
 
   it("switches the whole page to German from the switcher, without a reload", async () => {
-    renderApp({ path: "/cart", fetchImpl: createFakeServer().fetchImpl });
+    const shop = createShop({ products: [] });
+    renderApp({ path: "/cart", fetchImpl: shop.fetchImpl });
+    await screen.findByRole("heading", { name: "Your cart is empty" });
 
     await userEvent.selectOptions(screen.getByLabelText("Language"), "de");
 
-    expect(screen.getByRole("heading", { name: "Ihr Warenkorb ist leer" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Ihr Warenkorb ist leer" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Katalog" })).toBeInTheDocument();
     expect(screen.getByLabelText("Sprache")).toHaveValue("de");
   });

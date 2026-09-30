@@ -1,6 +1,7 @@
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { CartProvider } from "../features/cart/CartProvider";
 import { useCart } from "../features/cart/useCart";
 import { createFakeServer } from "../test/fakeServer";
 import { memoryStorage, renderWithPreferences, stubDeviceTheme } from "../test/render";
@@ -46,8 +47,8 @@ function Probe() {
 }
 
 function CartTotals() {
-  const cart = useCart();
-  return cart.data?.totals ? <TotalsSummary totals={cart.data.totals} /> : <p>loading</p>;
+  const { cart } = useCart();
+  return cart?.totals ? <TotalsSummary totals={cart.totals} /> : <p>loading</p>;
 }
 
 const theme = () => document.documentElement.dataset["theme"];
@@ -86,7 +87,9 @@ describe("switching without a reload", () => {
     renderWithPreferences(
       <>
         <Probe />
-        <CartTotals />
+        <CartProvider>
+          <CartTotals />
+        </CartProvider>
       </>,
       { fetchImpl: server.fetchImpl },
     );
@@ -109,7 +112,9 @@ describe("switching without a reload", () => {
     renderWithPreferences(
       <>
         <Probe />
-        <CartTotals />
+        <CartProvider>
+          <CartTotals />
+        </CartProvider>
       </>,
       { fetchImpl: createFakeServer().fetchImpl },
     );

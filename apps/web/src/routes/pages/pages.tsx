@@ -2,26 +2,7 @@ import { Link } from "react-router";
 import { usePreferences } from "../../preferences/usePreferences";
 import { EmptyState } from "../../ui";
 
-/** Route shells: each owns its URL and says what will live there. The screens are M3's (T-052 to T-055). */
-
-export function CatalogPage() {
-  const { t } = usePreferences();
-  return <h1>{t("page.catalog.title")}</h1>;
-}
-
-export function CartPage() {
-  const { t } = usePreferences();
-  return (
-    <>
-      <h1>{t("page.cart.title")}</h1>
-      <EmptyState
-        title={t("page.cart.empty.title")}
-        description={t("page.cart.empty.description")}
-        action={<Link to="/catalog">{t("page.cart.empty.browse")}</Link>}
-      />
-    </>
-  );
-}
+/** Route shells: each owns its URL and says what will live there. The screens are M3's (T-053 to T-055). */
 
 export function CheckoutPage() {
   const { t } = usePreferences();

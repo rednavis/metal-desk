@@ -13,3 +13,20 @@ spring:
       # Indexes are declared on the documents; this is what makes the driver create them. An Atlas
       # deployment that manages indexes itself should switch this off.
       auto-index-creation: true
+
+metaldesk:
+  jwt:
+    issuer: metal-desk-api
+    audience: metal-desk-storefront
+    ttl: 15m
+    # Base64 of at least 32 random bytes, supplied by the deployment (Secret Manager). Left empty, a
+    # random key is generated at startup: fine for development, never for a deployment.
+    signing-key: ${JWT_SIGNING_KEY:}
+  auth:
+    throttle:
+      # FR-2.2's illustrative policy: lock a source after 3 consecutive failures.
+      max-failures: 3
+      cool-down: 15m
+      # Reverse proxies allowed to vouch for X-Forwarded-For (addresses or CIDR blocks). Empty
+      # means the peer address is used and the header is ignored.
+      trusted-proxies: []

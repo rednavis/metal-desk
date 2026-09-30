@@ -45,13 +45,24 @@
   <rule ref="category/java/design.xml">
     <!-- Configured separately below: suppressed in test classes only. -->
     <exclude name="LawOfDemeter"/>
+    <exclude name="TooManyMethods"/>
+  </rule>
+  <rule ref="category/java/design.xml/TooManyMethods">
+    <properties>
+      <!-- Test classes only: one class per unit under test, one method per behaviour. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+    </properties>
   </rule>
   <rule ref="category/java/design.xml/LawOfDemeter">
     <properties>
-      <!-- Test classes only. A WebTestClient or StepVerifier assertion is one fluent chain by
-           design, and the rule counts every link as a violation; main code stays subject to it. -->
+      <!-- Test classes, plus two framework adapters. A WebTestClient or StepVerifier assertion is one fluent chain by
+           design, and the rule counts every link as a violation; main code stays subject to it, except for the two classes that
+           must read a servlet-style request or exchange handed to them by the framework
+           (an authentication entry point, and the client-address resolver), where the chain of
+           getters is the only way in. -->
       <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or @SimpleName = ('ApiAuthenticationEntryPoint', 'ClientAddressResolver')]"/>
     </properties>
   </rule>
   <rule ref="category/java/documentation.xml">
@@ -97,8 +108,26 @@
   <rule ref="category/java/errorprone.xml">
     <!-- The libs/*/*Module marker classes are private-constructor placeholders until Phase 2. -->
     <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+    <exclude name="AvoidUsingHardCodedIP"/>
   </rule>
-  <rule ref="category/java/multithreading.xml"/>
+  <rule ref="category/java/errorprone.xml/AvoidUsingHardCodedIP">
+    <properties>
+      <!-- Test classes only: the tests of address handling and of the trusted-proxy check need
+           literal addresses (documentation ranges), and production code stays subject to it. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/multithreading.xml">
+    <exclude name="DoNotUseThreads"/>
+  </rule>
+  <rule ref="category/java/multithreading.xml/DoNotUseThreads">
+    <properties>
+      <!-- Test classes only: a test must be able to ask which thread a piece of code ran on. -->
+      <property name="violationSuppressXPath"
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+    </properties>
+  </rule>
   <rule ref="category/java/performance.xml"/>
   <rule ref="category/java/security.xml"/>
 </ruleset>

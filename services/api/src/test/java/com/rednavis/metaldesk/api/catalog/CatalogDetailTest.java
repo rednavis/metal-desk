@@ -176,7 +176,7 @@ class CatalogDetailTest extends MongoTestSupport {
   void malformedIdIs400() {
     client
         .get()
-        .uri("/api/catalog/products/bad%20id")
+        .uri("/api/catalog/products/bad.id")
         .exchange()
         .expectStatus()
         .isBadRequest()

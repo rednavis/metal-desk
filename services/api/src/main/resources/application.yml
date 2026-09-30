@@ -39,3 +39,7 @@ metaldesk:
       max-attempts: 5
       # The page a reset link points at; the reference and code are appended as query parameters.
       link-base: http://localhost:5173/reset-password
+  cart:
+    # The cart reference cookie. A deployment behind TLS sets cookie-secure to true.
+    cookie-max-age: 30d
+    cookie-secure: false

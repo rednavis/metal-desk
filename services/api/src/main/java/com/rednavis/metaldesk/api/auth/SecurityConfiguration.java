@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.api.auth;
 
+import com.rednavis.metaldesk.api.cart.CartProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,11 @@ import org.springframework.security.web.server.savedrequest.NoOpServerRequestCac
  */
 @Configuration
 @EnableWebFluxSecurity
-@EnableConfigurationProperties({JwtProperties.class, ThrottleProperties.class})
+@EnableConfigurationProperties({
+  JwtProperties.class,
+  ThrottleProperties.class,
+  CartProperties.class
+})
 public class SecurityConfiguration {
 
   /** Anonymous reads. */
@@ -71,6 +76,10 @@ public class SecurityConfiguration {
                     .pathMatchers(HttpMethod.GET, PUBLIC_READS)
                     .permitAll()
                     .pathMatchers(HttpMethod.POST, PUBLIC_POSTS)
+                    .permitAll()
+                    .pathMatchers(HttpMethod.GET, "/api/cart/delivery-profile")
+                    .authenticated()
+                    .pathMatchers("/api/cart", "/api/cart/**")
                     .permitAll()
                     .anyExchange()
                     .authenticated())

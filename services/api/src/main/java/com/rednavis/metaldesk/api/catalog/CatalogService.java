@@ -8,6 +8,7 @@ import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
 import com.rednavis.metaldesk.api.persistence.mapper.CategoryMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CategoryRepository;
 import com.rednavis.metaldesk.api.persistence.repository.ProductRepository;
+import com.rednavis.metaldesk.api.web.RequestIds;
 import com.rednavis.metaldesk.share.domain.id.CategoryId;
 import com.rednavis.metaldesk.share.error.NotFoundException;
 import com.rednavis.metaldesk.share.error.ValidationException;
@@ -51,7 +52,6 @@ public class CatalogService {
   /** The largest page a category listing will serve. */
   public static final int MAX_PAGE_SIZE = 100;
 
-  private static final Pattern ID_FORMAT = Pattern.compile("[A-Za-z0-9_-]{1,64}");
   private static final int MIN_QUERY = 2;
   private static final int MAX_QUERY = 100;
   private static final Sort BY_NAME = Sort.by("name", "id");
@@ -91,7 +91,7 @@ public class CatalogService {
    */
   public Mono<PageView<ProductSummaryView>> productsInCategory(
       String categoryId, int page, int size) {
-    requireId(categoryId, "category");
+    RequestIds.require(categoryId, "category");
     if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
       throw new ValidationException(
           "page.invalid", "Page must be 0 or more and size 1 to " + MAX_PAGE_SIZE);
@@ -168,7 +168,7 @@ public class CatalogService {
   }
 
   private Mono<ProductDocument> load(String productId) {
-    requireId(productId, "product");
+    RequestIds.require(productId, "product");
     return productRepo
         .findById(productId)
         .switchIfEmpty(
@@ -191,11 +191,5 @@ public class CatalogService {
                                 list.stream()
                                     .map(document -> assembler.summary(document, context))
                                     .toList()));
-  }
-
-  private static void requireId(String id, String what) {
-    if (id == null || !ID_FORMAT.matcher(id).matches()) {
-      throw new ValidationException("id.malformed", "Not a valid " + what + " id");
-    }
   }
 }

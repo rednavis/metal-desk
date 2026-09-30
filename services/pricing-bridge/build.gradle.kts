@@ -12,3 +12,8 @@ dependencies {
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.starter.actuator)
 }
+
+dependencies {
+    testImplementation(libs.spring.boot.starter.webflux.test)
+    testImplementation(libs.reactor.test)
+}

@@ -60,7 +60,7 @@ this reference build.
 |---|---|---|
 | **web** | Customer-facing SPA — catalog, cart, checkout, order history. | `api` over HTTPS/JSON |
 | **api** | The customer-facing backend: catalog reads, cart/checkout orchestration, auth, order lifecycle. Reactive end-to-end (see §5). | `libs/*`, MongoDB, market-data feed, mail, payment providers |
-| **pricing-bridge** | Owns the market-data feed connection and the spot→sellable price computation (BR-3); publishes current prices for `api` to read. Isolated because its availability and update cadence requirements differ from the rest of the system — a stale price feed should degrade gracefully (NFR, §9 of the BRD), never take checkout down with it. | Market-data feed, MongoDB |
+| **pricing-bridge** | Owns the market-data feed connection and the spot→sellable price computation (BR-3); publishes current prices for `api` to read. Isolated because its availability and update cadence requirements differ from the rest of the system — a stale price feed should degrade gracefully (NFR, §9 of the BRD), never take checkout down with it. Today the feed is the in-process fake (ADR-0002), the latest and previous price per metal are held in memory per instance (no MongoDB yet), and staleness is reported at `/actuator/feed` rather than through `/actuator/health`. | Market-data feed (fake until a real adapter exists) |
 | **admin** | Staff-facing back office API: fulfillment-tier configuration, quote handling, order management. Deliberately a separate deployable from `api` — different auth model (staff SSO vs. customer JWT), different availability requirements (internal tool, not customer-facing uptime target). API-only — see [ADR-0005](adr/0005-consolidated-react-frontend.md) for why it has no server-rendered UI of its own. | `libs/*`, MongoDB |
 | **admin-web** | Staff-facing SPA for everything `admin` exposes. Same frontend stack as `web`, not a second UI paradigm — see [ADR-0005](adr/0005-consolidated-react-frontend.md). | `admin` over HTTPS/JSON |
 
@@ -275,7 +275,7 @@ several roads into `CANCELLED` stay distinguishable. Two readings of the diagram
 | Component | Service | Notes |
 |---|---|---|
 | `api` | Cloud Run | Stateless, reactive; min-instances ≥ 1 to avoid cold-start latency on the checkout path. |
-| `pricing-bridge` | Cloud Run (or Cloud Run Job + Cloud Scheduler) | Always-on if the feed is a persistent subscription; scheduled if it's poll-based — a real deployment's choice depends on its actual market-data source. |
+| `pricing-bridge` | Cloud Run (or Cloud Run Job + Cloud Scheduler) | Always-on if the feed is a persistent subscription; scheduled if it's poll-based — a real deployment's choice depends on its actual market-data source. The service is built as the always-on streaming shape (T-039); the job shape is not supported by it as it stands. |
 | `admin` | Cloud Run, behind Identity-Aware Proxy | Internal-only; IAP replaces a hand-rolled staff auth flow. |
 | `admin-web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN, behind the same Identity-Aware Proxy as `admin` | Static SPA, internal-only. |
 | `web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN | Static SPA; no application server needed for the frontend. |

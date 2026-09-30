@@ -190,6 +190,12 @@ failures from a source are throttled — by a per-instance, in-memory counter, w
 implies in a scaled deployment and needs a shared store before it is a real control. There are no refresh
 tokens and no revocation yet.
 
+The account lifecycle (task T-033) sits on a purpose-agnostic verification primitive (issue a code by mail,
+bind it to a subject, confirm it), so registration, password reset and checkout's quick registration share one
+mechanism. Codes are stored hashed, expire, are single-use and limit attempts; every failure to confirm, and every
+request that could reveal whether an address is registered, gets one indistinguishable answer. Switching account
+mints a new token for a permitted target rather than mutating the current one.
+
 ## 6. Order state machine
 
 ```

@@ -27,8 +27,8 @@ export function createRequestContext(initial: {
   };
 }
 
-/** Paths (relative to the API base) whose prices the server can convert. */
-const PRICED = [/^\/catalog(\/|$)/, /^\/cart(\/|$)/];
+/** Paths (relative to the API base) whose prices the server can convert: catalog, cart, reference prices. */
+const PRICED = [/^\/catalog(\/|$)/, /^\/cart(\/|$)/, /^\/market-data(\/|$)/];
 
 /** Paths whose request triggers a mail that is rendered in the customer's language. */
 const MAILING = [

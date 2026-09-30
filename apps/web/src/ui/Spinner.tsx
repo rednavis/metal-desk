@@ -11,7 +11,7 @@ export function Spinner({ label }: SpinnerProps) {
   return (
     <span role="status" aria-live="polite">
       <span className="md-spinner" aria-hidden="true" />
-      <span style={{ position: "absolute", left: "-9999px" }}>{label ?? t("spinner.loading")}</span>
+      <span className="md-sr-only">{label ?? t("spinner.loading")}</span>
     </span>
   );
 }

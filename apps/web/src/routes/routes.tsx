@@ -1,13 +1,7 @@
 import type { RouteObject } from "react-router";
 import { AppShell } from "./AppShell";
-import {
-  CartPage,
-  CatalogPage,
-  CheckoutPage,
-  HomePage,
-  NotFoundPage,
-  SignInPage,
-} from "./pages/pages";
+import { HomeRoute } from "./home/HomeRoute";
+import { CartPage, CatalogPage, CheckoutPage, NotFoundPage, SignInPage } from "./pages/pages";
 
 /** The storefront's routes. Every URL the app answers is listed here and only here. */
 export const appRoutes: RouteObject[] = [
@@ -15,7 +9,7 @@ export const appRoutes: RouteObject[] = [
     path: "/",
     element: <AppShell />,
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <HomeRoute /> },
       { path: "catalog", element: <CatalogPage /> },
       { path: "cart", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },

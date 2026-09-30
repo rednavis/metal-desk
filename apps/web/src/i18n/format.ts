@@ -14,6 +14,8 @@ export interface Formatter {
   /** A price from the API, `{amount, currency}`, in the active language. */
   money(price: { amount: string; currency: string }): string;
   number(value: number): string;
+  /** A percentage given as a number of percent, for example `5.25` for 5.25 %. */
+  percent(percent: string): string;
   /** A date and time from an ISO-8601 instant. */
   dateTime(iso: string): string;
 }
@@ -25,6 +27,12 @@ export function createFormatter(locale: Locale): Formatter {
         Number(price.amount),
       ),
     number: (value) => new Intl.NumberFormat(locale).format(value),
+    percent: (percent) =>
+      new Intl.NumberFormat(locale, {
+        style: "percent",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(percent) / 100),
     dateTime: (iso) =>
       new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
         new Date(iso),

@@ -10,7 +10,7 @@ export const de = {
   "nav.signIn": "Anmelden",
 
   "page.home.title": "MetalDesk",
-  "page.home.intro": "Hier erscheinen bald aktuelle Referenzpreise und der Katalog.",
+  "page.home.intro": "Edelmetalle zu Live-Preisen.",
   "page.catalog.title": "Katalog",
   "page.cart.title": "Warenkorb",
   "page.cart.empty.title": "Ihr Warenkorb ist leer",
@@ -38,6 +38,36 @@ export const de = {
   "currency.fakeRates":
     "Preise in {currency} werden mit Demo-Wechselkursen umgerechnet, nicht mit echten Marktkursen. Kasse und Bestellungen sind immer in {settlement}.",
   "currency.settlementOnly": "Kasse und Bestellungen sind immer in {settlement}.",
+
+  "metal.GOLD": "Gold",
+  "metal.SILVER": "Silber",
+  "metal.PLATINUM": "Platin",
+  "metal.PALLADIUM": "Palladium",
+  "metal.RHODIUM": "Rhodium",
+  "metal.RUTHENIUM": "Ruthenium",
+
+  "marketdata.title": "Referenzpreise",
+  "marketdata.caption": "Referenzpreis pro Gramm Feinmetall, mit der letzten Änderung",
+  "marketdata.col.metal": "Metall",
+  "marketdata.col.price": "Preis",
+  "marketdata.col.change": "Letzte Änderung",
+  "marketdata.perGram": "pro Gramm",
+  "marketdata.updated": "Aktualisiert {time}",
+  "marketdata.loading": "Preise werden geladen",
+  "marketdata.empty.title": "Noch keine Preise",
+  "marketdata.empty.description":
+    "Referenzpreise erscheinen hier, sobald der erste eingegangen ist.",
+  "marketdata.change.up": "Gestiegen um {amount} ({percent})",
+  "marketdata.change.down": "Gefallen um {amount} ({percent})",
+  "marketdata.change.unchanged": "Unverändert",
+  "marketdata.change.unknown": "Änderung noch nicht verfügbar",
+  "marketdata.stale.fetch":
+    "Diese Preise sind möglicherweise veraltet: die letzte erfolgreiche Aktualisierung war um {time}.",
+  "marketdata.stale.feed":
+    "Der Preisfeed wurde seit {time} nicht aktualisiert; diese Preise sind möglicherweise veraltet.",
+  "marketdata.error":
+    "Die Preise konnten nicht aktualisiert werden. Es werden die zuletzt bekannten Werte angezeigt; es wird automatisch erneut versucht.",
+  "marketdata.retry": "Jetzt erneut versuchen",
 
   "cart.itemCount_one": "{count} Artikel",
   "cart.itemCount_other": "{count} Artikel",

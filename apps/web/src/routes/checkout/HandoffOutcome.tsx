@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { usePreferences } from "../../preferences/usePreferences";
 
 /**
@@ -11,6 +12,11 @@ export function HandoffOutcome({ reference }: { reference: string }) {
       <h2 id="handoff-done-title">{t("checkout.handoff.done.title")}</h2>
       <p data-testid="handoff-reference">{t("checkout.handoff.done.reference", { reference })}</p>
       <p>{t("checkout.handoff.done.next")}</p>
+      <Link
+        to={{ pathname: "/inquiry", search: `?handoffReference=${encodeURIComponent(reference)}` }}
+      >
+        {t("checkout.handoff.ask")}
+      </Link>
     </section>
   );
 }

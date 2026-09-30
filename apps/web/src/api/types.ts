@@ -389,6 +389,107 @@ export interface Step1Request {
   account: { rememberMe: boolean; password?: string };
 }
 
+// ---- accounts, orders and inquiries --------------------------------------------------------
+
+export const orderStatusSchema = z.enum([
+  "CREATED",
+  "AWAITING_PAYMENT",
+  "AWAITING_MANAGER_QUOTE",
+  "PAID",
+  "FULFILLING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+]);
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
+
+export const verificationStateSchema = z.enum(["UNVERIFIED", "VERIFIED"]);
+export type VerificationState = z.infer<typeof verificationStateSchema>;
+
+export const inquirySourceSchema = z.enum(["CATALOG", "PRODUCT", "HANDOFF"]);
+export type InquirySource = z.infer<typeof inquirySourceSchema>;
+
+export const customerViewSchema = z.object({
+  customerId: z.string(),
+  verification: verificationStateSchema,
+});
+export type CustomerView = z.infer<typeof customerViewSchema>;
+
+export const registrationAcceptedSchema = z.object({ reference: z.string(), message: z.string() });
+export type RegistrationAccepted = z.infer<typeof registrationAcceptedSchema>;
+
+/** `status` is kept a string on the wire so a status added on the server still renders (by its label). */
+export const orderSummaryViewSchema = z.object({
+  orderNumber: z.string(),
+  createdAt: z.string(),
+  itemCount: z.number().int(),
+  total: priceViewSchema,
+  status: z.string(),
+  statusLabel: z.string(),
+});
+export type OrderSummaryView = z.infer<typeof orderSummaryViewSchema>;
+
+export const orderHistoryViewSchema = z.object({ orders: z.array(orderSummaryViewSchema) });
+export type OrderHistoryView = z.infer<typeof orderHistoryViewSchema>;
+
+export const orderLineViewSchema = z.object({
+  productName: z.string(),
+  quantity: z.number().int(),
+  unitPrice: priceViewSchema,
+  lineNet: priceViewSchema,
+  taxRatePercent: z.string(),
+  lineTax: priceViewSchema,
+});
+export type OrderLineView = z.infer<typeof orderLineViewSchema>;
+
+export const orderAddressViewSchema = z.object({
+  street: z.string(),
+  postalCode: z.string(),
+  city: z.string(),
+  country: z.string(),
+});
+export type OrderAddressView = z.infer<typeof orderAddressViewSchema>;
+
+export const orderTotalsViewSchema = z.object({
+  net: priceViewSchema,
+  tax: priceViewSchema,
+  delivery: priceViewSchema,
+  grandTotal: priceViewSchema,
+});
+export type OrderTotalsView = z.infer<typeof orderTotalsViewSchema>;
+
+export const shipmentViewSchema = z.object({ carrier: z.string(), trackingReference: z.string() });
+export type ShipmentView = z.infer<typeof shipmentViewSchema>;
+
+export const orderDetailViewSchema = z.object({
+  orderNumber: z.string(),
+  createdAt: z.string(),
+  itemCount: z.number().int(),
+  status: z.string(),
+  statusLabel: z.string(),
+  lines: z.array(orderLineViewSchema),
+  deliveryAddress: orderAddressViewSchema.optional(),
+  totals: orderTotalsViewSchema,
+  paymentMethod: z.string().optional(),
+  /** Absent, not empty, before the order ships. */
+  shipment: shipmentViewSchema.optional(),
+});
+export type OrderDetailView = z.infer<typeof orderDetailViewSchema>;
+
+export const inquiryReceiptSchema = z.object({ reference: z.string(), message: z.string() });
+export type InquiryReceipt = z.infer<typeof inquiryReceiptSchema>;
+
+/** An inquiry as sent (`InquiryRequest`); the context field that does not apply is left out. */
+export interface InquiryRequest {
+  source: InquirySource;
+  name: string;
+  email: string;
+  topic: string;
+  message: string;
+  productId?: string;
+  handoffReference?: string;
+}
+
 // ---- the registry the contract test walks --------------------------------------------------
 
 const API = "services/api/src/main/java/com/rednavis/metaldesk/api/";
@@ -669,5 +770,83 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: API + "cart/dto/AddressView.java",
     record: "AddressView",
     schema: addressViewSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "order/OrderStatus.java",
+    enumName: "OrderStatus",
+    schema: orderStatusSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "customer/VerificationState.java",
+    enumName: "VerificationState",
+    schema: verificationStateSchema,
+  },
+  {
+    kind: "enum",
+    java: API + "inquiry/InquirySource.java",
+    enumName: "InquirySource",
+    schema: inquirySourceSchema,
+  },
+  {
+    kind: "record",
+    java: API + "auth/CustomerView.java",
+    record: "CustomerView",
+    schema: customerViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "account/dto/RegistrationAccepted.java",
+    record: "RegistrationAccepted",
+    schema: registrationAcceptedSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderSummaryView.java",
+    record: "OrderSummaryView",
+    schema: orderSummaryViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderHistoryView.java",
+    record: "OrderHistoryView",
+    schema: orderHistoryViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderLineView.java",
+    record: "OrderLineView",
+    schema: orderLineViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderAddressView.java",
+    record: "OrderAddressView",
+    schema: orderAddressViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderTotalsView.java",
+    record: "OrderTotalsView",
+    schema: orderTotalsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/ShipmentView.java",
+    record: "ShipmentView",
+    schema: shipmentViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "order/dto/OrderDetailView.java",
+    record: "OrderDetailView",
+    schema: orderDetailViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "inquiry/dto/InquiryReceipt.java",
+    record: "InquiryReceipt",
+    schema: inquiryReceiptSchema,
   },
 ];

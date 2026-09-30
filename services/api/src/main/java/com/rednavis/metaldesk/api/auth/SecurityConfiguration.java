@@ -18,9 +18,10 @@ import org.springframework.security.web.server.savedrequest.NoOpServerRequestCac
  * public routes.
  *
  * <p>Public are the storefront's anonymous reads (BRD FR-1.x: catalog and market data), the health
- * probe, and sign-in itself. Every other route, including one that does not exist, needs a valid
- * bearer token. There is no session, no CSRF token (nothing rides on a cookie) and no login page:
- * the token is the only credential.
+ * probe, sign-in itself, and the account flows that precede having a token (registration, email
+ * verification and password reset). Every other route, including one that does not exist, needs a
+ * valid bearer token. There is no session, no CSRF token (nothing rides on a cookie) and no login
+ * page: the token is the only credential.
  */
 @Configuration
 @EnableWebFluxSecurity
@@ -30,6 +31,15 @@ public class SecurityConfiguration {
   /** Anonymous reads. */
   private static final String[] PUBLIC_READS = {
     "/api/catalog/**", "/api/market-data/**", "/actuator/health", "/actuator/health/**"
+  };
+
+  /** Anonymous writes: sign-in and the account flows a customer has to do before having a token. */
+  private static final String[] PUBLIC_POSTS = {
+    "/api/auth/sign-in",
+    "/api/account/register",
+    "/api/account/verify-email",
+    "/api/account/password-reset/request",
+    "/api/account/password-reset/confirm"
   };
 
   /**
@@ -60,7 +70,7 @@ public class SecurityConfiguration {
                 exchanges
                     .pathMatchers(HttpMethod.GET, PUBLIC_READS)
                     .permitAll()
-                    .pathMatchers(HttpMethod.POST, "/api/auth/sign-in")
+                    .pathMatchers(HttpMethod.POST, PUBLIC_POSTS)
                     .permitAll()
                     .anyExchange()
                     .authenticated())

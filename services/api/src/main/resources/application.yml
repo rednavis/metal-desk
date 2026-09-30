@@ -30,3 +30,12 @@ metaldesk:
       # Reverse proxies allowed to vouch for X-Forwarded-For (addresses or CIDR blocks). Empty
       # means the peer address is used and the header is ignored.
       trusted-proxies: []
+  account:
+    verification:
+      # A typed verification code, and a password-reset link, live this long. Short on purpose.
+      ttl: 15m
+      reset-ttl: 30m
+      # A challenge is dead after this many confirmation attempts, right code or not.
+      max-attempts: 5
+      # The page a reset link points at; the reference and code are appended as query parameters.
+      link-base: http://localhost:5173/reset-password

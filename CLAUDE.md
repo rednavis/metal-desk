@@ -70,6 +70,11 @@ repositories.
   new module gets it for free. The domain model belongs in `libs/share`; reuse it, never copy it.
 - Jacoco produces reports but **no** coverage threshold is wired (`jacocoTestCoverageVerification`
   is never invoked). Coverage can be 0% and `build` still passes.
+- `services:api` tests run against a real MongoDB through Testcontainers, so `./gradlew build` needs a
+  running Docker daemon. Every Mongo test extends `MongoTestSupport`, which shares one container per JVM —
+  don't start a container per class. On OrbStack, if Testcontainers can't find Docker, export
+  `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock` and
+  `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`.
 - **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a
   TruffleHog secret scan. A local `./gradlew build` / `pnpm -r run build` is the only real gate.
 

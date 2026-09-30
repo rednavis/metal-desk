@@ -161,6 +161,15 @@ subscriber — the container that most needs backpressure-aware I/O gets it for 
 whole stack share one execution model, instead of bolting reactive streams onto one service and
 blocking everywhere else.
 
+**Persistence** (task T-030) lives in `services/api` under `com.rednavis.metaldesk.api.persistence`, with
+`apps/admin` to share it through a `libs/persistence` extraction (T-040). The `libs/share` domain types carry
+no storage annotations (§8); the service has separate document types that carry them, and a hand-written
+mapper per aggregate converts in one direction each way, so a field added to an aggregate is a compile error
+in the mapper rather than a silently dropped column. Repositories are reactive Spring Data (`Mono`/`Flux`) and
+the blocking MongoDB driver is not on the classpath. The order number of BR-6 is allocated by one atomic
+`findAndModify` increment on a per-day counter, backed by a unique index on the order number; gaps are
+allowed, reuse is not.
+
 **Auth** is stateless JWT, not server-side sessions — deliberately, so `api` can scale horizontally
 with no shared session store. A bearer token is validated per request; CPU-bound crypto work is
 explicitly scheduled off the reactive event loop rather than blocking it.

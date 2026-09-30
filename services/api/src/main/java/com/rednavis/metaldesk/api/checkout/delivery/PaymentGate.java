@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.api.checkout.delivery;
 import com.rednavis.metaldesk.api.auth.AuthenticatedCustomer;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionService;
+import com.rednavis.metaldesk.api.checkout.payment.PaymentState;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,7 @@ public class PaymentGate {
   public static final String NOT_EVALUATED = "checkout.delivery-not-evaluated";
 
   private final CheckoutSessionService sessions;
+  private final QuotedHandoffs quoted;
 
   /**
    * Lets a payment proceed only if the session permits it.
@@ -43,7 +45,7 @@ public class PaymentGate {
    *     checkout.delivery-not-evaluated}
    */
   public Mono<CheckoutSession> require(String id, AuthenticatedCustomer customer) {
-    return sessions.find(id, customer).flatMap(this::check);
+    return sessions.find(id, customer).flatMap(quoted::adopt).flatMap(this::check);
   }
 
   /**
@@ -57,9 +59,23 @@ public class PaymentGate {
    */
   public Mono<CheckoutSession> check(CheckoutSession session) {
     final CheckoutStage stage = session.delivery().map(DeliveryState::stage).orElse(null);
-    return stage == CheckoutStage.PAYMENT_ALLOWED && session.handoff().isEmpty()
+    return stage == CheckoutStage.PAYMENT_ALLOWED && handoffSettled(session)
         ? Mono.just(session)
         : Mono.error(refusal(stage));
+  }
+
+  /** A handed-off session may be paid only once staff's terms were adopted into it. */
+  private static boolean handoffSettled(CheckoutSession session) {
+    return session
+        .handoff()
+        .map(
+            record ->
+                session
+                    .payment()
+                    .flatMap(PaymentState::order)
+                    .filter(record.orderId()::equals)
+                    .isPresent())
+        .orElse(true);
   }
 
   private static ConflictException refusal(CheckoutStage stage) {

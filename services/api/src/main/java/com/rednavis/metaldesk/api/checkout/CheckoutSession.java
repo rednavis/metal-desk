@@ -3,14 +3,17 @@ package com.rednavis.metaldesk.api.checkout;
 import com.rednavis.metaldesk.api.cart.CartId;
 import com.rednavis.metaldesk.api.checkout.delivery.DeliveryState;
 import com.rednavis.metaldesk.api.checkout.delivery.HandoffRecord;
+import com.rednavis.metaldesk.api.checkout.payment.PaymentPhase;
 import com.rednavis.metaldesk.api.checkout.payment.PaymentState;
 import com.rednavis.metaldesk.api.checkout.step1.ConsentRecord;
 import com.rednavis.metaldesk.api.checkout.step1.ConversionState;
 import com.rednavis.metaldesk.api.checkout.step1.CustomerDetails;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
+import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.order.OrderLine;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -233,6 +236,40 @@ public record CheckoutSession(
         delivery,
         handoff,
         Optional.of(state),
+        lifecycle);
+  }
+
+  /**
+   * Adopts the terms staff set on the handed-off order: the delivery state becomes the quoted one
+   * and the payment state is bound to that order, so it is the order that gets paid.
+   *
+   * @param quoted the delivery state carrying the staff-decided quote
+   * @param handedOff the handed-off order
+   * @return the session ready for payment; the chosen method, if any, is kept
+   */
+  public CheckoutSession withQuotedHandoff(DeliveryState quoted, OrderId handedOff) {
+    return new CheckoutSession(
+        id,
+        owner,
+        source,
+        cart,
+        lines,
+        details,
+        consent,
+        conversion,
+        Optional.of(quoted),
+        handoff,
+        Optional.of(
+            payment
+                .map(state -> state.withOrder(handedOff))
+                .orElseGet(
+                    () ->
+                        new PaymentState(
+                            Optional.empty(),
+                            Optional.of(handedOff),
+                            Optional.empty(),
+                            PaymentPhase.ORDER_CREATED,
+                            Locale.ENGLISH))),
         lifecycle);
   }
 

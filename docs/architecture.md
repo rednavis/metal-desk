@@ -219,6 +219,12 @@ endpoint calls first, so a crafted request reaches no provider. A handoff create
 `AWAITING_MANAGER_QUOTE` through the state machine; the customer's reference is its order number, and staff are
 told everything they need to price it.
 
+Once staff answer (task T-040: the order returns to `AWAITING_PAYMENT` carrying their delivery quote) the session is
+*adopted*: its delivery state becomes payment-allowed with that quote and its payment state is bound to the handed-off
+order, so the ordinary payment path charges that very order at the total it carries instead of creating a second one
+(task T-041). The terms carry a validity, checked on every payment-step call, after which the session is refused with
+`checkout.quote-expired`.
+
 Payment (task T-037) completes the checkout. The offered methods are filtered by a business-rule policy: above a
 configurable ceiling on the grand total (default 2500.00 EUR, strictly above) the wallet account is withheld unless
 `wallet-high-value` is set, and invoice is never filtered. Choosing a method creates nothing; executing it requires the
@@ -272,6 +278,12 @@ several roads into `CANCELLED` stay distinguishable. Two readings of the diagram
   being given up.
 
 `DELIVERED` and `CANCELLED` are terminal.
+
+**Covered end to end.** Both ways through checkout are exercised by automated tests in `services/api`
+(`CheckoutSelfServiceE2eTest`, `CheckoutHandoffE2eTest`, task T-041): through the HTTP surface only, against the
+in-process fakes and a WireMock provider stub, with the charged amount read from the stub's request journal. The
+handoff test runs the real `apps/admin` for the staff step, started in a class loader of its own because the two
+services cannot share a classpath, and called over HTTP.
 
 ## 7. Reference deployment (GCP)
 

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { ApiError } from "./errors";
+import { carriesCurrency, withLocale, type RequestContext } from "./requestContext";
 import type { TokenStore } from "./tokenStore";
 
 /** Options of a single call. */
@@ -20,6 +21,8 @@ export interface ApiClientOptions {
   tokenStore?: TokenStore;
   /** Called after a 401, once the token has been cleared; the app routes to sign-in here. */
   onUnauthorized?: () => void;
+  /** The customer's language and display currency, applied to requests; see `requestContext.ts`. */
+  requestContext?: RequestContext;
   /** Replaces the platform's `fetch`, for tests. */
   fetchImpl?: typeof globalThis.fetch;
 }
@@ -51,16 +54,25 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     };
     const token = options.tokenStore?.get();
     if (token) headers["Authorization"] = `Bearer ${token}`;
-    if (call.body !== undefined) headers["Content-Type"] = "application/json";
+    const preferences = options.requestContext?.get();
+    if (preferences) headers["Accept-Language"] = preferences.locale;
+    const payload = preferences
+      ? withLocale(method, path, call.body, preferences.locale)
+      : call.body;
+    if (payload !== undefined) headers["Content-Type"] = "application/json";
+    const query =
+      preferences && carriesCurrency(path)
+        ? { currency: preferences.currency, ...call.query }
+        : call.query;
 
     let response: Response;
     try {
       const transport: typeof globalThis.fetch =
         options.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
-      response = await transport(url(baseUrl, path, call.query), {
+      response = await transport(url(baseUrl, path, query), {
         method,
         headers,
-        body: call.body === undefined ? undefined : JSON.stringify(call.body),
+        body: payload === undefined ? undefined : JSON.stringify(payload),
         credentials: "same-origin",
         signal: call.signal,
       });

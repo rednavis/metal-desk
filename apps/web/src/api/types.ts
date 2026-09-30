@@ -146,6 +146,60 @@ export const signInResponseSchema = z.object({
 });
 export type SignInResponse = z.infer<typeof signInResponseSchema>;
 
+// ---- cart (api/cart/dto) -------------------------------------------------------------------
+
+export const totalsViewSchema = z.object({
+  net: priceViewSchema,
+  tax: priceViewSchema,
+  total: priceViewSchema,
+});
+export type TotalsView = z.infer<typeof totalsViewSchema>;
+
+export const cartLineViewSchema = z.object({
+  productId: z.string(),
+  name: z.string(),
+  quantity: z.number().int(),
+  maxQuantity: z.number().int(),
+  pricingMode: pricingModeSchema,
+  unitPrice: priceViewSchema.optional(),
+  lineNet: priceViewSchema.optional(),
+  taxRatePercent: z.string().optional(),
+  lineTax: priceViewSchema.optional(),
+});
+export type CartLineView = z.infer<typeof cartLineViewSchema>;
+
+export const cartViewSchema = z.object({
+  cartId: z.string().optional(),
+  empty: z.boolean(),
+  itemCount: z.number().int(),
+  complete: z.boolean(),
+  lines: z.array(cartLineViewSchema),
+  /** Absent when no line has a price. */
+  totals: totalsViewSchema.optional(),
+});
+export type CartView = z.infer<typeof cartViewSchema>;
+
+// ---- display currency and preferences (api/currency, api/account/preferences) ---------------
+
+export const currencyOptionSchema = z.object({ code: z.string(), perSettlementUnit: z.string() });
+export type CurrencyOption = z.infer<typeof currencyOptionSchema>;
+
+export const currencyOptionsViewSchema = z.object({
+  /** The currency orders are priced and charged in; checkout is always in this one. */
+  settlement: z.string(),
+  /** `FAKE` means the rates are demo rates and the UI must say so. */
+  rateSource: z.string(),
+  options: z.array(currencyOptionSchema),
+});
+export type CurrencyOptionsView = z.infer<typeof currencyOptionsViewSchema>;
+
+export const preferencesViewSchema = z.object({
+  theme: z.enum(["LIGHT", "DARK"]).optional(),
+  locale: z.string().optional(),
+  currency: z.string().optional(),
+});
+export type PreferencesView = z.infer<typeof preferencesViewSchema>;
+
 // ---- the registry the contract test walks --------------------------------------------------
 
 const API = "services/api/src/main/java/com/rednavis/metaldesk/api/";
@@ -264,6 +318,42 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: API + "marketdata/ReferencePriceView.java",
     record: "ReferencePriceView",
     schema: referencePriceViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "cart/dto/TotalsView.java",
+    record: "TotalsView",
+    schema: totalsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "cart/dto/CartLineView.java",
+    record: "CartLineView",
+    schema: cartLineViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "cart/dto/CartView.java",
+    record: "CartView",
+    schema: cartViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "currency/CurrencyOptionsView.java",
+    record: "CurrencyOption",
+    schema: currencyOptionSchema,
+  },
+  {
+    kind: "record",
+    java: API + "currency/CurrencyOptionsView.java",
+    record: "CurrencyOptionsView",
+    schema: currencyOptionsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "account/preferences/PreferencesView.java",
+    record: "PreferencesView",
+    schema: preferencesViewSchema,
   },
   {
     kind: "record",

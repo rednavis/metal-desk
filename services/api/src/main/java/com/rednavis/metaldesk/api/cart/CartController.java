@@ -5,6 +5,8 @@ import com.rednavis.metaldesk.api.cart.dto.AddLineRequest;
 import com.rednavis.metaldesk.api.cart.dto.AddressView;
 import com.rednavis.metaldesk.api.cart.dto.CartView;
 import com.rednavis.metaldesk.api.cart.dto.QuantityRequest;
+import com.rednavis.metaldesk.api.currency.DisplayCurrencies;
+import com.rednavis.metaldesk.share.domain.money.Currency;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -41,6 +44,7 @@ public class CartController {
   private final CartService service;
   private final BasketService baskets;
   private final CartProperties properties;
+  private final DisplayCurrencies currencies;
 
   /**
    * Shows the cart. With no cart yet the answer is 200 and the empty state, never 404.
@@ -52,8 +56,9 @@ public class CartController {
   @GetMapping
   public Mono<ResponseEntity<CartView>> cart(
       @CookieValue(name = COOKIE, required = false) String reference,
-      @AuthenticationPrincipal AuthenticatedCustomer customer) {
-    return service.view(reference, customer).map(this::respond);
+      @AuthenticationPrincipal AuthenticatedCustomer customer,
+      @RequestParam(required = false) String currency) {
+    return service.view(reference, customer).map(view -> respond(view, currency));
   }
 
   /**
@@ -68,8 +73,11 @@ public class CartController {
   public Mono<ResponseEntity<CartView>> add(
       @CookieValue(name = COOKIE, required = false) String reference,
       @AuthenticationPrincipal AuthenticatedCustomer customer,
-      @RequestBody AddLineRequest request) {
-    return service.add(reference, customer, request.productId()).map(this::respond);
+      @RequestBody AddLineRequest request,
+      @RequestParam(required = false) String currency) {
+    return service
+        .add(reference, customer, request.productId())
+        .map(view -> respond(view, currency));
   }
 
   /**
@@ -86,10 +94,11 @@ public class CartController {
       @CookieValue(name = COOKIE, required = false) String reference,
       @AuthenticationPrincipal AuthenticatedCustomer customer,
       @PathVariable String productId,
-      @RequestBody QuantityRequest request) {
+      @RequestBody QuantityRequest request,
+      @RequestParam(required = false) String currency) {
     return service
         .changeQuantity(reference, customer, productId, request.quantity())
-        .map(this::respond);
+        .map(view -> respond(view, currency));
   }
 
   /**
@@ -104,8 +113,9 @@ public class CartController {
   public Mono<ResponseEntity<CartView>> remove(
       @CookieValue(name = COOKIE, required = false) String reference,
       @AuthenticationPrincipal AuthenticatedCustomer customer,
-      @PathVariable String productId) {
-    return service.remove(reference, customer, productId).map(this::respond);
+      @PathVariable String productId,
+      @RequestParam(required = false) String currency) {
+    return service.remove(reference, customer, productId).map(view -> respond(view, currency));
   }
 
   /**
@@ -118,8 +128,9 @@ public class CartController {
   @DeleteMapping
   public Mono<ResponseEntity<CartView>> clear(
       @CookieValue(name = COOKIE, required = false) String reference,
-      @AuthenticationPrincipal AuthenticatedCustomer customer) {
-    return service.clear(reference, customer).map(this::respond);
+      @AuthenticationPrincipal AuthenticatedCustomer customer,
+      @RequestParam(required = false) String currency) {
+    return service.clear(reference, customer).map(view -> respond(view, currency));
   }
 
   /**
@@ -130,8 +141,10 @@ public class CartController {
    * @return the one-line basket, without a cart reference; 400 for an unpriced product
    */
   @PostMapping("/buy-now")
-  public Mono<CartView> buyNow(@RequestBody AddLineRequest request) {
-    return baskets.buyNowView(request.productId());
+  public Mono<CartView> buyNow(
+      @RequestBody AddLineRequest request, @RequestParam(required = false) String currency) {
+    final Currency shown = currencies.resolve(currency);
+    return baskets.buyNowView(request.productId()).map(view -> currencies.cart(view, shown));
   }
 
   /**
@@ -150,7 +163,8 @@ public class CartController {
         .defaultIfEmpty(ResponseEntity.noContent().build());
   }
 
-  private ResponseEntity<CartView> respond(CartView view) {
+  private ResponseEntity<CartView> respond(CartView settled, String currency) {
+    final CartView view = currencies.cart(settled, currencies.resolve(currency));
     final ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
     if (view.cartId() != null) {
       builder.header(

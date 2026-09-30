@@ -16,20 +16,38 @@
  * `localStorage` alone.
  */
 export interface TokenStore {
-  get(): string | null;
-  set(token: string): void;
-  clear(): void;
+  get: () => string | null;
+  set: (token: string) => void;
+  clear: () => void;
+  /** Calls `listener` whenever the token is set or cleared; returns the way to stop. */
+  subscribe: (listener: () => void) => () => void;
 }
 
 export function createMemoryTokenStore(): TokenStore {
   let token: string | null = null;
+  const listeners = new Set<() => void>();
+  const notify = () => {
+    listeners.forEach((listener) => {
+      listener();
+    });
+  };
   return {
     get: () => token,
     set: (next) => {
       token = next;
+      notify();
     },
     clear: () => {
-      token = null;
+      if (token !== null) {
+        token = null;
+        notify();
+      }
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
     },
   };
 }

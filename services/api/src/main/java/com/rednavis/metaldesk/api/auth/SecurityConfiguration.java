@@ -30,7 +30,11 @@ public class SecurityConfiguration {
 
   /** Anonymous reads. */
   private static final String[] PUBLIC_READS = {
-    "/api/catalog/**", "/api/market-data/**", "/actuator/health", "/actuator/health/**"
+    "/api/catalog/**",
+    "/api/market-data/**",
+    "/api/currencies",
+    "/actuator/health",
+    "/actuator/health/**"
   };
 
   /**

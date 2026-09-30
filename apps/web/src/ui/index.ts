@@ -5,4 +5,6 @@ export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
 export { Field } from "./Field";
 export { Layout } from "./Layout";
+export { PreferenceSwitcher } from "./PreferenceSwitcher";
 export { Spinner } from "./Spinner";
+export { TotalsSummary } from "./TotalsSummary";

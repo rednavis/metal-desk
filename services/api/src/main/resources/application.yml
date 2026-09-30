@@ -66,3 +66,12 @@ metaldesk:
       base-url: http://localhost:9092
       timeout: 10s
       retry-budget: 1
+  fx:
+    # Display-currency conversion (FR-1.8) for the catalog and the cart. Orders are always priced and
+    # charged in the settlement currency. THESE RATES ARE FAKE (ADR-0002: no rate source exists in
+    # this build), deliberately not market-like, and reported to clients as `FAKE`. A real provider
+    # replaces FakeExchangeRates behind the ExchangeRates interface.
+    settlement: EUR
+    source: FAKE
+    rates:
+      USD: "2.00"

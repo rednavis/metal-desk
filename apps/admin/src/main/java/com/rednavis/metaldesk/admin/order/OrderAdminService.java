@@ -44,6 +44,7 @@ public class OrderAdminService {
   private final OrderMapper mapper;
   private final CustomerRepository customers;
   private final ShipmentRepository shipments;
+  private final HandoffContexts handoffs;
   private final Clock clock;
 
   /**
@@ -137,6 +138,7 @@ public class OrderAdminService {
     return OrderViews.detail(
         order,
         customers.findById(order.customerId().value()).orElse(null),
-        shipments.findById(order.id().value()).orElse(null));
+        shipments.findById(order.id().value()).orElse(null),
+        order.status() == OrderStatus.AWAITING_MANAGER_QUOTE ? handoffs.of(order) : null);
   }
 }

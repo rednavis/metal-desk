@@ -219,6 +219,14 @@ endpoint calls first, so a crafted request reaches no provider. A handoff create
 `AWAITING_MANAGER_QUOTE` through the state machine; the customer's reference is its order number, and staff are
 told everything they need to price it.
 
+What staff see in the back office comes from `apps/admin`, not from the notification mail: the order detail carries the
+customer's contact details, and for an order awaiting a quote a handoff context, the destination region, the total
+weight and which ceiling the region's widest tier is exceeded on. None of that is stored on the order, so it is
+derived when the order is shown, by the same `TierSelector` over the tiers *as configured now*; a tier widened since
+the handoff shows as `WITHIN_TIERS` rather than repeating what the customer was told. `GET /api/admin/me` returns the
+identity the proxy reported so the SPA can show whose name an action is recorded under, and declining a quote takes a
+reason, which goes to the audit log beside who declined (task T-056).
+
 Once staff answer (task T-040: the order returns to `AWAITING_PAYMENT` carrying their delivery quote) the session is
 *adopted*: its delivery state becomes payment-allowed with that quote and its payment state is bound to the handed-off
 order, so the ordinary payment path charges that very order at the total it carries instead of creating a second one

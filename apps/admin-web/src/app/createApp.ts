@@ -13,7 +13,7 @@ export interface AppOptions {
 /**
  * Builds the pieces of the running app and wires them together: the router, the API client and the
  * query cache. Nothing here renders, so tests build the very same app `main.tsx` does, with a
- * memory history and a stubbed `fetch`. There is no token store and no sign-in: see `api/client.ts`.
+ * memory history and a stubbed `fetch`. There is no token store and no identity of its own: see `api/client.ts`.
  */
 export function createApp(options: AppOptions = {}) {
   const router = options.initialEntries

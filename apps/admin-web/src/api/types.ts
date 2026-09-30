@@ -4,8 +4,8 @@
  * `contract.test.ts` reads the Java records in this repository and fails when one drifts from its
  * schema.
  *
- * Only what exists today is mirrored: the error envelope, pages, and the tier API. The quote queue
- * and order views are added by T-056 with the screens that use them, each with its contract entry.
+ * What is mirrored: the error envelope, pages, the tier API, the quote queue, the order views and
+ * the staff identity, each with its contract entry.
  */
 import { z } from "zod";
 
@@ -55,6 +55,138 @@ export function pageViewSchema<T extends z.ZodType>(item: T) {
 }
 export type PageView<T> = { items: T[]; page: number; size: number; total: number };
 
+// ---- orders, quotes and the staff identity -------------------------------------------------
+
+export const orderStatusSchema = z.enum([
+  "CREATED",
+  "AWAITING_PAYMENT",
+  "AWAITING_MANAGER_QUOTE",
+  "PAID",
+  "FULFILLING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+]);
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
+
+/** The state machine's triggers; `actions` of an order lists the ones it accepts now. */
+export const transitionTriggerSchema = z.enum([
+  "CHECKOUT_SUBMITTED",
+  "PAYMENT_CAPTURED",
+  "PAYMENT_FAILED",
+  "PAYMENT_ABANDONED",
+  "CUSTOMER_CANCELLED",
+  "TIER_EXCEEDED",
+  "QUOTE_SET",
+  "QUOTE_DECLINED",
+  "FULFILLMENT_STARTED",
+  "SHIPPED",
+  "DELIVERED",
+]);
+export type TransitionTrigger = z.infer<typeof transitionTriggerSchema>;
+
+export const boundCeilingSchema = z.enum(["VALUE", "WEIGHT", "NO_TIER_FOR_REGION", "WITHIN_TIERS"]);
+export type BoundCeiling = z.infer<typeof boundCeilingSchema>;
+
+export const orderSummaryViewSchema = z.object({
+  id: z.string(),
+  number: z.string(),
+  status: orderStatusSchema,
+  customerId: z.string(),
+  itemCount: z.number().int(),
+  total: z.string(),
+  currency: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type OrderSummaryView = z.infer<typeof orderSummaryViewSchema>;
+
+export const contactViewSchema = z.object({ email: z.string(), phone: z.string().optional() });
+export type ContactView = z.infer<typeof contactViewSchema>;
+
+export const lineViewSchema = z.object({
+  productId: z.string(),
+  name: z.string(),
+  quantity: z.number().int(),
+  unitPrice: z.string(),
+  lineNet: z.string(),
+  lineTax: z.string(),
+});
+export type LineView = z.infer<typeof lineViewSchema>;
+
+export const quoteInfoSchema = z.object({
+  tierId: z.string(),
+  cost: z.string(),
+  minDays: z.number().int(),
+  maxDays: z.number().int(),
+  quotedAt: z.string(),
+});
+export type QuoteInfo = z.infer<typeof quoteInfoSchema>;
+
+export const shipmentViewSchema = z.object({ carrier: z.string(), trackingReference: z.string() });
+export type ShipmentView = z.infer<typeof shipmentViewSchema>;
+
+/** Absent weight and ceiling mean a product is gone from the catalog: they are not guessed. */
+export const handoffContextSchema = z.object({
+  region: z.string(),
+  weightGrams: z.string().optional(),
+  boundCeiling: boundCeilingSchema.optional(),
+});
+export type HandoffContext = z.infer<typeof handoffContextSchema>;
+
+export const orderDetailViewSchema = z.object({
+  summary: orderSummaryViewSchema,
+  customerName: z.string().optional(),
+  contact: contactViewSchema.optional(),
+  destination: z.string(),
+  lines: z.array(lineViewSchema),
+  net: z.string(),
+  tax: z.string(),
+  delivery: z.string(),
+  quote: quoteInfoSchema.optional(),
+  shipment: shipmentViewSchema.optional(),
+  /** Present only while the order awaits a manager quote. */
+  handoff: handoffContextSchema.optional(),
+  /** What the server's state machine accepts now; the screens offer exactly these. */
+  actions: z.array(transitionTriggerSchema),
+});
+export type OrderDetailView = z.infer<typeof orderDetailViewSchema>;
+
+export const quoteOutcomeSchema = z.object({
+  orderId: z.string(),
+  number: z.string(),
+  status: orderStatusSchema,
+  deliveryPrice: z.string().optional(),
+  total: z.string().optional(),
+  currency: z.string().optional(),
+});
+export type QuoteOutcome = z.infer<typeof quoteOutcomeSchema>;
+
+export const staffViewSchema = z.object({ email: z.string() });
+export type StaffView = z.infer<typeof staffViewSchema>;
+
+/** A tier as sent (`TierRequest`). Amounts are decimal text, never numbers. */
+export interface TierRequest {
+  region: string;
+  valueCeiling: string;
+  weightCeiling: string;
+  weightUnit: "GRAM" | "KILOGRAM" | "TROY_OUNCE";
+  currency: string;
+  deliveryPrice: string;
+  minDays: number;
+  maxDays: number;
+}
+
+/** The terms of a manager quote as sent (`ManagerQuoteRequest`). */
+export interface ManagerQuoteRequest {
+  deliveryPrice: string;
+  terms: string;
+  transitMinDays: number;
+  transitMaxDays: number;
+  validUntil: string;
+}
+
+const SHARE = "libs/share/src/main/java/com/rednavis/metaldesk/share/domain/";
 const ADMIN = "apps/admin/src/main/java/com/rednavis/metaldesk/admin/";
 
 /** A Java record mirrored by an object schema. */
@@ -110,5 +242,77 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: ADMIN + "order/dto/PageView.java",
     record: "PageView",
     schema: pageViewSchema(z.unknown()),
+  },
+  {
+    kind: "enum",
+    java: SHARE + "order/OrderStatus.java",
+    enumName: "OrderStatus",
+    schema: orderStatusSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "order/TransitionTrigger.java",
+    enumName: "TransitionTrigger",
+    schema: transitionTriggerSchema,
+  },
+  {
+    kind: "enum",
+    java: ADMIN + "order/dto/BoundCeiling.java",
+    enumName: "BoundCeiling",
+    schema: boundCeilingSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderSummaryView.java",
+    record: "OrderSummaryView",
+    schema: orderSummaryViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "ContactView",
+    schema: contactViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "LineView",
+    schema: lineViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "QuoteInfo",
+    schema: quoteInfoSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "ShipmentView",
+    schema: shipmentViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "HandoffContext",
+    schema: handoffContextSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "OrderDetailView",
+    schema: orderDetailViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "quote/dto/QuoteOutcome.java",
+    record: "QuoteOutcome",
+    schema: quoteOutcomeSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "security/StaffView.java",
+    record: "StaffView",
+    schema: staffViewSchema,
   },
 ];

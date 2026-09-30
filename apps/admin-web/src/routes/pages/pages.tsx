@@ -1,27 +1,31 @@
 import { Link } from "react-router";
+import { useQuotePage } from "../../features/orders/useOrders";
 import { EmptyState } from "../../ui";
 
-/** Route shells: each owns its URL and says what will live there. The screens are T-056's. */
-
+/** The landing page: what is waiting for a person. */
 export function OverviewPage() {
+  const quotes = useQuotePage(0);
   return (
     <>
       <h1>MetalDesk Admin</h1>
-      <p>Tiers, manager quotes and orders will be managed from here.</p>
+      <p>
+        {quotes.data
+          ? `Manager quotes waiting: ${String(quotes.data.total)}.`
+          : "Delivery tiers, manager quotes and orders are managed from here."}
+      </p>
+      <ul>
+        <li>
+          <Link to="/quotes">Manager quotes</Link>
+        </li>
+        <li>
+          <Link to="/orders">Orders</Link>
+        </li>
+        <li>
+          <Link to="/tiers">Delivery tiers</Link>
+        </li>
+      </ul>
     </>
   );
-}
-
-export function TiersPage() {
-  return <h1>Delivery tiers</h1>;
-}
-
-export function QuotesPage() {
-  return <h1>Manager quotes</h1>;
-}
-
-export function OrdersPage() {
-  return <h1>Orders</h1>;
 }
 
 export function NotFoundPage() {

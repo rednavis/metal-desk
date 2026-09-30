@@ -133,6 +133,16 @@ class StaffAuthenticationTest extends AdminTestSupport {
   }
 
   @Test
+  void theIdentityIsShownBackToTheStaffMember() {
+    get("/api/admin/me")
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath("$.email")
+        .isEqualTo("staff@example.com");
+  }
+
+  @Test
   void proxyIdentityIsAccepted() {
     get("/api/admin/tiers").expectStatus().isOk();
   }

@@ -225,6 +225,14 @@ order, so the ordinary payment path charges that very order at the total it carr
 (task T-041). The terms carry a validity, checked on every payment-step call, after which the session is refused with
 `checkout.quote-expired`.
 
+**Display currency and preferences** (task T-051, BRD FR-1.6 to FR-1.8). The catalog and the cart can be shown in another
+currency than orders are settled in: the server converts (`?currency=` on those endpoints), the client only formats, so
+it never multiplies a price. Conversion is for display only: checkout, payment, confirmation and order history are
+always in the settlement currency, because the overview total must equal the charged amount. The rates come from an
+`ExchangeRates` port whose only implementation serves configured demo rates, reported to clients as `FAKE` and disclosed
+in the UI; no rate source exists in this build. A signed-in customer's theme, language and currency are stored server-side
+(`/api/account/preferences`) and win over the browser's copy on sign-in, field by field.
+
 Payment (task T-037) completes the checkout. The offered methods are filtered by a business-rule policy: above a
 configurable ceiling on the grand total (default 2500.00 EUR, strictly above) the wallet account is withheld unless
 `wallet-high-value` is set, and invoice is never filtered. Choosing a method creates nothing; executing it requires the

@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { createApiClient, type ApiClientOptions } from "../api/client";
+import { createRequestContext } from "../api/requestContext";
 import { createMemoryTokenStore } from "../api/tokenStore";
 import { SIGN_IN_PATH, appRoutes } from "../routes/routes";
 
@@ -18,6 +19,8 @@ export interface AppOptions {
  */
 export function createApp(options: AppOptions = {}) {
   const tokenStore = createMemoryTokenStore();
+  // The provider replaces these with the customer's real preferences before anything is requested.
+  const requestContext = createRequestContext({ locale: "en", currency: "EUR" });
   const router = options.initialEntries
     ? createMemoryRouter(appRoutes, { initialEntries: options.initialEntries })
     : createBrowserRouter(appRoutes);
@@ -25,6 +28,7 @@ export function createApp(options: AppOptions = {}) {
     baseUrl: options.baseUrl,
     fetchImpl: options.fetchImpl,
     tokenStore,
+    requestContext,
     onUnauthorized: () => {
       const from = router.state.location.pathname;
       if (from !== SIGN_IN_PATH) {
@@ -37,7 +41,7 @@ export function createApp(options: AppOptions = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: 1, staleTime: 5_000, refetchOnWindowFocus: false } },
   });
-  return { router, client, tokenStore, queryClient };
+  return { router, client, tokenStore, queryClient, requestContext };
 }
 
 export type App = ReturnType<typeof createApp>;

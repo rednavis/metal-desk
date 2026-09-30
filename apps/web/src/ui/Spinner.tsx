@@ -1,16 +1,17 @@
+import { usePreferences } from "../preferences/usePreferences";
+
 interface SpinnerProps {
-  /** What is loading, read out by screen readers. */
+  /** What is loading, read out by screen readers; "Loading" in the active language by default. */
   label?: string;
 }
 
 /** A loading indicator that announces itself politely. */
-export function Spinner({ label = "Loading" }: SpinnerProps) {
+export function Spinner({ label }: SpinnerProps) {
+  const { t } = usePreferences();
   return (
     <span role="status" aria-live="polite">
       <span className="md-spinner" aria-hidden="true" />
-      <span className="md-visually-hidden" style={{ position: "absolute", left: "-9999px" }}>
-        {label}
-      </span>
+      <span style={{ position: "absolute", left: "-9999px" }}>{label ?? t("spinner.loading")}</span>
     </span>
   );
 }

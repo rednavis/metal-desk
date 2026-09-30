@@ -1,0 +1,38 @@
+/*
+ * The theme, as tokens. Colours are defined once, here, and switched at the root: the page's
+ * `data-theme` attribute is "light" or "dark" (set by `applyTheme`), and nothing else in the app
+ * mentions a theme. Components use the variables and so follow without knowing.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #ffffff;
+  --color-fg: #111827;
+  --color-muted: #4b5563;
+  --color-border: #d1d5db;
+  --color-accent: #1d4ed8;
+  --color-accent-fg: #ffffff;
+  --color-danger: #b91c1c;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0f172a;
+  --color-fg: #f1f5f9;
+  --color-muted: #94a3b8;
+  --color-border: #334155;
+  --color-accent: #60a5fa;
+  --color-accent-fg: #0f172a;
+  --color-danger: #f87171;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: system-ui, sans-serif;
+}
+
+a {
+  color: var(--color-accent);
+}

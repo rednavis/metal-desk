@@ -4,6 +4,8 @@ import com.rednavis.metaldesk.api.catalog.dto.CategoryView;
 import com.rednavis.metaldesk.api.catalog.dto.PageView;
 import com.rednavis.metaldesk.api.catalog.dto.ProductDetailView;
 import com.rednavis.metaldesk.api.catalog.dto.ProductSummaryView;
+import com.rednavis.metaldesk.api.currency.DisplayCurrencies;
+import com.rednavis.metaldesk.share.domain.money.Currency;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 public class CatalogController {
 
   private final CatalogService service;
+  private final DisplayCurrencies currencies;
 
   /**
    * Lists the categories (FR-1.2).
@@ -46,8 +49,18 @@ public class CatalogController {
   public Mono<PageView<ProductSummaryView>> products(
       @PathVariable String id,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
-    return service.productsInCategory(id, page, size);
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String currency) {
+    final Currency shown = currencies.resolve(currency);
+    return service
+        .productsInCategory(id, page, size)
+        .map(
+            result ->
+                new PageView<>(
+                    result.items().stream().map(item -> currencies.summary(item, shown)).toList(),
+                    result.page(),
+                    result.size(),
+                    result.total()));
   }
 
   /**
@@ -57,8 +70,10 @@ public class CatalogController {
    * @return the detail
    */
   @GetMapping("/products/{id}")
-  public Mono<ProductDetailView> product(@PathVariable String id) {
-    return service.product(id);
+  public Mono<ProductDetailView> product(
+      @PathVariable String id, @RequestParam(required = false) String currency) {
+    final Currency shown = currencies.resolve(currency);
+    return service.product(id).map(view -> currencies.detail(view, shown));
   }
 
   /**
@@ -68,8 +83,10 @@ public class CatalogController {
    * @return the related products
    */
   @GetMapping("/products/{id}/related")
-  public Flux<ProductSummaryView> related(@PathVariable String id) {
-    return service.related(id);
+  public Flux<ProductSummaryView> related(
+      @PathVariable String id, @RequestParam(required = false) String currency) {
+    final Currency shown = currencies.resolve(currency);
+    return service.related(id).map(view -> currencies.summary(view, shown));
   }
 
   /**
@@ -79,7 +96,9 @@ public class CatalogController {
    * @return the matches
    */
   @GetMapping("/search")
-  public Flux<ProductSummaryView> search(@RequestParam("q") String query) {
-    return service.search(query);
+  public Flux<ProductSummaryView> search(
+      @RequestParam("q") String query, @RequestParam(required = false) String currency) {
+    final Currency shown = currencies.resolve(currency);
+    return service.search(query).map(view -> currencies.summary(view, shown));
   }
 }

@@ -30,3 +30,10 @@ export const marketDataConfig: MarketDataConfig = {
   retryBaseMs: 2_000,
   retryMaxMs: 60_000,
 };
+
+/**
+ * The version of the privacy policy the checkout shows and the customer accepts (BRD FR-4.3). The
+ * server refuses an acceptance of any other version (`consent.version-mismatch`), so this must be
+ * set to `metaldesk.checkout.policy-version` for a deployment; the default is the server's.
+ */
+export const policyVersion: string = import.meta.env.VITE_POLICY_VERSION ?? "2026-10";

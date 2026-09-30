@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_MARKET_DATA_POLL_MS?: string;
   /** How old prices may be before they are shown as stale, in milliseconds. */
   readonly VITE_MARKET_DATA_STALE_MS?: string;
+  /** The privacy-policy version checkout asks the customer to accept; must match the server's. */
+  readonly VITE_POLICY_VERSION?: string;
 }
 
 interface ImportMeta {

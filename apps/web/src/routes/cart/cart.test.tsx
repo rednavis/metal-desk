@@ -223,6 +223,9 @@ describe("buy now", () => {
     });
     expect(app.router.state.location.search).toBe("?buyNow=p1");
     expect(shop.quantities).toEqual(new Map([["p2", 1]]));
-    expect(shop.sent.filter((r) => r.method !== "GET")).toEqual([]);
+    // Only the checkout session is started, for that one product; nothing is sent to the cart.
+    expect(shop.sent.filter((r) => r.method !== "GET" && r.url.startsWith("/api/cart"))).toEqual(
+      [],
+    );
   });
 });

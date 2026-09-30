@@ -200,6 +200,195 @@ export const preferencesViewSchema = z.object({
 });
 export type PreferencesView = z.infer<typeof preferencesViewSchema>;
 
+// ---- checkout (api/checkout) ---------------------------------------------------------------
+
+export const checkoutStageSchema = z.enum(["PAYMENT_ALLOWED", "HANDOFF_REQUIRED"]);
+export type CheckoutStage = z.infer<typeof checkoutStageSchema>;
+
+export const handoffReasonSchema = z.enum([
+  "VALUE_CEILING_EXCEEDED",
+  "WEIGHT_CEILING_EXCEEDED",
+  "NO_TIER_FOR_REGION",
+]);
+export type HandoffReason = z.infer<typeof handoffReasonSchema>;
+
+export const paymentMethodSchema = z.enum([
+  "CARD",
+  "BANK_DEBIT",
+  "BANK_REDIRECT",
+  "BANK_TRANSFER",
+  "SAVED_WALLET",
+  "WALLET_ACCOUNT",
+  "INVOICE",
+]);
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+
+export const paymentMethodGroupSchema = z.enum(["GATEWAY", "WALLET", "INVOICE"]);
+export type PaymentMethodGroup = z.infer<typeof paymentMethodGroupSchema>;
+
+export const confirmationKindSchema = z.enum(["PAID", "INVOICE", "MANAGER_QUOTE"]);
+export type ConfirmationKind = z.infer<typeof confirmationKindSchema>;
+
+export const detailsViewSchema = z.object({
+  name: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  street: z.string(),
+  city: z.string(),
+  country: z.string(),
+  postalCode: z.string(),
+  companyName: z.string().optional(),
+  companyAddress: z.string().optional(),
+  note: z.string().optional(),
+});
+export type DetailsView = z.infer<typeof detailsViewSchema>;
+
+export const consentViewSchema = z.object({ policyVersion: z.string(), acceptedAt: z.string() });
+export type ConsentView = z.infer<typeof consentViewSchema>;
+
+export const conversionViewSchema = z.object({ reference: z.string(), verified: z.boolean() });
+export type ConversionView = z.infer<typeof conversionViewSchema>;
+
+export const quoteViewSchema = z.object({
+  tierId: z.string(),
+  cost: priceViewSchema,
+  minDays: z.number().int(),
+  maxDays: z.number().int(),
+  quotedAt: z.string(),
+});
+export type QuoteView = z.infer<typeof quoteViewSchema>;
+
+export const deliveryEvaluationViewSchema = z.object({
+  stage: checkoutStageSchema,
+  quote: quoteViewSchema.optional(),
+  reason: handoffReasonSchema.optional(),
+  boundCeiling: z.enum(["VALUE", "WEIGHT"]).optional(),
+  exTaxValue: priceViewSchema,
+  weightGrams: z.string(),
+  handoffReference: z.string().optional(),
+});
+export type DeliveryEvaluationView = z.infer<typeof deliveryEvaluationViewSchema>;
+
+export const handoffViewSchema = z.object({
+  reference: z.string(),
+  reason: handoffReasonSchema,
+  boundCeiling: z.enum(["VALUE", "WEIGHT"]).optional(),
+});
+export type HandoffView = z.infer<typeof handoffViewSchema>;
+
+export const sessionViewSchema = z.object({
+  checkoutId: z.string(),
+  source: z.enum(["CART", "BUY_NOW"]),
+  basket: cartViewSchema,
+  details: detailsViewSchema.optional(),
+  consent: consentViewSchema.optional(),
+  conversion: conversionViewSchema.optional(),
+  delivery: deliveryEvaluationViewSchema.optional(),
+});
+export type SessionView = z.infer<typeof sessionViewSchema>;
+
+export const step1ResponseSchema = z.object({
+  checkoutId: z.string(),
+  step1Complete: z.boolean(),
+  details: detailsViewSchema,
+  consent: consentViewSchema,
+  conversion: conversionViewSchema.optional(),
+});
+export type Step1Response = z.infer<typeof step1ResponseSchema>;
+
+export const paymentMethodViewSchema = z.object({
+  method: paymentMethodSchema,
+  group: paymentMethodGroupSchema,
+});
+export type PaymentMethodView = z.infer<typeof paymentMethodViewSchema>;
+
+export const paymentMethodsViewSchema = z.object({
+  methods: z.array(paymentMethodViewSchema),
+  highValue: z.boolean(),
+  grandTotal: priceViewSchema,
+  selected: paymentMethodSchema.optional(),
+});
+export type PaymentMethodsView = z.infer<typeof paymentMethodsViewSchema>;
+
+export const overviewTotalsViewSchema = z.object({
+  net: priceViewSchema,
+  tax: priceViewSchema,
+  delivery: priceViewSchema,
+  grandTotal: priceViewSchema,
+});
+export type OverviewTotalsView = z.infer<typeof overviewTotalsViewSchema>;
+
+export const overviewViewSchema = z.object({
+  checkoutId: z.string(),
+  details: detailsViewSchema,
+  paymentMethod: paymentMethodSchema.optional(),
+  lines: z.array(cartLineViewSchema),
+  delivery: quoteViewSchema,
+  totals: overviewTotalsViewSchema,
+  orderReference: z.string().optional(),
+});
+export type OverviewView = z.infer<typeof overviewViewSchema>;
+
+export const paymentResultKindSchema = z.enum([
+  "CAPTURED",
+  "REDIRECT",
+  "ELEMENT",
+  "DOCUMENT_ISSUED",
+  "DECLINED",
+  "ERROR",
+]);
+export type PaymentResultKind = z.infer<typeof paymentResultKindSchema>;
+
+/** One wire shape for every outcome; `result` says which other fields are present. */
+export const paymentResultViewSchema = z.object({
+  result: paymentResultKindSchema,
+  orderReference: z.string().optional(),
+  redirectUrl: z.string().optional(),
+  clientHandle: z.string().optional(),
+  invoiceReference: z.string().optional(),
+  declineReason: z.string().optional(),
+  errorCode: z.string().optional(),
+  message: z.string().optional(),
+});
+export type PaymentResultView = z.infer<typeof paymentResultViewSchema>;
+
+export const confirmationViewSchema = z.object({
+  kind: confirmationKindSchema,
+  orderNumber: z.string(),
+  status: z.string(),
+  statusLabel: z.string(),
+  itemCount: z.number().int(),
+  total: priceViewSchema.optional(),
+  invoiceNumber: z.string().optional(),
+  message: z.string(),
+});
+export type ConfirmationView = z.infer<typeof confirmationViewSchema>;
+
+export const addressViewSchema = z.object({
+  street: z.string(),
+  city: z.string(),
+  country: z.string(),
+  postalCode: z.string(),
+  companyName: z.string().optional(),
+  companyAddress: z.string().optional(),
+});
+export type AddressView = z.infer<typeof addressViewSchema>;
+
+/** Checkout step 1 as sent (`Step1Request`): always the full explicit field set. */
+export interface Step1Request {
+  name: string;
+  contact: { email: string; phone: string };
+  street: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  company: { name: string; address: string };
+  note: string;
+  privacyPolicyAccepted: boolean;
+  policyVersion: string;
+  account: { rememberMe: boolean; password?: string };
+}
+
 // ---- the registry the contract test walks --------------------------------------------------
 
 const API = "services/api/src/main/java/com/rednavis/metaldesk/api/";
@@ -360,5 +549,125 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: API + "auth/SignInResponse.java",
     record: "SignInResponse",
     schema: signInResponseSchema,
+  },
+  {
+    kind: "enum",
+    java: API + "checkout/delivery/CheckoutStage.java",
+    enumName: "CheckoutStage",
+    schema: checkoutStageSchema,
+  },
+  {
+    kind: "enum",
+    java: API + "checkout/delivery/HandoffReason.java",
+    enumName: "HandoffReason",
+    schema: handoffReasonSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "payment/PaymentMethod.java",
+    enumName: "PaymentMethod",
+    schema: paymentMethodSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "payment/PaymentMethodGroup.java",
+    enumName: "PaymentMethodGroup",
+    schema: paymentMethodGroupSchema,
+  },
+  {
+    kind: "enum",
+    java: API + "checkout/confirmation/dto/ConfirmationKind.java",
+    enumName: "ConfirmationKind",
+    schema: confirmationKindSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/dto/DetailsView.java",
+    record: "DetailsView",
+    schema: detailsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/dto/ConsentView.java",
+    record: "ConsentView",
+    schema: consentViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/dto/ConversionView.java",
+    record: "ConversionView",
+    schema: conversionViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/delivery/dto/QuoteView.java",
+    record: "QuoteView",
+    schema: quoteViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/delivery/dto/DeliveryEvaluationView.java",
+    record: "DeliveryEvaluationView",
+    schema: deliveryEvaluationViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/delivery/dto/HandoffView.java",
+    record: "HandoffView",
+    schema: handoffViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/dto/SessionView.java",
+    record: "SessionView",
+    schema: sessionViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/dto/Step1Response.java",
+    record: "Step1Response",
+    schema: step1ResponseSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/PaymentMethodView.java",
+    record: "PaymentMethodView",
+    schema: paymentMethodViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/PaymentMethodsView.java",
+    record: "PaymentMethodsView",
+    schema: paymentMethodsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/OverviewTotalsView.java",
+    record: "OverviewTotalsView",
+    schema: overviewTotalsViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/OverviewView.java",
+    record: "OverviewView",
+    schema: overviewViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/PaymentResultView.java",
+    record: "PaymentResultView",
+    schema: paymentResultViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/confirmation/dto/ConfirmationView.java",
+    record: "ConfirmationView",
+    schema: confirmationViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "cart/dto/AddressView.java",
+    record: "AddressView",
+    schema: addressViewSchema,
   },
 ];

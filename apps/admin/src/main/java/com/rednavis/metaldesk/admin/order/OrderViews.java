@@ -1,6 +1,7 @@
 package com.rednavis.metaldesk.admin.order;
 
 import com.rednavis.metaldesk.admin.order.dto.OrderDetailView;
+import com.rednavis.metaldesk.admin.order.dto.OrderDetailView.HandoffContext;
 import com.rednavis.metaldesk.admin.order.dto.OrderSummaryView;
 import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.persistence.document.ShipmentDocument;
@@ -45,10 +46,11 @@ public final class OrderViews {
    * @param order the order
    * @param customer the customer record, or null if it is gone
    * @param shipment the shipment, or null if none was entered
+   * @param handoff the handoff context, or null if the order is not awaiting a quote
    * @return the detail
    */
   public static OrderDetailView detail(
-      Order order, CustomerDocument customer, ShipmentDocument shipment) {
+      Order order, CustomerDocument customer, ShipmentDocument shipment, HandoffContext handoff) {
     final OrderTotals totals = order.totals();
     final List<TransitionTrigger> actions =
         new ArrayList<>(OrderStateMachine.availableFrom(order.status()));
@@ -56,6 +58,9 @@ public final class OrderViews {
     return new OrderDetailView(
         summary(order),
         customer == null ? null : customer.name(),
+        customer == null
+            ? null
+            : new OrderDetailView.ContactView(customer.email(), customer.phone()),
         destination(order.deliveryAddress()),
         order.lines().stream().map(OrderViews::line).toList(),
         totals.net().amount().toPlainString(),
@@ -65,6 +70,7 @@ public final class OrderViews {
         shipment == null
             ? null
             : new OrderDetailView.ShipmentView(shipment.carrier(), shipment.trackingReference()),
+        handoff,
         actions);
   }
 

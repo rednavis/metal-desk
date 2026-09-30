@@ -51,6 +51,9 @@ public class QuoteService {
   /** The tier id recorded on a delivery quote that staff, not a tier, decided. */
   public static final String MANAGER_TIER = "manager-quote";
 
+  /** The longest reason accepted for declining a quote. */
+  public static final int REASON_MAX = 500;
+
   private final OrderStore store;
   private final OrderAdminService orderService;
   private final ManagerQuoteRepository quotes;
@@ -136,17 +139,25 @@ public class QuoteService {
    * Declines the quote: the order is cancelled.
    *
    * @param orderId the order id
+   * @param reason why, or null if none was given
    * @param staff who is acting
    * @return the order's new status
+   * @throws ValidationException if the reason is longer than {@value #REASON_MAX} characters
    */
-  public QuoteOutcome decline(String orderId, StaffPrincipal staff) {
+  public QuoteOutcome decline(String orderId, String reason, StaffPrincipal staff) {
+    if (reason != null && reason.length() > REASON_MAX) {
+      throw new ValidationException(
+          "quote.reason-too-long", "The reason must be at most " + REASON_MAX + " characters");
+    }
     final Order before = store.require(orderId);
     final Order after =
         OrderTransitions.advance(before, TransitionTrigger.QUOTE_DECLINED, clock.instant());
     store.advance(before, after);
     final String number = after.number().format();
     final String who = staff.email();
-    log.info("Quote for order {} declined by {}", number, who);
+    final String why =
+        reason == null ? "no reason given" : reason.replaceAll("\\p{Cntrl}", " ").strip();
+    log.info("Quote for order {} declined by {}: {}", number, who, why);
     return new QuoteOutcome(after.id().value(), number, after.status(), null, null, null);
   }
 }

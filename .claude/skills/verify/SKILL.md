@@ -6,7 +6,7 @@ description: Full backend + frontend build verification for metal-desk — clean
 Run a full verification pass of the metal-desk monorepo. Steps:
 
 1. **Backend**: `./gradlew clean build` from the repo root. This runs Spotless, Checkstyle, SpotBugs,
-   tests, and Jacoco across all 6 JVM modules (`libs:share`, `libs:payments`, `libs:mail`,
+   PMD, tests, and Jacoco across all 6 JVM modules (`libs:share`, `libs:payments`, `libs:mail`,
    `services:api`, `services:pricing-bridge`, `apps:admin`) via the `metaldesk.quality-conventions`
    convention plugin. Must end in `BUILD SUCCESSFUL`.
 

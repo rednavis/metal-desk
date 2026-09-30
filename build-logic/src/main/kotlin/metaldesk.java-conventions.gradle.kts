@@ -24,6 +24,21 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+
+    // Mockito's inline mock maker needs an instrumentation agent. Left alone it attaches one to the
+    // running JVM, which the JDK warns about and will stop allowing; Mockito's documented fix is to
+    // start the test JVM with mockito-core itself as the agent. The jar is taken from the test
+    // classpath (Spring modules get it, at the Spring-managed version, from spring-boot-starter-test),
+    // so there is no second version to keep in step, and a module without Mockito gets no flag.
+    //
+    // Netty (reactive Mongo driver, WebFlux) loads a native library through a restricted JDK method,
+    // which the JDK warns about on every run and will block unless native access is granted. The test
+    // JVM grants it to classpath code explicitly.
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    val mockitoCore = classpath.filter { it.name.startsWith("mockito-core-") }
+    doFirst {
+        mockitoCore.files.firstOrNull()?.let { jvmArgs("-javaagent:${it.absolutePath}") }
+    }
 }
 
 dependencies {

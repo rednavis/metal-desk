@@ -48,6 +48,11 @@
     <!-- Configured separately below: suppressed in test classes only. -->
     <exclude name="LawOfDemeter"/>
     <exclude name="TooManyMethods"/>
+    <!-- Checks that code stays inside packages or classes it is told to; with neither property set it
+         has nothing to check, and PMD drops it with a "misconfigured rule" warning on every run. Add it
+         back, with `packages`, if a real coupling boundary is ever to be enforced here (ArchUnit
+         already owns the module boundaries). -->
+    <exclude name="LoosePackageCoupling"/>
   </rule>
   <rule ref="category/java/design.xml/TooManyMethods">
     <properties>

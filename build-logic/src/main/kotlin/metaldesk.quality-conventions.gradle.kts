@@ -4,6 +4,11 @@ import com.github.spotbugs.snom.Effort
 import com.github.spotbugs.snom.SpotBugsExtension
 import com.github.spotbugs.snom.SpotBugsTask
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.file.RegularFile
+import org.gradle.api.plugins.quality.Pmd
+import org.gradle.api.provider.Provider
+import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
     id("com.diffplug.spotless")
@@ -85,6 +90,8 @@ configure<SpotBugsExtension> {
     effort = Effort.MAX
     reportLevel = Confidence.LOW
     ignoreFailures = false
+    showProgress = true
+    showStackTraces = true
     excludeFilter = spotbugsExcludeFile.asFile
 }
 
@@ -104,6 +111,18 @@ pmd {
     isIgnoreFailures = false
     // Gradle's default is to fail only on priority 5 (lowest) and above, i.e. everything.
     rulesMinimumPriority = 5
+}
+
+// PMD resolves `java.lang` and friends through the JDK's jrt-fs.jar. If the analysis classpath lacks it,
+// PMD adds the one of whatever JVM runs Gradle and warns that it "could be the wrong java version". The
+// project compiles with its toolchain, so that is the JDK whose jrt-fs.jar belongs on the classpath.
+val toolchainJrtFs: Provider<RegularFile> =
+    extensions.getByType<JavaToolchainService>().launcherFor(
+        extensions.getByType<JavaPluginExtension>().toolchain,
+    ).map { it.metadata.installationPath.file("lib/jrt-fs.jar") }
+
+tasks.withType<Pmd>().configureEach {
+    classpath = files(classpath ?: files(), toolchainJrtFs)
 }
 
 jacoco {

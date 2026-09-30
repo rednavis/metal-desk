@@ -68,13 +68,16 @@ public class QuoteController {
    * Declines the quote; the order is cancelled.
    *
    * @param orderId the order id
+   * @param request why the quote is declined; the back office always sends one, but the call still
+   *     works without a body
    * @param staff who is acting
    * @return the outcome
    */
   @PostMapping("/{orderId}/decline")
   public QuoteOutcome decline(
       @PathVariable String orderId,
+      @RequestBody(required = false) DeclineRequest request,
       @RequestAttribute(StaffAuthenticationInterceptor.PRINCIPAL) StaffPrincipal staff) {
-    return service.decline(orderId, staff);
+    return service.decline(orderId, request == null ? null : request.reason(), staff);
   }
 }

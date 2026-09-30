@@ -10,6 +10,7 @@ import com.rednavis.metaldesk.persistence.document.CredentialDocument;
 import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
 import com.rednavis.metaldesk.persistence.mapper.CustomerMapper;
 import com.rednavis.metaldesk.share.domain.customer.AuthCredential;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,8 +116,7 @@ class AuthControllerTest extends MongoTestSupport {
     final EntityExchangeResult<byte[]> noBody = signIn(null);
 
     assertEquals(HttpStatus.UNAUTHORIZED, unknown.getStatus());
-    for (final EntityExchangeResult<byte[]> other :
-        new EntityExchangeResult[] {wrong, missing, noBody}) {
+    for (final EntityExchangeResult<byte[]> other : List.of(wrong, missing, noBody)) {
       assertEquals(unknown.getStatus(), other.getStatus());
       assertArrayEquals(unknown.getResponseBody(), other.getResponseBody());
     }

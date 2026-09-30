@@ -30,10 +30,10 @@ export interface ApiClient {
  * The only place in the app that talks to the network. It applies the base URL and a correlation id
  * to every call and turns every failure into an {@link ApiError}.
  *
- * It sends no credential of any kind and there is no sign-in: staff are authenticated by the
+ * It sends no credential of any kind and has no way to obtain one: staff are authenticated by the
  * Identity-Aware Proxy in front of `apps/admin` (Architecture section 7), which adds its own
  * identity to the request on the way in. A 401 therefore means the proxy refused the session, and
- * the app can only say so; signing in is not something this app can do.
+ * the app can only say so; establishing an identity is not something this app can do.
  */
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const baseUrl = (options.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? "/api").replace(

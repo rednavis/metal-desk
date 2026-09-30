@@ -41,7 +41,7 @@ describe("the admin API client", () => {
     expect(transport.mock.calls[0]?.[1]?.credentials).toBe("same-origin");
   });
 
-  it("reports a 401 as an error and does nothing else: there is no sign-in to go to", async () => {
+  it("reports a 401 as an error and does nothing else: there is nowhere to go to get an identity", async () => {
     const client = createApiClient({
       baseUrl: "/api",
       fetchImpl: reply(401, {

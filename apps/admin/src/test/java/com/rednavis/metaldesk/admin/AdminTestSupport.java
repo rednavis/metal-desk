@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.admin;
 import com.rednavis.metaldesk.admin.persistence.CustomerRepository;
 import com.rednavis.metaldesk.admin.persistence.ManagerQuoteRepository;
 import com.rednavis.metaldesk.admin.persistence.OrderRepository;
+import com.rednavis.metaldesk.admin.persistence.ProductRepository;
 import com.rednavis.metaldesk.admin.persistence.ShipmentRepository;
 import com.rednavis.metaldesk.admin.persistence.TierRepository;
 import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
@@ -52,6 +53,7 @@ public class AdminTestSupport {
   @Autowired protected ShipmentRepository shipments;
   @Autowired protected ManagerQuoteRepository quotes;
   @Autowired protected CustomerRepository customers;
+  @Autowired protected ProductRepository products;
   @Autowired protected OrderMapper orderMapper;
   @Autowired protected CustomerMapper customerMapper;
 
@@ -80,6 +82,7 @@ public class AdminTestSupport {
     shipments.deleteAll();
     quotes.deleteAll();
     customers.deleteAll();
+    products.deleteAll();
   }
 
   /**

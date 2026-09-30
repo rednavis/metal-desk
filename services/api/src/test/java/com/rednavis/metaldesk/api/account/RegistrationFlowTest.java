@@ -173,8 +173,7 @@ class RegistrationFlowTest extends AccountTestSupport {
     final EntityExchangeResult<byte[]> unknown = verify(Map.of(REFERENCE, "nope", CODE, "000000"));
 
     assertEquals(400, wrong.getStatus().value());
-    for (final EntityExchangeResult<byte[]> other :
-        new EntityExchangeResult[] {expired, exhausted, unknown}) {
+    for (final EntityExchangeResult<byte[]> other : List.of(expired, exhausted, unknown)) {
       assertEquals(wrong.getStatus(), other.getStatus());
       assertArrayEquals(wrong.getResponseBody(), other.getResponseBody());
     }

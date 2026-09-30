@@ -51,6 +51,7 @@ public class DeliveryEvaluationService {
   private final BasketMetrics metrics;
   private final FulfillmentTierRepository tiers;
   private final FulfillmentTierMapper tierMapper;
+  private final QuotedHandoffs quoted;
   private final Clock clock;
 
   /**
@@ -68,7 +69,7 @@ public class DeliveryEvaluationService {
   public Mono<CheckoutSession> evaluate(String id, AuthenticatedCustomer customer) {
     return sessions
         .find(id, customer)
-        .flatMap(session -> frozen(session) ? Mono.just(session) : evaluateLive(session));
+        .flatMap(session -> frozen(session) ? quoted.adopt(session) : evaluateLive(session));
   }
 
   /** A session with a manager handoff or an order is not re-evaluated: someone owns its price. */

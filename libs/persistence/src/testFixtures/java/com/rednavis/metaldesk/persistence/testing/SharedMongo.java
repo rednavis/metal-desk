@@ -33,7 +33,16 @@ public final class SharedMongo {
    * @param registry the registry a {@code @DynamicPropertySource} method receives
    */
   public static void registerProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.mongodb.uri", () -> MONGO.getConnectionString() + "/metaldesk");
+    registry.add("spring.mongodb.uri", SharedMongo::connectionString);
+  }
+
+  /**
+   * The connection string of the shared container, including the database.
+   *
+   * @return the connection string
+   */
+  public static String connectionString() {
+    return MONGO.getConnectionString() + "/metaldesk";
   }
 
   /** Records that the running test class talks to the shared container. */

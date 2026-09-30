@@ -25,3 +25,27 @@ dependencies {
     testImplementation(libs.reactor.test)
     testImplementation(libs.wiremock.standalone)
 }
+
+// The hand-off end-to-end test (T-041) runs the real apps/admin application next to this one, in a
+// class loader of its own, because the two cannot share a classpath: admin is MVC with the blocking
+// MongoDB driver, this service is WebFlux with the reactive one. Only its runtime classpath is
+// resolved here, and it is handed to the test as a system property, so nothing of admin reaches
+// this module's own classpath.
+val adminRuntime by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
+dependencies {
+    adminRuntime(project(":apps:admin"))
+}
+
+tasks.test {
+    inputs.files(adminRuntime)
+    doFirst {
+        systemProperty(
+            "metaldesk.admin.classpath",
+            adminRuntime.files.joinToString(File.pathSeparator) { it.absolutePath },
+        )
+    }
+}

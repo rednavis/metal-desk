@@ -128,9 +128,10 @@
   </rule>
   <rule ref="category/java/multithreading.xml/DoNotUseThreads">
     <properties>
-      <!-- Test classes only: a test must be able to ask which thread a piece of code ran on. -->
+      <!-- Test classes and test-support bases: a test must be able to ask which thread a piece of code ran on, and
+           the end-to-end harness (T-041) must set the context class loader under which it starts apps/admin. -->
       <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or ends-with(@SimpleName, 'TestSupport')]"/>
     </properties>
   </rule>
   <rule ref="category/java/performance.xml"/>

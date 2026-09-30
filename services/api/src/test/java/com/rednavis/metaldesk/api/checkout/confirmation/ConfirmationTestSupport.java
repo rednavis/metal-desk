@@ -2,11 +2,11 @@ package com.rednavis.metaldesk.api.checkout.confirmation;
 
 import com.rednavis.metaldesk.api.checkout.CheckoutProperties;
 import com.rednavis.metaldesk.api.checkout.payment.PaymentTestSupport;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
 import com.rednavis.metaldesk.mail.MailTemplate;
 import com.rednavis.metaldesk.mail.TransactionalMail;
 import com.rednavis.metaldesk.mail.fake.RecordedMail;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import java.util.List;
 import java.util.Map;

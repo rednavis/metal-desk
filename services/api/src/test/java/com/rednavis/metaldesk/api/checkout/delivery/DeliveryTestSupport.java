@@ -1,8 +1,8 @@
 package com.rednavis.metaldesk.api.checkout.delivery;
 
 import com.rednavis.metaldesk.api.checkout.CheckoutTestSupport;
-import com.rednavis.metaldesk.api.persistence.mapper.FulfillmentTierMapper;
 import com.rednavis.metaldesk.api.persistence.repository.FulfillmentTierRepository;
+import com.rednavis.metaldesk.persistence.mapper.FulfillmentTierMapper;
 import com.rednavis.metaldesk.share.domain.Region;
 import com.rednavis.metaldesk.share.domain.fulfillment.FulfillmentTier;
 import com.rednavis.metaldesk.share.domain.fulfillment.TransitTime;

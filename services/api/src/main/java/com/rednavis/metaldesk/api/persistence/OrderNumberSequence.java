@@ -1,6 +1,6 @@
 package com.rednavis.metaldesk.api.persistence;
 
-import com.rednavis.metaldesk.api.persistence.document.OrderSequenceDocument;
+import com.rednavis.metaldesk.persistence.document.OrderSequenceDocument;
 import com.rednavis.metaldesk.share.domain.order.OrderNumber;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import java.time.LocalDate;

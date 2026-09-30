@@ -3,12 +3,12 @@ package com.rednavis.metaldesk.api.auth;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.rednavis.metaldesk.api.persistence.AccountFixtures;
 import com.rednavis.metaldesk.api.persistence.MongoTestSupport;
-import com.rednavis.metaldesk.api.persistence.document.CredentialDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.CustomerMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CredentialRepository;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
+import com.rednavis.metaldesk.persistence.document.CredentialDocument;
+import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
+import com.rednavis.metaldesk.persistence.mapper.CustomerMapper;
 import com.rednavis.metaldesk.share.domain.customer.AuthCredential;
 import java.util.Map;
 import java.util.Objects;

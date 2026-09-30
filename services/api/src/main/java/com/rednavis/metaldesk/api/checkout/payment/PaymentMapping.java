@@ -1,6 +1,6 @@
 package com.rednavis.metaldesk.api.checkout.payment;
 
-import com.rednavis.metaldesk.api.persistence.document.SessionPaymentDocument;
+import com.rednavis.metaldesk.persistence.document.SessionPaymentDocument;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.ProviderReference;

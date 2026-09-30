@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
+import com.rednavis.metaldesk.persistence.document.OrderDocument;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;

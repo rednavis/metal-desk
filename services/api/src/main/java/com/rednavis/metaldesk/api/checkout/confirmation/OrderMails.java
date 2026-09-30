@@ -2,12 +2,12 @@ package com.rednavis.metaldesk.api.checkout.confirmation;
 
 import com.rednavis.metaldesk.api.account.LocaleParser;
 import com.rednavis.metaldesk.api.checkout.CheckoutProperties;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.mail.MailAttachment;
 import com.rednavis.metaldesk.mail.MailRenderer;
 import com.rednavis.metaldesk.mail.MailTemplate;
 import com.rednavis.metaldesk.mail.TransactionalMail;
 import com.rednavis.metaldesk.payments.invoice.InvoiceNumber;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import java.util.List;

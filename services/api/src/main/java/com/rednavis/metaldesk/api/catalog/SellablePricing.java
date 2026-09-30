@@ -1,9 +1,9 @@
 package com.rednavis.metaldesk.api.catalog;
 
 import com.rednavis.metaldesk.api.marketdata.ReferencePriceCache;
-import com.rednavis.metaldesk.api.persistence.document.PriceDocument.ScopeKind;
-import com.rednavis.metaldesk.api.persistence.document.PriceRuleDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.PriceRuleMapper;
+import com.rednavis.metaldesk.persistence.document.PriceDocument.ScopeKind;
+import com.rednavis.metaldesk.persistence.document.PriceRuleDocument;
+import com.rednavis.metaldesk.persistence.mapper.PriceRuleMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Product;
 import com.rednavis.metaldesk.share.domain.pricing.PriceDerivation;
 import com.rednavis.metaldesk.share.domain.pricing.SellablePrice;

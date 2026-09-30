@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":libs:share"))
     implementation(project(":libs:payments"))
     implementation(project(":libs:mail"))
+    implementation(project(":libs:persistence"))
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.mongodb.reactive)
@@ -20,6 +21,7 @@ dependencies {
     testImplementation(libs.spring.boot.starter.webflux.test)
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.mongodb)
+    testImplementation(testFixtures(project(":libs:persistence")))
     testImplementation(libs.reactor.test)
     testImplementation(libs.wiremock.standalone)
 }

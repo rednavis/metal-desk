@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.rednavis.metaldesk.api.account.MailInspector;
-import com.rednavis.metaldesk.api.persistence.document.CheckoutSessionDocument;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
 import com.rednavis.metaldesk.api.persistence.repository.VerificationChallengeRepository;
 import com.rednavis.metaldesk.mail.MailTemplate;
+import com.rednavis.metaldesk.persistence.document.CheckoutSessionDocument;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;
 import java.util.Map;
 import java.util.Objects;

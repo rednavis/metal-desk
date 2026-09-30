@@ -1,6 +1,5 @@
 package com.rednavis.metaldesk.api.payments;
 
-import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.payments.gateway.GatewayConfiguration;
 import com.rednavis.metaldesk.payments.gateway.GatewayProvider;
@@ -12,6 +11,7 @@ import com.rednavis.metaldesk.payments.invoice.MinimalPdfInvoiceRenderer;
 import com.rednavis.metaldesk.payments.provider.PaymentProvider;
 import com.rednavis.metaldesk.payments.wallet.WalletConfiguration;
 import com.rednavis.metaldesk.payments.wallet.WalletProvider;
+import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
 import java.net.URI;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

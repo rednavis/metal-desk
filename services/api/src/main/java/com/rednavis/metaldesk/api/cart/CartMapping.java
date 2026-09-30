@@ -1,7 +1,7 @@
 package com.rednavis.metaldesk.api.cart;
 
-import com.rednavis.metaldesk.api.persistence.document.CartDocument;
-import com.rednavis.metaldesk.api.persistence.document.CartLineDocument;
+import com.rednavis.metaldesk.persistence.document.CartDocument;
+import com.rednavis.metaldesk.persistence.document.CartLineDocument;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.domain.id.ProductId;
 import com.rednavis.metaldesk.share.domain.order.Quantity;

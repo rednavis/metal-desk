@@ -2,13 +2,14 @@ package com.rednavis.metaldesk.api.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.rednavis.metaldesk.api.persistence.document.ProductDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.CategoryMapper;
-import com.rednavis.metaldesk.api.persistence.mapper.FulfillmentTierMapper;
-import com.rednavis.metaldesk.api.persistence.mapper.ProductMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CategoryRepository;
 import com.rednavis.metaldesk.api.persistence.repository.FulfillmentTierRepository;
 import com.rednavis.metaldesk.api.persistence.repository.ProductRepository;
+import com.rednavis.metaldesk.persistence.document.ProductDocument;
+import com.rednavis.metaldesk.persistence.fixtures.CatalogFixtures;
+import com.rednavis.metaldesk.persistence.mapper.CategoryMapper;
+import com.rednavis.metaldesk.persistence.mapper.FulfillmentTierMapper;
+import com.rednavis.metaldesk.persistence.mapper.ProductMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Category;
 import com.rednavis.metaldesk.share.domain.catalog.Product;
 import com.rednavis.metaldesk.share.domain.fulfillment.FulfillmentTier;

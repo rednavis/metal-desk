@@ -1,7 +1,8 @@
 package com.rednavis.metaldesk.api.persistence;
 
-import com.rednavis.metaldesk.api.persistence.mapper.CustomerMapper;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
+import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
+import com.rednavis.metaldesk.persistence.mapper.CustomerMapper;
 import com.rednavis.metaldesk.share.domain.customer.Customer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

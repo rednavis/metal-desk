@@ -1,8 +1,9 @@
 package com.rednavis.metaldesk.api.persistence;
 
-import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
+import com.rednavis.metaldesk.persistence.document.OrderDocument;
+import com.rednavis.metaldesk.persistence.fixtures.OrderFixtures;
+import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

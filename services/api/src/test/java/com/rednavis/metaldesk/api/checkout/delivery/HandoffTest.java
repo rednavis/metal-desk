@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
-import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
 import com.rednavis.metaldesk.api.persistence.repository.CustomerRepository;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.mail.MailTemplate;
 import com.rednavis.metaldesk.mail.TransactionalMail;
 import com.rednavis.metaldesk.mail.fake.RecordedMail;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
+import com.rednavis.metaldesk.persistence.document.OrderDocument;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;

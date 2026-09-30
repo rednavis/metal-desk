@@ -7,7 +7,7 @@ import com.rednavis.metaldesk.api.account.verification.VerificationOutcome;
 import com.rednavis.metaldesk.api.account.verification.VerificationPurpose;
 import com.rednavis.metaldesk.api.account.verification.VerificationService;
 import com.rednavis.metaldesk.api.account.verification.VerificationTicket;
-import com.rednavis.metaldesk.api.persistence.document.CustomerDocument;
+import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.customer.PhoneNumber;
 import com.rednavis.metaldesk.share.domain.customer.VerificationState;

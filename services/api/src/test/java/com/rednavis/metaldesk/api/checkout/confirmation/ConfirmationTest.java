@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.rednavis.metaldesk.api.persistence.document.OrderDocument;
-import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.mail.MailTemplate;
 import com.rednavis.metaldesk.mail.TransactionalMail;
+import com.rednavis.metaldesk.persistence.document.OrderDocument;
+import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;

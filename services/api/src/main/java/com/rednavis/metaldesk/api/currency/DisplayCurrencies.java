@@ -4,6 +4,7 @@ import com.rednavis.metaldesk.api.cart.dto.CartView;
 import com.rednavis.metaldesk.api.catalog.dto.PriceView;
 import com.rednavis.metaldesk.api.catalog.dto.ProductDetailView;
 import com.rednavis.metaldesk.api.catalog.dto.ProductSummaryView;
+import com.rednavis.metaldesk.api.marketdata.ReferencePriceView;
 import com.rednavis.metaldesk.share.domain.money.Currency;
 import com.rednavis.metaldesk.share.domain.money.Money;
 import com.rednavis.metaldesk.share.error.ValidationException;
@@ -120,6 +121,19 @@ public class DisplayCurrencies {
         view.pricingMode(),
         price(view.price(), target),
         view.tax());
+  }
+
+  /**
+   * Converts a reference price.
+   *
+   * @param view the price in the settlement currency
+   * @param target the display currency
+   * @return the price in the display currency
+   */
+  public ReferencePriceView reference(ReferencePriceView view, Currency target) {
+    return target == rates.settlement()
+        ? view
+        : MarketDataCurrencyView.convert(view, target, rates.rateTo(target).orElseThrow());
   }
 
   /**

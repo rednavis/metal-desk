@@ -76,6 +76,15 @@
   padding: calc(var(--space) * 3) var(--space);
 }
 
+.md-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .md-spinner {
   display: inline-block;
   width: 1.5rem;
@@ -93,6 +102,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .md-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   .md-spinner {
     animation-duration: 4s;
   }

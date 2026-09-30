@@ -4,16 +4,6 @@ import { EmptyState } from "../../ui";
 
 /** Route shells: each owns its URL and says what will live there. The screens are M3's (T-052 to T-055). */
 
-export function HomePage() {
-  const { t } = usePreferences();
-  return (
-    <>
-      <h1>{t("page.home.title")}</h1>
-      <p>{t("page.home.intro")}</p>
-    </>
-  );
-}
-
 export function CatalogPage() {
   const { t } = usePreferences();
   return <h1>{t("page.catalog.title")}</h1>;

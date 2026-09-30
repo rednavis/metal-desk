@@ -13,7 +13,7 @@ export const en = {
   "nav.signIn": "Sign in",
 
   "page.home.title": "MetalDesk",
-  "page.home.intro": "Live reference prices and the catalog will appear here.",
+  "page.home.intro": "Precious metals, priced live.",
   "page.catalog.title": "Catalog",
   "page.cart.title": "Cart",
   "page.cart.empty.title": "Your cart is empty",
@@ -39,6 +39,36 @@ export const en = {
   "currency.fakeRates":
     "Prices in {currency} are converted at demo exchange rates, not real market rates. Checkout and orders are always in {settlement}.",
   "currency.settlementOnly": "Checkout and orders are always in {settlement}.",
+
+  "metal.GOLD": "Gold",
+  "metal.SILVER": "Silver",
+  "metal.PLATINUM": "Platinum",
+  "metal.PALLADIUM": "Palladium",
+  "metal.RHODIUM": "Rhodium",
+  "metal.RUTHENIUM": "Ruthenium",
+
+  "marketdata.title": "Reference prices",
+  "marketdata.caption": "Reference price per gram of pure metal, with the latest change",
+  "marketdata.col.metal": "Metal",
+  "marketdata.col.price": "Price",
+  "marketdata.col.change": "Latest change",
+  "marketdata.perGram": "per gram",
+  "marketdata.updated": "Updated {time}",
+  "marketdata.loading": "Loading prices",
+  "marketdata.empty.title": "No prices yet",
+  "marketdata.empty.description":
+    "Reference prices appear here as soon as the first one is received.",
+  "marketdata.change.up": "Up {amount} ({percent})",
+  "marketdata.change.down": "Down {amount} ({percent})",
+  "marketdata.change.unchanged": "Unchanged",
+  "marketdata.change.unknown": "Change not yet available",
+  "marketdata.stale.fetch":
+    "These prices may be out of date: the last successful update was at {time}.",
+  "marketdata.stale.feed":
+    "The price feed has not updated since {time}; these prices may be out of date.",
+  "marketdata.error":
+    "Prices could not be refreshed. Showing the last known values; trying again automatically.",
+  "marketdata.retry": "Retry now",
 
   "cart.itemCount_one": "{count} item",
   "cart.itemCount_other": "{count} items",

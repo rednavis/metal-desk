@@ -48,6 +48,15 @@ public class CatalogSeed {
     return product(id, name, category, Optional.of(Money.of("1.00", Currency.EUR)));
   }
 
+  /** Stores a priced product of the given weight in grams. */
+  public Product pricedProduct(String id, String name, Category category, String grams) {
+    final Product product =
+        CatalogFixtures.weighedProduct(
+            id, name, category, Optional.of(Money.of("1.00", Currency.EUR)), grams);
+    products.save(productMapper.toDocument(product)).block();
+    return product;
+  }
+
   /** Stores a product with no catalog price. */
   public Product unpricedProduct(String id, String name, Category category) {
     return product(id, name, category, Optional.empty());

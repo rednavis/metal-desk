@@ -88,11 +88,17 @@ public final class CatalogFixtures {
   /** A product with the given name and price, so tests can search and price by name. */
   public static Product namedProduct(
       String id, String name, Category category, Optional<Money> price) {
+    return weighedProduct(id, name, category, price, "100");
+  }
+
+  /** A gold product of the given weight in grams, so tests can control an order's value. */
+  public static Product weighedProduct(
+      String id, String name, Category category, Optional<Money> price, String grams) {
     return new Product(
         new ProductId(id),
         name,
         new ProductSpecification(
-            Metal.GOLD, Purity.of("999.9"), Weight.of("100", WeightUnit.GRAM), Optional.empty()),
+            Metal.GOLD, Purity.of("999.9"), Weight.of(grams, WeightUnit.GRAM), Optional.empty()),
         category,
         StockStatus.IN_STOCK,
         price);

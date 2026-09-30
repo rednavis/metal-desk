@@ -28,6 +28,17 @@ public class FieldViolationsException extends RuntimeException {
   }
 
   /**
+   * Creates the exception, keeping the failure that caused it.
+   *
+   * @param violations what is wrong, at least one
+   * @param cause what caused it
+   */
+  public FieldViolationsException(List<FieldViolation> violations, Throwable cause) {
+    super("The request has " + violations.size() + " invalid field(s)", cause);
+    this.found = violations.toArray(new FieldViolation[0]);
+  }
+
+  /**
    * What is wrong.
    *
    * @return the violations

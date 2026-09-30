@@ -216,6 +216,17 @@ endpoint calls first, so a crafted request reaches no provider. A handoff create
 `AWAITING_MANAGER_QUOTE` through the state machine; the customer's reference is its order number, and staff are
 told everything they need to price it.
 
+Payment (task T-037) completes the checkout. The offered methods are filtered by a business-rule policy: above a
+configurable ceiling on the grand total (default 2500.00 EUR, strictly above) the wallet account is withheld unless
+`wallet-high-value` is set, and invoice is never filtered. Choosing a method creates nothing; executing it requires the
+customer to echo the total they saw (`confirmedTotal`), then creates the order *before* the provider is called, so the
+price is final and the order number exists (BR-2, BR-6). The checkout package talks only to the `PaymentProvider` SPI;
+the three adapters are wired in `api/payments`. A decline never cancels the order (a retry or another method reuses
+it), a provider timeout is reported as "could not confirm", not as a decline, and editing an earlier step cancels the
+unpaid order and freezes nothing stale: delivery evaluation is not re-run once an order or handoff exists. A
+provider's return callback is only a claim: the server asks the provider to `confirm` the reference and ignores every
+query parameter. Settlement (`OrderSettlement`) and invoice delivery (`InvoiceSink`) are hooks that T-038 fills in.
+
 ## 6. Order state machine
 
 ```

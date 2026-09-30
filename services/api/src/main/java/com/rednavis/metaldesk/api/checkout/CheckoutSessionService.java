@@ -9,6 +9,7 @@ import com.rednavis.metaldesk.api.checkout.dto.ConfirmEmailRequest;
 import com.rednavis.metaldesk.api.checkout.dto.SessionView;
 import com.rednavis.metaldesk.api.checkout.dto.Step1Request;
 import com.rednavis.metaldesk.api.checkout.dto.Step1Response;
+import com.rednavis.metaldesk.api.checkout.payment.PaymentEditPolicy;
 import com.rednavis.metaldesk.api.checkout.step1.ConversionState;
 import com.rednavis.metaldesk.api.checkout.step1.GuestConversionService;
 import com.rednavis.metaldesk.api.checkout.step1.Step1Validator;
@@ -49,6 +50,7 @@ public class CheckoutSessionService {
   private final GuestConversionService guests;
   private final CustomerRepository customers;
   private final CheckoutProperties properties;
+  private final PaymentEditPolicy paymentEdits;
   private final Clock clock;
 
   /**
@@ -115,6 +117,7 @@ public class CheckoutSessionService {
             session ->
                 requireVerified(customer)
                     .then(Mono.defer(() -> requireNotHandedOff(session)))
+                    .then(Mono.defer(() -> paymentEdits.beforeEdit(session)))
                     .then(Mono.defer(() -> advance(session, guest, request))))
         .map(CheckoutViews::step1);
   }

@@ -68,6 +68,7 @@ public class CheckoutSessionStore {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
+            Optional.empty(),
             Lifecycle.begin(now, properties.sessionTtl()));
     return mongo.insert(mapper.toDocument(session)).map(mapper::toDomain);
   }

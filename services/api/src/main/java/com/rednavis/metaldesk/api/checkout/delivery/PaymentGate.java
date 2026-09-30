@@ -43,15 +43,23 @@ public class PaymentGate {
    *     checkout.delivery-not-evaluated}
    */
   public Mono<CheckoutSession> require(String id, AuthenticatedCustomer customer) {
-    return sessions
-        .find(id, customer)
-        .flatMap(
-            session -> {
-              final CheckoutStage stage = session.delivery().map(DeliveryState::stage).orElse(null);
-              return stage == CheckoutStage.PAYMENT_ALLOWED
-                  ? Mono.just(session)
-                  : Mono.error(refusal(stage));
-            });
+    return sessions.find(id, customer).flatMap(this::check);
+  }
+
+  /**
+   * Lets a payment proceed only if an already-loaded session permits it. For callers that reached
+   * the session by another route than a customer's request, such as a provider's callback.
+   *
+   * @param session the checkout session
+   * @return the same session, when payment is allowed
+   * @throws ConflictException {@code checkout.handoff-required} or {@code
+   *     checkout.delivery-not-evaluated}
+   */
+  public Mono<CheckoutSession> check(CheckoutSession session) {
+    final CheckoutStage stage = session.delivery().map(DeliveryState::stage).orElse(null);
+    return stage == CheckoutStage.PAYMENT_ALLOWED && session.handoff().isEmpty()
+        ? Mono.just(session)
+        : Mono.error(refusal(stage));
   }
 
   private static ConflictException refusal(CheckoutStage stage) {

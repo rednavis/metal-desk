@@ -19,8 +19,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * @param cartId the cart it was started from, or null
  * @param lines the basket lines as quoted when the session started
  * @param step1 what step 1 collected, or null before it
- * @param delivery the last delivery evaluation, or null before one
- * @param handoff the manager handoff, or null if the session was not handed off
+ * @param delivery the last delivery evaluation and any handoff, or null before one
+ * @param payment what the session knows about paying, or null before a method is chosen
  * @param version the change counter used for compare-and-set
  * @param createdAt when the session started
  * @param updatedAt when it last changed
@@ -35,7 +35,7 @@ public record CheckoutSessionDocument(
     List<OrderLineDocument> lines,
     Step1Document step1,
     DeliveryDocument delivery,
-    HandoffDocument handoff,
+    SessionPaymentDocument payment,
     long version,
     Instant createdAt,
     Instant updatedAt,

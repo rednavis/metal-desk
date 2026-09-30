@@ -51,9 +51,10 @@
   </rule>
   <rule ref="category/java/design.xml/TooManyMethods">
     <properties>
-      <!-- Test classes only: one class per unit under test, one method per behaviour. -->
+      <!-- Test classes and test-support bases only: one class per unit under test, one method per
+           behaviour, and a base that drives the flow under test is a list of small helpers. -->
       <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test')]"/>
+                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or ends-with(@SimpleName, 'TestSupport')]"/>
     </properties>
   </rule>
   <rule ref="category/java/design.xml/LawOfDemeter">

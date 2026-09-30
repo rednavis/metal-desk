@@ -11,6 +11,7 @@ import java.time.Instant;
  * @param exTaxValue the order value before tax
  * @param weight the total weight
  * @param evaluatedAt when the tiers were evaluated
+ * @param handoff the manager handoff of this session, or null
  */
 public record DeliveryDocument(
     String stage,
@@ -18,4 +19,5 @@ public record DeliveryDocument(
     String reason,
     MoneyDocument exTaxValue,
     WeightDocument weight,
-    Instant evaluatedAt) {}
+    Instant evaluatedAt,
+    HandoffDocument handoff) {}

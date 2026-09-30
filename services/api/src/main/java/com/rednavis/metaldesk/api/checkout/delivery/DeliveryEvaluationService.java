@@ -7,6 +7,7 @@ import com.rednavis.metaldesk.api.cart.PricedLine;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionService;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
+import com.rednavis.metaldesk.api.checkout.payment.PaymentState;
 import com.rednavis.metaldesk.api.persistence.mapper.FulfillmentTierMapper;
 import com.rednavis.metaldesk.api.persistence.repository.FulfillmentTierRepository;
 import com.rednavis.metaldesk.share.domain.Region;
@@ -55,8 +56,8 @@ public class DeliveryEvaluationService {
   /**
    * Evaluates the delivery of a session.
    *
-   * <p>A session already handed to staff is returned as it is: its order exists and a manager owns
-   * the price.
+   * <p>A session already handed to staff, or that already has an order, is returned as it is: its
+   * price is owned by a manager or fixed by the order (BRD BR-2).
    *
    * @param id the session's id
    * @param customer the signed-in customer, or null for a guest
@@ -67,8 +68,13 @@ public class DeliveryEvaluationService {
   public Mono<CheckoutSession> evaluate(String id, AuthenticatedCustomer customer) {
     return sessions
         .find(id, customer)
-        .flatMap(
-            session -> session.handoff().isPresent() ? Mono.just(session) : evaluateLive(session));
+        .flatMap(session -> frozen(session) ? Mono.just(session) : evaluateLive(session));
+  }
+
+  /** A session with a manager handoff or an order is not re-evaluated: someone owns its price. */
+  private static boolean frozen(CheckoutSession session) {
+    return session.handoff().isPresent()
+        || session.payment().flatMap(PaymentState::order).isPresent();
   }
 
   private Mono<CheckoutSession> evaluateLive(CheckoutSession session) {

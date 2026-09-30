@@ -53,3 +53,16 @@ metaldesk:
     # language.
     staff-email: staff@metal-desk.example.test
     staff-locale: en
+    # Payment providers send the customer back to <client-base-url>/<checkout id>/return or /cancel.
+    client-base-url: http://localhost:5173/checkout
+  payments:
+    # Development and CI point these at WireMock stubs (ADR-0002); a deployment points them at real
+    # providers. No credential belongs here.
+    gateway:
+      base-url: http://localhost:9091
+      timeout: 10s
+      retry-budget: 1
+    wallet:
+      base-url: http://localhost:9092
+      timeout: 10s
+      retry-budget: 1

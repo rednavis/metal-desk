@@ -5,6 +5,7 @@ import com.rednavis.metaldesk.api.auth.AuthenticatedCustomer;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionService;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
+import com.rednavis.metaldesk.api.checkout.OrderTransitions;
 import com.rednavis.metaldesk.api.persistence.OrderNumberSequence;
 import com.rednavis.metaldesk.api.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
@@ -12,7 +13,6 @@ import com.rednavis.metaldesk.share.domain.id.CustomerId;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderNumber;
-import com.rednavis.metaldesk.share.domain.order.OrderStateMachine;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import java.time.Clock;
@@ -128,23 +128,9 @@ public class HandoffService {
             session.details().orElseThrow().deliveryAddress(),
             session.lines(),
             now);
-    return advance(
-        advance(created, TransitionTrigger.CHECKOUT_SUBMITTED, now),
+    return OrderTransitions.advance(
+        OrderTransitions.advance(created, TransitionTrigger.CHECKOUT_SUBMITTED, now),
         TransitionTrigger.TIER_EXCEEDED,
-        now);
-  }
-
-  private static Order advance(Order order, TransitionTrigger trigger, Instant now) {
-    return new Order(
-        order.id(),
-        order.number(),
-        order.customerId(),
-        order.deliveryAddress(),
-        order.lines(),
-        order.quote(),
-        order.payment(),
-        OrderStateMachine.transition(order.status(), trigger),
-        order.createdAt(),
         now);
   }
 }

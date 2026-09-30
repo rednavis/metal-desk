@@ -27,14 +27,16 @@ public final class DeliveryMapping {
   }
 
   /** Builds the stored form of a delivery state. */
-  public static DeliveryDocument deliveryDocument(DeliveryState state) {
+  public static DeliveryDocument deliveryDocument(
+      DeliveryState state, Optional<HandoffRecord> handoff) {
     return new DeliveryDocument(
         state.stage().name(),
         state.quote().map(DeliveryMapping::quoteDocument).orElse(null),
         state.reason().map(HandoffReason::name).orElse(null),
         ValueMapper.moneyToDocument(state.exTaxValue()),
         ValueMapper.weightToDocument(state.weight()),
-        state.evaluatedAt());
+        state.evaluatedAt(),
+        handoff.map(DeliveryMapping::handoffDocument).orElse(null));
   }
 
   /** Rebuilds a delivery quote. */

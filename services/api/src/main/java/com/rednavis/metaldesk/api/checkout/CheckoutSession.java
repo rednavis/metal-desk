@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.api.checkout;
 import com.rednavis.metaldesk.api.cart.CartId;
 import com.rednavis.metaldesk.api.checkout.delivery.DeliveryState;
 import com.rednavis.metaldesk.api.checkout.delivery.HandoffRecord;
+import com.rednavis.metaldesk.api.checkout.payment.PaymentState;
 import com.rednavis.metaldesk.api.checkout.step1.ConsentRecord;
 import com.rednavis.metaldesk.api.checkout.step1.ConversionState;
 import com.rednavis.metaldesk.api.checkout.step1.CustomerDetails;
@@ -16,8 +17,7 @@ import java.util.stream.Stream;
 
 /**
  * The server-side state of one checkout: the basket it started from and what has been collected so
- * far, and, after delivery evaluation, the stage it permits. The payment method is added by the
- * payment step.
+ * far, the stage its delivery evaluation permits, and what is known about paying.
  *
  * <p>It is persisted and found by an opaque id; see the package description for why that is not a
  * contradiction of the stateless-authentication decision. It is immutable: each change returns a
@@ -34,6 +34,7 @@ import java.util.stream.Stream;
  * @param conversion the guest's quick registration, if they asked for one
  * @param delivery the outcome of the last delivery evaluation, empty before one
  * @param handoff the manager handoff, empty unless the session was handed to staff
+ * @param payment what is known about paying, empty until a method is chosen
  * @param lifecycle its version and times
  */
 public record CheckoutSession(
@@ -47,6 +48,7 @@ public record CheckoutSession(
     Optional<ConversionState> conversion,
     Optional<DeliveryState> delivery,
     Optional<HandoffRecord> handoff,
+    Optional<PaymentState> payment,
     Lifecycle lifecycle) {
 
   /** Where the basket of a session came from. */
@@ -74,6 +76,7 @@ public record CheckoutSession(
             conversion,
             delivery,
             handoff,
+            payment,
             lifecycle)
         .anyMatch(Objects::isNull)) {
       throw new ValidationException(
@@ -93,7 +96,8 @@ public record CheckoutSession(
    * @param newConsent the privacy acceptance
    * @param newConversion the guest's quick registration, or empty
    * @return the session with step 1 done; going back and submitting again simply replaces it. The
-   *     delivery evaluation is dropped, because it was made for the old address.
+   *     delivery evaluation is dropped, because it was made for the old address, and so is any
+   *     order (the caller cancels it first).
    */
   public CheckoutSession withStep1(
       CustomerDetails newDetails,
@@ -110,6 +114,7 @@ public record CheckoutSession(
         newConversion,
         Optional.empty(),
         handoff,
+        payment.map(PaymentState::withoutOrder),
         lifecycle);
   }
 
@@ -135,6 +140,7 @@ public record CheckoutSession(
                             state.email(), state.reference(), state.customer(), true)),
                     delivery,
                     handoff,
+                    payment,
                     lifecycle))
         .orElse(this);
   }
@@ -158,6 +164,7 @@ public record CheckoutSession(
         conversion,
         Optional.of(evaluation),
         handoff,
+        payment,
         lifecycle);
   }
 
@@ -181,6 +188,7 @@ public record CheckoutSession(
             conversion,
             delivery,
             Optional.of(record),
+            payment,
             lifecycle);
   }
 
@@ -192,6 +200,60 @@ public record CheckoutSession(
    */
   public CheckoutSession withLifecycle(Lifecycle next) {
     return new CheckoutSession(
-        id, owner, source, cart, lines, details, consent, conversion, delivery, handoff, next);
+        id,
+        owner,
+        source,
+        cart,
+        lines,
+        details,
+        consent,
+        conversion,
+        delivery,
+        handoff,
+        payment,
+        next);
+  }
+
+  /**
+   * Records what is known about paying.
+   *
+   * @param state the payment state
+   * @return the session with it
+   */
+  public CheckoutSession withPayment(PaymentState state) {
+    return new CheckoutSession(
+        id,
+        owner,
+        source,
+        cart,
+        lines,
+        details,
+        consent,
+        conversion,
+        delivery,
+        handoff,
+        Optional.of(state),
+        lifecycle);
+  }
+
+  /**
+   * Forgets the delivery evaluation and any order, because an earlier step was edited.
+   *
+   * @return the session that must be evaluated and paid for afresh; the chosen method is kept
+   */
+  public CheckoutSession withoutEvaluation() {
+    return new CheckoutSession(
+        id,
+        owner,
+        source,
+        cart,
+        lines,
+        details,
+        consent,
+        conversion,
+        Optional.empty(),
+        handoff,
+        payment.map(PaymentState::withoutOrder),
+        lifecycle);
   }
 }

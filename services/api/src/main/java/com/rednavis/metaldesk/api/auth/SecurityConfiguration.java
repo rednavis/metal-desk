@@ -33,13 +33,17 @@ public class SecurityConfiguration {
     "/api/catalog/**", "/api/market-data/**", "/actuator/health", "/actuator/health/**"
   };
 
-  /** Anonymous writes: sign-in and the account flows a customer has to do before having a token. */
+  /**
+   * Anonymous writes: sign-in, the account flows a customer has to do before having a token, and
+   * inquiries, which a visitor may send without signing in.
+   */
   private static final String[] PUBLIC_POSTS = {
     "/api/auth/sign-in",
     "/api/account/register",
     "/api/account/verify-email",
     "/api/account/password-reset/request",
-    "/api/account/password-reset/confirm"
+    "/api/account/password-reset/confirm",
+    "/api/inquiries"
   };
 
   /**

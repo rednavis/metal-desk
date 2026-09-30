@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.api.checkout.payment;
 
+import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
 import com.rednavis.metaldesk.api.checkout.OrderTransitions;
 import com.rednavis.metaldesk.api.checkout.payment.dto.PaymentResultView;
@@ -12,6 +13,7 @@ import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
 import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import java.time.Clock;
+import java.util.Locale;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -164,7 +166,7 @@ public class PaymentOutcomeHandler {
             .flatMap(
                 paid ->
                     phase(checkoutId, PaymentPhase.PAID, Optional.empty())
-                        .then(settlement.paid(paid))
+                        .flatMap(session -> settlement.paid(paid, localeOf(session)))
                         .thenReturn(PaymentResults.of(paid, "CAPTURED", null, null, null)));
   }
 
@@ -180,7 +182,8 @@ public class PaymentOutcomeHandler {
                 order,
                 PaymentResults.record(order, providerId, method, PaymentStatus.PENDING, reference),
                 clock.instant()))
-        .then(phase(checkoutId, PaymentPhase.PENDING_CONFIRMATION, Optional.of(reference)));
+        .then(phase(checkoutId, PaymentPhase.PENDING_CONFIRMATION, Optional.of(reference)))
+        .then();
   }
 
   private Mono<PaymentResultView> invoiced(
@@ -198,7 +201,7 @@ public class PaymentOutcomeHandler {
         .flatMap(
             saved ->
                 phase(checkoutId, PaymentPhase.INVOICE_ISSUED, Optional.of(reference))
-                    .then(settlement.invoiceIssued(saved))
+                    .flatMap(session -> settlement.invoiceIssued(saved, localeOf(session)))
                     .thenReturn(
                         PaymentResults.of(
                             saved, "DOCUMENT_ISSUED", null, null, reference.value())));
@@ -217,15 +220,18 @@ public class PaymentOutcomeHandler {
   private Mono<Void> retryable(String checkoutId, Order order) {
     return orders
         .failed(order)
-        .then(phase(checkoutId, PaymentPhase.ORDER_CREATED, Optional.empty()));
+        .then(phase(checkoutId, PaymentPhase.ORDER_CREATED, Optional.empty()))
+        .then();
   }
 
-  private Mono<Void> phase(
+  private Mono<CheckoutSession> phase(
       String checkoutId, PaymentPhase next, Optional<ProviderReference> reference) {
-    return store
-        .update(
-            checkoutId,
-            session -> session.withPayment(session.payment().orElseThrow().in(next, reference)))
-        .then();
+    return store.update(
+        checkoutId,
+        session -> session.withPayment(session.payment().orElseThrow().in(next, reference)));
+  }
+
+  private static Locale localeOf(CheckoutSession session) {
+    return session.payment().map(PaymentState::locale).orElse(Locale.ENGLISH);
   }
 }

@@ -1,29 +1,37 @@
 package com.rednavis.metaldesk.api.checkout.payment;
 
+import com.rednavis.metaldesk.api.payments.InvoiceArchive;
 import com.rednavis.metaldesk.payments.invoice.InvoiceDocument;
 import com.rednavis.metaldesk.payments.invoice.InvoiceNumber;
 import com.rednavis.metaldesk.payments.invoice.InvoiceSink;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-/** Records the invoices the invoice provider renders, so a test can see them. */
+/**
+ * Records the invoices the invoice provider renders, so a test can see them, and archives them as
+ * the real sink does.
+ */
 @Primary
 @Component
+@RequiredArgsConstructor
 public class RecordingInvoiceSink implements InvoiceSink {
 
+  private final InvoiceArchive archive;
   private final List<InvoiceNumber> recordedNumbers = new CopyOnWriteArrayList<>();
   private final List<InvoiceDocument> recordedDocuments = new CopyOnWriteArrayList<>();
 
   @Override
   public Mono<Void> publish(InvoiceNumber number, List<InvoiceDocument> published) {
     return Mono.fromRunnable(
-        () -> {
-          recordedNumbers.add(number);
-          recordedDocuments.addAll(published);
-        });
+            () -> {
+              recordedNumbers.add(number);
+              recordedDocuments.addAll(published);
+            })
+        .then(archive.store(number, published));
   }
 
   /**

@@ -3,6 +3,7 @@ Subject: Neue Anfrage von {{customerName}}: {{topic}}
 Ein Kunde hat eine Nachricht gesendet.
 
 Von: {{customerName}} <{{customerEmail}}>
+Referenz: {{reference}}
 Thema: {{topic}}
 
 {{message}}

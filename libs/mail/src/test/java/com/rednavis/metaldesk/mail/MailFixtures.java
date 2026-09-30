@@ -42,7 +42,11 @@ public final class MailFixtures {
         Map.entry("exTaxValue", Money.of("25000.00", Currency.EUR)),
         Map.entry("weight", "3110 g"),
         Map.entry("lines", "- 2 x Gold bar 1 oz (1959.32 EUR each)"),
-        Map.entry("message", "Do you have this in stock?"));
+        Map.entry("message", "Do you have this in stock?"),
+        Map.entry("deliveryPrice", Money.of("45.00", Currency.EUR)),
+        Map.entry("transit", "3-5 days"),
+        Map.entry("validUntil", "2026-10-31"),
+        Map.entry("terms", "Insured courier, signature on delivery."));
   }
 
   /**

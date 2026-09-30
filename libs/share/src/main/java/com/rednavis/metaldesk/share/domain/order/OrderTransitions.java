@@ -1,9 +1,6 @@
-package com.rednavis.metaldesk.api.checkout;
+package com.rednavis.metaldesk.share.domain.order;
 
 import com.rednavis.metaldesk.share.domain.fulfillment.DeliveryQuote;
-import com.rednavis.metaldesk.share.domain.order.Order;
-import com.rednavis.metaldesk.share.domain.order.OrderStateMachine;
-import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
 import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
 import java.time.Instant;
 import java.util.Optional;

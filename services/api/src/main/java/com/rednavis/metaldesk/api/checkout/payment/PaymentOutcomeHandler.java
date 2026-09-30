@@ -2,12 +2,12 @@ package com.rednavis.metaldesk.api.checkout.payment;
 
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
-import com.rednavis.metaldesk.api.checkout.OrderTransitions;
 import com.rednavis.metaldesk.api.checkout.payment.dto.PaymentResultView;
 import com.rednavis.metaldesk.payments.provider.PaymentOutcome;
 import com.rednavis.metaldesk.payments.provider.PaymentProviderException;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;
+import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
 import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
 import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;

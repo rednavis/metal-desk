@@ -1,7 +1,6 @@
 package com.rednavis.metaldesk.api.checkout.payment;
 
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
-import com.rednavis.metaldesk.api.checkout.OrderTransitions;
 import com.rednavis.metaldesk.api.checkout.delivery.DeliveryState;
 import com.rednavis.metaldesk.api.checkout.delivery.HandoffCustomers;
 import com.rednavis.metaldesk.api.persistence.OrderNumberSequence;
@@ -9,6 +8,7 @@ import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
 import com.rednavis.metaldesk.share.domain.order.Order;
+import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
 import java.time.Clock;
 import java.time.Instant;

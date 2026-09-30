@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class MailTemplateTest {
 
   @Test
-  void declaresExactlyTheTenNotificationsTheBrdRequires() {
+  void declaresTheBrdNotificationsAndTheManagerQuoteTerms() {
     final Set<String> names =
         Arrays.stream(MailTemplate.values()).map(Enum::name).collect(Collectors.toSet());
     assertEquals(
@@ -24,7 +24,8 @@ class MailTemplateTest {
             "HANDOFF_RECEIPT_CUSTOMER",
             "HANDOFF_NOTIFICATION_STAFF",
             "INQUIRY_RECEIPT_CUSTOMER",
-            "INQUIRY_NOTIFICATION_STAFF"),
+            "INQUIRY_NOTIFICATION_STAFF",
+            "MANAGER_QUOTE_CUSTOMER"),
         names);
   }
 

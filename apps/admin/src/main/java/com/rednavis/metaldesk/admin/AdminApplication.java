@@ -1,10 +1,19 @@
 package com.rednavis.metaldesk.admin;
 
+import com.rednavis.metaldesk.persistence.PersistenceConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.Import;
 
-/** Entry point for the {@code metal-admin} back-office API. */
+/**
+ * Entry point for the {@code metal-admin} staff API: a pure JSON API, no server-rendered UI. It is
+ * the one MVC (blocking, virtual-thread) module of the platform (ADR-0004); its only client is
+ * {@code apps/admin-web}.
+ */
 @SpringBootApplication
+@ConfigurationPropertiesScan
+@Import(PersistenceConfiguration.class)
 public class AdminApplication {
 
   /**

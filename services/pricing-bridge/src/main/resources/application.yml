@@ -4,3 +4,33 @@ server:
 spring:
   application:
     name: metal-pricing-bridge
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # `feed` is the staleness signal (age of the last tick) that T-079 alerts on.
+        include: health,feed
+
+metaldesk:
+  pricing-bridge:
+    # The only feed there is is the in-process fake (ADR-0002); no external provider, hostname or
+    # credential belongs in this file.
+    feed: fake
+    fake-feed:
+      interval: 2s
+      volatility: 0.005
+      seed: 20260930
+      # Invented prices per gram of pure metal, in euro.
+      starting-prices:
+        GOLD: 60.00
+        SILVER: 0.80
+        PLATINUM: 30.00
+        PALLADIUM: 32.00
+        RHODIUM: 140.00
+        RUTHENIUM: 14.00
+    subscription:
+      initial-backoff: 1s
+      max-backoff: 30s
+      jitter: 0.5
+      stale-after: 30s

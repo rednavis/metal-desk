@@ -133,6 +133,13 @@ need `.github/scripts/affected.mjs` changed first.
   (gradle/gradle#2510). Don't remove either. Usage is limited to `@RequiredArgsConstructor` and
   `@Slf4j`; prefer records and constructor injection.
 
+## Container images
+
+`deploy/images/Dockerfile` builds all three services (`--build-arg MODULE=services/api|services/pricing-bridge|apps/admin`, from
+the repo root). Its build-context filter must be named **`Dockerfile.dockerignore`** beside it: a plain `.dockerignore`
+there is silently ignored and sends the whole repo (and any `.env`) to the builder. The Temurin base-image tags live
+only in the Dockerfile (not the version catalog). Never pass a credential as a build argument. See `deploy/README.md`.
+
 ## Checkstyle: a real Gradle bug, not a config mistake
 
 If Checkstyle fails with "Unable to create Root Module", the suppression-path wiring in

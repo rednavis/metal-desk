@@ -1,6 +1,6 @@
 # CI workflows
 
-Two workflows: `ci.yml` (below) and [`infra.yml`](infra.yml), which checks the Terraform under `infra/` and is described at the end. `ci.yml` jobs:
+Three workflows: `ci.yml` (below), [`infra.yml`](infra.yml), which checks the Terraform under `infra/`, and [`image.yml`](image.yml), which builds the service images; both are described at the end. `ci.yml` jobs:
 
 | Job | Runs | What it does |
 |---|---|---|
@@ -242,3 +242,13 @@ with `~>` in `infra/terraform/envs/*/versions.tf`; an upgrade edits both. Third-
 It is deliberately **not** one of the required checks yet: it is path-filtered, so a required path-filtered check would
 block every pull request that does not touch `infra/`. Make it required only with the always-run result-job pattern
 used for `JVM build` and `Frontend build result` (`T-078`).
+
+## `image.yml` — service images
+
+Builds `deploy/images/Dockerfile` for `api`, `pricing-bridge` and `admin` (one matrix entry each) on a pull request or
+push to `master` that touches an image input (`deploy/**`, the JVM modules, `build-logic/**`, `gradle/**`, the root
+Gradle files), and asserts that the image runs as non-root with `java` as its entrypoint and carries no credential;
+`pricing-bridge` is also started and shut down with SIGTERM. A separate `push` job pushes `<sha>`-tagged images to
+Artifact Registry **only on a push to `master` with the repository variable `IMAGE_PUSH_ENABLED=true`**, authenticating
+by Workload Identity Federation (`T-077`, not yet present), so it is skipped today. No credential is stored. Details and
+the variables: [`deploy/README.md`](../../deploy/README.md). Not a required check; it is path-filtered.

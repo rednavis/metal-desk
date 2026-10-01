@@ -119,8 +119,7 @@ the one resource that needs it.
 
 - **Images** are pinned by digest or a commit-SHA tag; a mutable tag fails validation. `T-073` builds them.
 - **Secrets are references**, `{ secret, version }`, never values; the module has no variable that takes one. `T-075`
-  creates `<prefix>-mongodb-uri`, `<prefix>-jwt-signing-key` and `<prefix>-admin-jwt-signing-key` (the names
-  `services.tf` uses) and grants each service's account access to its own.
+  declares them (`secrets.tf`) and grants each service's account access to its own: see [Secrets](#secrets).
 - **Not covered:** `pricing-bridge` as a Cloud Run Job. A poll-based feed would want that shape; this module models the
   always-on service `T-039` built.
 
@@ -168,6 +167,97 @@ load balancer with Cloud CDN. Details, decisions and what is unverified are in t
   only the bundle, **not `/api`**, and the backends have no CORS configuration, so a cross-origin API URL would not work today.
   Serving `/api` from the same load balancer (a backend service for the API) is open work for `T-078`. Deployment sets
   `VITE_API_BASE_URL` per environment at build time and nothing is compiled in by default.
+
+## Secrets
+
+**Terraform never holds a secret value.** `modules/secret` creates the empty container and a per-service read grant; there
+is no `google_secret_manager_secret_version` and no data argument of any kind anywhere in the tree (a value passed that way
+lands in Terraform state, a plain JSON file in a bucket). A person adds each version with `gcloud`, out of band. Nothing in this
+repository, in an image, or in a plan is a secret, and `CONTRIBUTING.md` still forbids any real credential or sandbox key.
+
+### Inventory
+
+ADR-0002 mocks every external dependency, so the real list is short, and **only secrets with a consumer today exist**. No
+payment, mail or market-data secret is pre-created: every provider is WireMock- or fake-backed, and an empty secret named for
+a provider invites someone to paste a real key.
+
+| Secret id (`metaldesk-<env>-...`) | Read by | Why |
+|---|---|---|
+| `mongodb-uri-api` | `api` | The `api`'s MongoDB Atlas connection string (the one real external system) |
+| `jwt-signing-key` | `api` | Signs customer tokens (`JWT_SIGNING_KEY`) |
+| `mongodb-uri-admin` | `admin` | The `admin`'s MongoDB Atlas connection string |
+| `admin-jwt-signing-key` | `admin` | Signs staff tokens (`ADMIN_JWT_SIGNING_KEY`); a different key from the customer one, so neither token is accepted by the other service |
+
+`pricing-bridge` reads **no** secret (a fake feed, no database) and is granted none. Each secret has **exactly one**
+reader, granted on that secret and nothing project-wide; no runtime identity holds any Secret Manager administrative role.
+The database URI is two secrets, not one, so `api` and `admin` can use separate Atlas database users and be rotated or
+revoked independently.
+
+> The task specification predates ADR-0006 and says `admin` needs no secret. It does: staff sign in to `apps/admin`, which
+> signs its own tokens and has its own database connection. The inventory follows the code, and ADR-0006 wins over the spec.
+
+### Populating a value (once per environment, before the services are applied)
+
+**Who:** a platform operator with permission to add secret versions on these secrets (for example
+`roles/secretmanager.secretVersionAdder`), using their own `gcloud` login. No service account holds that permission, and
+Terraform does not grant it. **Run these before applying `services.tf`**, which refers to version `1` of each; a Cloud Run
+service whose secret version does not exist fails to deploy, which is the safe failure.
+
+```bash
+# The two signing keys. Generated on your machine and piped straight in: the value is never displayed or stored.
+# Shape: Base64 text of at least 32 random bytes (the application rejects anything shorter or not Base64).
+openssl rand -base64 32 | tr -d '\n' | gcloud secrets versions add metaldesk-<env>-jwt-signing-key       --project=<project-id> --data-file=-
+openssl rand -base64 32 | tr -d '\n' | gcloud secrets versions add metaldesk-<env>-admin-jwt-signing-key --project=<project-id> --data-file=-
+
+# The two database connection strings: the PRIVATE connection string Atlas shows for this environment's private endpoint, for
+# the database user made for THAT service. Shape only: an Atlas URI of the form <scheme>://<user>:<password>@<host>/<database>?<options>.
+# `read -s` keeps it out of the terminal and the shell history.
+read -rs ATLAS_URI
+printf %s "$ATLAS_URI" | gcloud secrets versions add metaldesk-<env>-mongodb-uri-api --project=<project-id> --data-file=-
+unset ATLAS_URI
+read -rs ATLAS_URI
+printf %s "$ATLAS_URI" | gcloud secrets versions add metaldesk-<env>-mongodb-uri-admin --project=<project-id> --data-file=-
+unset ATLAS_URI
+
+# Check that version 1 exists (this lists versions; it does not print a value).
+gcloud secrets versions list metaldesk-<env>-jwt-signing-key --project=<project-id>
+```
+
+Never `gcloud secrets versions access` in a shared terminal or a CI log. The Atlas cluster and its private endpoint are not
+created by this repository (`T-071`); the connection strings exist only once they are.
+
+### Pinned versions, never `latest`
+
+A service refers to a secret by **version number** (`version = "1"` in `services.tf`), in every environment; the Cloud Run
+module rejects a moving alias. That is stricter than the specification, which allowed `latest` outside `prod`. The trade-off:
+
+- With `latest`, a new version takes effect whenever an instance next starts, so during a rollout old and new instances
+  disagree. Survivable for a connection string, **actively broken for a signing key**: a token signed by one instance would be
+  rejected by another, intermittently.
+- Pinned, a rotation is a deliberate deploy, at the price of one edit and one apply.
+
+### Rotation (a procedure, not automation)
+
+1. **Add** the new version (the same `gcloud secrets versions add` command): it becomes version *N+1*; the old one still works.
+2. **Point the service at it**: change `version = "N"` to *N+1* in `services.tf` and apply. Cloud Run starts new revisions on
+   the new version.
+3. **Verify**: the revision is healthy (`/actuator/health`) and the behaviour works (a sign-in, a read).
+4. **Disable the old version**: `gcloud secrets versions disable N --secret=<id> --project=<project-id>`. Destroy it later,
+   once nothing can need it.
+
+For a **signing key**, rotation signs everyone out (one HMAC key, no key set): customer tokens last 15 minutes and staff
+tokens 30, so plan for it. For a **database URI**, create the new Atlas user or password first, switch, then remove the old
+credential in Atlas.
+
+### The JWT signing key must come from Secret Manager
+
+Both applications have a startup fallback: with an empty `JWT_SIGNING_KEY` / `ADMIN_JWT_SIGNING_KEY` they **generate a random
+key and log a warning** ("Development only", `JwtConfiguration`). In a deployed environment that is unacceptable: each instance
+would sign with a different key, and a token valid on one instance would fail on another, intermittently. The deployed
+configuration **must** supply the secrets above, and the fallback **must be disabled outside local development**. Terraform
+cannot do that by itself (a Cloud Run service that references a missing secret version fails to start, which prevents the
+common mistake, but an *empty* version would still trigger the fallback). Failing startup on a blank key outside a local
+profile is an **application change, raised here and not made** (`T-032`).
 
 ## Running it
 

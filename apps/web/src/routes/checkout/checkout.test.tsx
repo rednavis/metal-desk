@@ -161,6 +161,9 @@ describe("step 2: delivery and the manager branch", () => {
 
     expect(await screen.findByTestId("delivery-cost")).toHaveTextContent("14.90");
     expect(screen.getByText("2 to 4 days")).toBeInTheDocument();
+    expect(screen.getByTestId("applied-tier")).toHaveTextContent("Applied delivery tier");
+    expect(screen.getByTestId("applied-tier-id")).toHaveTextContent("eu-standard");
+    expect(screen.getByTestId("applied-tier")).toHaveTextContent("DE");
     expect(screen.getByRole("button", { name: "Continue to the payment method" })).toBeEnabled();
   });
 

@@ -285,6 +285,17 @@
   color: var(--color-fg);
 }
 
+/* An icon-only button: square, the icon sized to the text; its name comes from aria-label. */
+.md-button--icon {
+  width: 2.375rem;
+  padding: 0;
+}
+
+.md-button--icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .md-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;

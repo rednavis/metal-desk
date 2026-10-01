@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useEffectEvent, useState, type FormEvent } from "react";
 import { usePreferences } from "../../preferences/usePreferences";
-import { Button, Field } from "../../ui";
+import { Field } from "../../ui";
 
 interface QuantityFieldProps {
   /** The product's name, for the accessible label. */
@@ -14,11 +14,17 @@ interface QuantityFieldProps {
   onChange: (quantity: number) => void;
 }
 
+/** How long the customer may pause while typing before the new quantity is sent. */
+const SETTLE_MS = 600;
+
 /**
- * A line's quantity. The cap is enforced before sending (the input refuses above it, and an
- * over-cap entry is reported and not sent) and the server's own refusal is shown if it still
- * arrives: the field never clamps, so what the customer typed stays in the box beside the
- * explanation, instead of the cart silently holding another number.
+ * A line's quantity. A change is sent by itself once the customer stops typing, and at once on
+ * Enter or when the field loses focus, so there is nothing to press to recalculate the cart.
+ *
+ * The cap is enforced before sending (an over-cap or non-whole entry is reported and not sent) and
+ * the server's own refusal is shown if it still arrives: the field never clamps while the
+ * customer types, so what they typed stays in the box beside the explanation. While a change is
+ * being applied the field is read-only rather than disabled, so the focus stays where it was.
  */
 export function QuantityField({
   name,
@@ -33,10 +39,9 @@ export function QuantityField({
   const [invalid, setInvalid] = useState(false);
   const text = draft ?? String(quantity);
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    const value = Number(text);
-    if (!Number.isInteger(value) || value < 1 || value > max) {
+  function commit(entered: string) {
+    const value = Number(entered);
+    if (entered.trim() === "" || !Number.isInteger(value) || value < 1 || value > max) {
       setInvalid(true);
       return;
     }
@@ -45,12 +50,35 @@ export function QuantityField({
     setDraft(undefined);
   }
 
+  // The timer fires later than the render that set it, so it reads the latest props and state
+  // through an effect event rather than the ones it was created with.
+  const settle = useEffectEvent((entered: string) => {
+    commit(entered);
+  });
+
+  useEffect(() => {
+    if (draft === undefined) return undefined;
+    const timer = setTimeout(() => {
+      settle(draft);
+    }, SETTLE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [draft]);
+
   const error = invalid
     ? t(Number(text) > max ? "cart.quantity.max" : "cart.quantity.invalid", { max })
     : serverError;
 
   return (
-    <form className="md-quantity" onSubmit={submit} noValidate>
+    <form
+      className="md-quantity"
+      onSubmit={(event: FormEvent) => {
+        event.preventDefault();
+        commit(text);
+      }}
+      noValidate
+    >
       <Field
         label={t("cart.quantity.label", { name })}
         type="number"
@@ -59,15 +87,16 @@ export function QuantityField({
         max={max}
         value={text}
         error={error}
-        disabled={disabled}
+        readOnly={disabled}
+        aria-busy={disabled ? true : undefined}
         onChange={(event) => {
           setDraft(event.target.value);
           setInvalid(false);
         }}
+        onBlur={() => {
+          if (draft !== undefined) commit(draft);
+        }}
       />
-      <Button type="submit" variant="secondary" disabled={disabled || draft === undefined}>
-        {t("cart.quantity.update")}
-      </Button>
     </form>
   );
 }

@@ -96,9 +96,8 @@ describe("the cart page", () => {
 
     await userEvent.clear(field);
     await userEvent.type(field, "12");
-    await userEvent.click(screen.getByRole("button", { name: "Update" }));
 
-    expect(screen.getByText("At most 10 of a product per order.")).toBeInTheDocument();
+    expect(await screen.findByText("At most 10 of a product per order.")).toBeInTheDocument();
     expect(field).toHaveValue(12);
     expect(shop.sent.some((r) => r.method === "PUT")).toBe(false);
   });
@@ -111,10 +110,32 @@ describe("the cart page", () => {
 
     await userEvent.clear(field);
     await userEvent.type(field, "8");
-    await userEvent.click(screen.getByRole("button", { name: "Update" }));
 
     expect(await screen.findByText("At most 5 of a product")).toBeInTheDocument();
     expect(shop.quantities.get("p1")).toBe(1);
+  });
+
+  it("has no update button: a changed quantity is sent by itself", async () => {
+    const shop = createShop({ products: [BAR] });
+    shop.quantities.set("p1", 1);
+    renderApp({ path: "/cart", fetchImpl: shop.fetchImpl });
+    await screen.findByLabelText("Quantity of Gold Bar 100 g");
+
+    expect(screen.queryByRole("button", { name: "Update" })).not.toBeInTheDocument();
+  });
+
+  it("sends a quantity on Enter without waiting", async () => {
+    const shop = createShop({ products: [BAR] });
+    shop.quantities.set("p1", 1);
+    renderApp({ path: "/cart", fetchImpl: shop.fetchImpl });
+    const field = await screen.findByLabelText("Quantity of Gold Bar 100 g");
+
+    await userEvent.clear(field);
+    await userEvent.type(field, "3{Enter}");
+
+    await waitFor(() => {
+      expect(shop.quantities.get("p1")).toBe(3);
+    });
   });
 
   it("updates a quantity within the cap from the server's answer", async () => {
@@ -125,7 +146,6 @@ describe("the cart page", () => {
 
     await userEvent.clear(field);
     await userEvent.type(field, "4");
-    await userEvent.click(screen.getByRole("button", { name: "Update" }));
 
     await waitFor(() => {
       expect(badge()).toBe("4");

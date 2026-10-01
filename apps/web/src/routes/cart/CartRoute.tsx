@@ -7,7 +7,7 @@ import { QuantityField } from "../../features/cart/QuantityField";
 import { RemoveLineDialog } from "../../features/cart/RemoveLineDialog";
 import { useCart } from "../../features/cart/useCart";
 import { usePreferences } from "../../preferences/usePreferences";
-import { Button, EmptyState, ErrorState, Spinner, TotalsSummary } from "../../ui";
+import { Button, EmptyState, ErrorState, Spinner, TotalsSummary, TrashIcon } from "../../ui";
 import "../../features/cart/cart.css";
 
 /**
@@ -38,77 +38,78 @@ export function CartRoute() {
   } else {
     body = (
       <div className="md-split">
-        <table className="md-table">
-          <caption className="md-sr-only">{t("cart.caption")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("cart.col.product")}</th>
-              <th scope="col">{t("cart.col.quantity")}</th>
-              <th scope="col">{t("cart.col.unitPrice")}</th>
-              <th scope="col">{t("cart.col.lineNet")}</th>
-              <th scope="col">{t("cart.col.lineTax")}</th>
-              <th scope="col">
-                <span className="md-sr-only">{t("cart.col.actions")}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {cart.lines.map((line) => {
-              const refused = failure?.productId === line.productId;
-              return (
-                <tr key={line.productId} data-testid="cart-line">
-                  <th scope="row">
+        <ul className="md-cart-lines" aria-label={t("cart.caption")}>
+          {cart.lines.map((line) => {
+            const refused = failure?.productId === line.productId;
+            return (
+              <li key={line.productId} className="md-cart-line" data-testid="cart-line">
+                <div className="md-cart-line__head">
+                  <h2 className="md-cart-line__name">
                     <Link to={`/catalog/products/${encodeURIComponent(line.productId)}`}>
                       {line.name}
                     </Link>
-                  </th>
-                  <td>
-                    <QuantityField
-                      name={line.name}
-                      quantity={line.quantity}
-                      max={line.maxQuantity}
-                      disabled={busy}
-                      serverError={
-                        refused && isApiError(failure.error) ? failure.error.message : undefined
-                      }
-                      onChange={(quantity) => {
-                        void setQuantity(line.productId, quantity);
-                      }}
-                    />
-                    {refused && !isApiError(failure.error) ? (
-                      <ErrorState error={failure.error} />
-                    ) : null}
-                  </td>
-                  <td>
-                    <PriceOrRequest
-                      productId={line.productId}
-                      pricingMode={line.pricingMode}
-                      price={line.unitPrice}
-                    />
-                  </td>
-                  <td>{line.lineNet ? format.money(line.lineNet) : null}</td>
-                  <td>
-                    {line.lineTax && line.taxRatePercent
-                      ? `${format.money(line.lineTax)} (${format.percent(line.taxRatePercent)})`
-                      : null}
-                  </td>
-                  <td>
-                    <Button
-                      variant="secondary"
-                      aria-label={t("cart.remove", { name: line.name })}
-                      disabled={busy}
-                      onClick={() => {
-                        setRemoving(line);
-                      }}
-                    >
-                      {t("cart.remove.confirm")}
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </h2>
+                  <Button
+                    variant="secondary"
+                    className="md-button--icon"
+                    aria-label={t("cart.remove", { name: line.name })}
+                    title={t("cart.remove", { name: line.name })}
+                    disabled={busy}
+                    onClick={() => {
+                      setRemoving(line);
+                    }}
+                  >
+                    <TrashIcon />
+                  </Button>
+                </div>
+                <dl className="md-cart-line__facts">
+                  <div className="md-cart-line__quantity">
+                    <dt>{t("cart.col.quantity")}</dt>
+                    <dd>
+                      <QuantityField
+                        name={line.name}
+                        quantity={line.quantity}
+                        max={line.maxQuantity}
+                        disabled={busy}
+                        serverError={
+                          refused && isApiError(failure.error) ? failure.error.message : undefined
+                        }
+                        onChange={(quantity) => {
+                          void setQuantity(line.productId, quantity);
+                        }}
+                      />
+                      {refused && !isApiError(failure.error) ? (
+                        <ErrorState error={failure.error} />
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t("cart.col.unitPrice")}</dt>
+                    <dd>
+                      <PriceOrRequest
+                        productId={line.productId}
+                        pricingMode={line.pricingMode}
+                        price={line.unitPrice}
+                      />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t("cart.col.lineNet")}</dt>
+                    <dd>{line.lineNet ? format.money(line.lineNet) : null}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("cart.col.lineTax")}</dt>
+                    <dd>
+                      {line.lineTax && line.taxRatePercent
+                        ? `${format.money(line.lineTax)} (${format.percent(line.taxRatePercent)})`
+                        : null}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
         <aside className="md-summary" aria-labelledby="cart-totals">
           <h2 id="cart-totals">{t("cart.totals")}</h2>
           {cart.totals ? <TotalsSummary totals={cart.totals} /> : null}

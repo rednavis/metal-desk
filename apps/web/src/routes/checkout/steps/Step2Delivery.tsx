@@ -65,7 +65,8 @@ export function Step2Delivery({
     ) : null;
 
   if (delivery.stage === "PAYMENT_ALLOWED" && delivery.quote) {
-    const { cost, minDays, maxDays } = delivery.quote;
+    const { tierId, cost, minDays, maxDays, quotedAt } = delivery.quote;
+    const region = session?.details?.country;
     return (
       <section aria-labelledby="step2-title">
         <h2 id="step2-title">{t("checkout.step2.title")}</h2>
@@ -84,6 +85,25 @@ export function Step2Delivery({
             </dd>
           </div>
         </dl>
+        <div className="md-panel" data-testid="applied-tier">
+          <h3>{t("checkout.delivery.tier.title")}</h3>
+          <dl className="md-panel__rows">
+            <div>
+              <dt>{t("checkout.delivery.tier.id")}</dt>
+              <dd data-testid="applied-tier-id">{tierId}</dd>
+            </div>
+            {region ? (
+              <div>
+                <dt>{t("checkout.delivery.tier.region")}</dt>
+                <dd>{region}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>{t("checkout.delivery.tier.quotedAt")}</dt>
+              <dd>{format.dateTime(quotedAt)}</dd>
+            </div>
+          </dl>
+        </div>
         <div className="md-actions">
           <Button variant="secondary" onClick={onEditDetails}>
             {t("checkout.back")}

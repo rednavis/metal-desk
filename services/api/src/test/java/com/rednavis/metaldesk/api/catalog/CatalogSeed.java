@@ -11,6 +11,7 @@ import com.rednavis.metaldesk.persistence.mapper.ProductMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Category;
 import com.rednavis.metaldesk.share.domain.catalog.Metal;
 import com.rednavis.metaldesk.share.domain.catalog.Product;
+import com.rednavis.metaldesk.share.domain.catalog.StockStatus;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import com.rednavis.metaldesk.share.domain.id.CategoryId;
 import com.rednavis.metaldesk.share.domain.money.Currency;
@@ -53,6 +54,17 @@ public class CatalogSeed {
     final Product product =
         CatalogFixtures.weighedProduct(
             id, name, category, Optional.of(Money.of("1.00", Currency.EUR)), grams);
+    products.save(productMapper.toDocument(product)).block();
+    return product;
+  }
+
+  /** Stores a priced product with the given stock status. */
+  public Product pricedProduct(String id, String name, Category category, StockStatus stock) {
+    final Product base =
+        CatalogFixtures.namedProduct(
+            id, name, category, Optional.of(Money.of("1.00", Currency.EUR)));
+    final Product product =
+        new Product(base.id(), base.name(), base.specification(), category, stock, base.price());
     products.save(productMapper.toDocument(product)).block();
     return product;
   }

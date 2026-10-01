@@ -69,6 +69,33 @@ public class AuthController {
   }
 
   /**
+   * Swaps the bearer token for a new one with a full lifetime, so a customer who keeps using the
+   * site stays signed in and one who stops is signed out when the last token expires.
+   *
+   * @param customer the authenticated customer
+   * @param correlation the caller's correlation id, if any
+   * @return 200 with a new token; 401 if the customer may no longer sign in
+   */
+  @PostMapping("/refresh")
+  public Mono<ResponseEntity<Object>> refresh(
+      @AuthenticationPrincipal AuthenticatedCustomer customer,
+      @RequestHeader(name = CorrelationId.HEADER, required = false) String correlation) {
+    return service
+        .refresh(customer)
+        .<ResponseEntity<Object>>map(
+            token ->
+                ResponseEntity.ok(
+                    new SignInResponse(token.value(), BEARER, token.lifetime().toSeconds())))
+        .defaultIfEmpty(
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(
+                    new ApiErrorEnvelope(
+                        "auth.unauthorized",
+                        "Authentication is required",
+                        CorrelationId.choose(correlation))));
+  }
+
+  /**
    * Says who the bearer token is for.
    *
    * @param customer the authenticated customer

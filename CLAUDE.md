@@ -72,8 +72,8 @@ repositories.
 
 Both apps style through CSS custom properties: `apps/web/src/theme/tokens.css` and `apps/admin-web/src/ui/tokens.css`
 (palette, shadows, base type), then `ui/ui.css` for the kit and a feature `*.css` per feature. Use a token, never a
-literal colour, so dark mode keeps working. `web` switches theme on `<html data-theme>`; `admin-web` follows
-`prefers-color-scheme` and has no switch. Class names are `md-*`. Status and direction are never colour alone (label
+literal colour, so dark mode keeps working. Both switch theme on `<html data-theme>`: `web` from its preferences, `admin-web` from a
+self-contained switch in the header (`ui/theme.ts`, saved in localStorage; "system" follows `prefers-color-scheme`). Class names are `md-*`. Status and direction are never colour alone (label
 or glyph too). The brand mark and tokens are deliberately duplicated between the apps (T-079): a shared package would
 need `.github/scripts/affected.mjs` changed first.
 

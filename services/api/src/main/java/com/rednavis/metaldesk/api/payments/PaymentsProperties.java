@@ -22,9 +22,11 @@ public record PaymentsProperties(@DefaultValue Endpoint gateway, @DefaultValue E
    * @param timeout how long to wait for one call
    * @param retryBudget how many extra attempts an idempotent call may make (an authorisation is
    *     never retried)
+   * @param stub whether to answer with a canned {@code captured} response and make no request
    */
   public record Endpoint(
       @DefaultValue("http://localhost:9091") String baseUrl,
       @DefaultValue("10s") Duration timeout,
-      @DefaultValue("1") int retryBudget) {}
+      @DefaultValue("1") int retryBudget,
+      @DefaultValue("false") boolean stub) {}
 }

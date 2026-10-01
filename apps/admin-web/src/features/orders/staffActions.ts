@@ -9,10 +9,12 @@ import type { TransitionTrigger } from "../../api/types";
  */
 export type StaffOperation =
   | { kind: "advance"; trigger: "FULFILLMENT_STARTED" | "DELIVERED"; label: string }
+  | { kind: "payment"; trigger: "PAYMENT_CAPTURED"; label: string }
   | { kind: "shipment"; trigger: "SHIPPED"; label: string }
   | { kind: "quote"; trigger: "QUOTE_SET" | "QUOTE_DECLINED"; label: string };
 
 export const STAFF_OPERATIONS: readonly StaffOperation[] = [
+  { kind: "payment", trigger: "PAYMENT_CAPTURED", label: "Invoice paid: payment received" },
   { kind: "advance", trigger: "FULFILLMENT_STARTED", label: "Start fulfilment" },
   { kind: "shipment", trigger: "SHIPPED", label: "Enter shipment" },
   { kind: "advance", trigger: "DELIVERED", label: "Mark as delivered" },

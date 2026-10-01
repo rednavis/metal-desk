@@ -26,6 +26,8 @@ import org.springframework.test.web.servlet.client.RestTestClient.ResponseSpec;
  */
 class AuthApiTest extends AdminTestSupport {
 
+  private static final String ROLE_PATH = "$.role";
+  private static final String BEARER_PREFIX = "Bearer ";
   private static final String SIGN_IN = "/api/admin/auth/sign-in";
   private static final String ADMIN = "admin";
   private static final String MANAGER = "manager";
@@ -68,7 +70,7 @@ class AuthApiTest extends AdminTestSupport {
         .expectBody()
         .jsonPath("$.tokenType")
         .isEqualTo("Bearer")
-        .jsonPath("$.role")
+        .jsonPath(ROLE_PATH)
         .isEqualTo("ADMIN")
         .jsonPath("$.login")
         .isEqualTo(ADMIN)
@@ -82,7 +84,7 @@ class AuthApiTest extends AdminTestSupport {
         .expectStatus()
         .isOk()
         .expectBody()
-        .jsonPath("$.role")
+        .jsonPath(ROLE_PATH)
         .isEqualTo("MANAGER");
   }
 
@@ -98,7 +100,7 @@ class AuthApiTest extends AdminTestSupport {
     client
         .get()
         .uri("/api/admin/me")
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + token)
         .exchange()
         .expectStatus()
         .isOk()
@@ -107,12 +109,12 @@ class AuthApiTest extends AdminTestSupport {
         .isEqualTo("manager")
         .jsonPath("$.email")
         .isEqualTo("manager@manager.by")
-        .jsonPath("$.role")
+        .jsonPath(ROLE_PATH)
         .isEqualTo("MANAGER");
     client
         .get()
         .uri("/api/admin/tiers")
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + token)
         .exchange()
         .expectStatus()
         .isOk();
@@ -188,6 +190,54 @@ class AuthApiTest extends AdminTestSupport {
             VerificationState.VERIFIED));
 
     signIn(credentials("customer@example.com", "whatever")).expectStatus().isUnauthorized();
+  }
+
+  @Test
+  void refreshSwapsTokenForNewOneThatWorks() {
+    final String old = tokenOf(MANAGER, MANAGER);
+
+    final byte[] body =
+        Objects.requireNonNull(
+            client
+                .post()
+                .uri("/api/admin/auth/refresh")
+                .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + old)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.expiresInSeconds")
+                .isEqualTo(1800)
+                .jsonPath(ROLE_PATH)
+                .isEqualTo("MANAGER")
+                .returnResult()
+                .getResponseBody());
+    final String fresh =
+        new String(body, StandardCharsets.UTF_8)
+            .replaceAll(".*\"accessToken\":\"([^\"]+)\".*", "$1");
+    client
+        .get()
+        .uri("/api/admin/me")
+        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + fresh)
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
+  @Test
+  void refreshNeedsToken() {
+    client.post().uri("/api/admin/auth/refresh").exchange().expectStatus().isUnauthorized();
+  }
+
+  @Test
+  void refreshIsRefusedForUserWhoNoLongerExists() {
+    client
+        .post()
+        .uri("/api/admin/auth/refresh")
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.ADMIN))
+        .exchange()
+        .expectStatus()
+        .isUnauthorized();
   }
 
   @Test

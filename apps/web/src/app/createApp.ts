@@ -3,7 +3,7 @@ import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { isApiError } from "../api/errors";
 import { createApiClient, type ApiClientOptions } from "../api/client";
 import { createRequestContext } from "../api/requestContext";
-import { createMemoryTokenStore } from "../api/tokenStore";
+import { createMemoryTokenStore, createPersistentTokenStore } from "../api/tokenStore";
 import { SIGN_IN_PATH, appRoutes } from "../routes/routes";
 
 export interface AppOptions {
@@ -19,7 +19,10 @@ export interface AppOptions {
  * tests build the very same app `main.tsx` does, with a memory history and a stubbed `fetch`.
  */
 export function createApp(options: AppOptions = {}) {
-  const tokenStore = createMemoryTokenStore();
+  // Tests (which run on a memory history) keep the token in memory; the real app persists it.
+  const tokenStore = options.initialEntries
+    ? createMemoryTokenStore()
+    : createPersistentTokenStore();
   // The provider replaces these with the customer's real preferences before anything is requested.
   const requestContext = createRequestContext({ locale: "en", currency: "EUR" });
   const router = options.initialEntries

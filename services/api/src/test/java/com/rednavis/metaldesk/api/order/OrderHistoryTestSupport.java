@@ -7,11 +7,17 @@ import com.rednavis.metaldesk.api.persistence.repository.ShipmentRepository;
 import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
 import com.rednavis.metaldesk.persistence.fixtures.OrderFixtures;
 import com.rednavis.metaldesk.persistence.mapper.OrderMapper;
+import com.rednavis.metaldesk.share.domain.fulfillment.DeliveryQuote;
+import com.rednavis.metaldesk.share.domain.fulfillment.TransitTime;
 import com.rednavis.metaldesk.share.domain.id.CustomerId;
+import com.rednavis.metaldesk.share.domain.id.FulfillmentTierId;
 import com.rednavis.metaldesk.share.domain.id.OrderId;
+import com.rednavis.metaldesk.share.domain.money.Currency;
+import com.rednavis.metaldesk.share.domain.money.Money;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderNumber;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;
+import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +93,26 @@ public class OrderHistoryTestSupport extends CartTestSupport {
             created.updatedAt());
     orderStore.save(orderMapper.toDocument(order)).block();
     return order;
+  }
+
+  /**
+   * Stores an order that awaits payment and carries a delivery quote, as a checkout leaves it.
+   *
+   * @param owner the customer
+   * @return the order
+   */
+  protected Order placeAwaitingPayment(Caller owner) {
+    final Order order = placeOrder(owner, OrderStatus.AWAITING_PAYMENT);
+    final Order quoted =
+        OrderTransitions.withQuote(
+            order,
+            new DeliveryQuote(
+                new FulfillmentTierId("tier-1"),
+                Money.of("12.50", Currency.EUR),
+                new TransitTime(2, 4),
+                order.createdAt()));
+    orderStore.save(orderMapper.toDocument(quoted)).block();
+    return quoted;
   }
 
   /**

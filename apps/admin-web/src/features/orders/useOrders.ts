@@ -73,6 +73,10 @@ export function useOrderActions(orderId: string) {
     mutationFn: () => advance("fulfillment"),
     onSuccess: refresh,
   });
+  const markPaymentReceived = useMutation({
+    mutationFn: () => advance("payment-received"),
+    onSuccess: refresh,
+  });
   const markDelivered = useMutation({ mutationFn: () => advance("delivery"), onSuccess: refresh });
   const enterShipment = useMutation({
     mutationFn: (entry: { carrier: string; trackingReference: string }) =>
@@ -95,5 +99,5 @@ export function useOrderActions(orderId: string) {
       }),
     onSuccess: refresh,
   });
-  return { startFulfillment, markDelivered, enterShipment, setTerms, decline };
+  return { startFulfillment, markPaymentReceived, markDelivered, enterShipment, setTerms, decline };
 }

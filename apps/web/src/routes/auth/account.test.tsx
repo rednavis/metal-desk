@@ -344,6 +344,57 @@ describe("order history", () => {
     expect(screen.queryByText("Tracking number")).not.toBeInTheDocument();
   });
 
+  it("offers Pay now only on an order that is awaiting payment, and opens its checkout", async () => {
+    const unpaid = {
+      ...ADA,
+      orders: [
+        {
+          number: "100000000002",
+          status: "AWAITING_PAYMENT",
+          statusLabel: "Awaiting payment",
+          total: "119.00",
+        },
+      ],
+    };
+    const { app } = await signInAs(unpaid, "/sign-in?from=%2Forders%2F100000000002", {
+      accounts: [unpaid],
+    });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Pay now" }));
+
+    await waitFor(() => {
+      expect(app.router.state.location.pathname).toBe("/checkout/resumed-1");
+    });
+    expect(app.router.state.location.search).toBe("?step=3");
+  });
+
+  it("offers no second payment once an invoice was issued, and says it awaits payment", async () => {
+    const invoiced = {
+      ...ADA,
+      orders: [
+        {
+          number: "100000000003",
+          status: "AWAITING_PAYMENT",
+          statusLabel: "Awaiting payment",
+          total: "18178.35",
+          invoicePending: true,
+        },
+      ],
+    };
+    await signInAs(invoiced, "/sign-in?from=%2Forders%2F100000000003", { accounts: [invoiced] });
+
+    expect(await screen.findByTestId("invoice-pending")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Pay now" })).not.toBeInTheDocument();
+  });
+
+  it("offers no payment on a paid order", async () => {
+    await signInAs(ADA, "/sign-in?from=%2Forders%2F100000000001");
+
+    await screen.findByTestId("grand-total");
+
+    expect(screen.queryByRole("button", { name: "Pay now" })).not.toBeInTheDocument();
+  });
+
   it("shows an explicit empty state for a customer with no orders", async () => {
     const empty = { ...ADA, orders: [] };
     await signInAs(empty, "/sign-in?from=%2Forders", { accounts: [empty] });

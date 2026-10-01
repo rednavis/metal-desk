@@ -1,14 +1,12 @@
 package com.rednavis.metaldesk.api.persistence;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.rednavis.metaldesk.api.persistence.repository.CategoryRepository;
 import com.rednavis.metaldesk.api.persistence.repository.ProductRepository;
-import com.rednavis.metaldesk.persistence.document.CartDocument;
 import com.rednavis.metaldesk.persistence.document.CategoryDocument;
-import com.rednavis.metaldesk.persistence.document.ProductDocument;
+import com.rednavis.metaldesk.persistence.document.PriceDocument.ScopeKind;
+import com.rednavis.metaldesk.persistence.document.PriceRuleDocument;
 import com.rednavis.metaldesk.persistence.mapper.CategoryMapper;
 import com.rednavis.metaldesk.persistence.mapper.ProductMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Category;
@@ -22,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 
 /**
- * The data the migrations seed, read back through the real mappers: every category, product and
- * cart must load into the domain model, and the carts must point only at products that exist.
+ * The data the migrations seed, read back through the real mappers: every category and product must
+ * load into the domain model, and every priced one must have a margin rule to be sold.
  */
 class SeedDataTest extends MongoTestSupport {
 
@@ -49,26 +47,19 @@ class SeedDataTest extends MongoTestSupport {
   }
 
   @Test
-  void seededCartsReferenceOnlyExistingProducts() {
-    final Map<String, Boolean> known =
-        Objects.requireNonNull(products.findAll().collectList().block()).stream()
-            .collect(Collectors.toMap(ProductDocument::id, doc -> true));
+  void everySeededPricedProductHasMarginRule() {
+    final List<String> ruleIds =
+        Objects.requireNonNull(mongo.findAll(PriceRuleDocument.class).collectList().block())
+            .stream()
+            .map(PriceRuleDocument::id)
+            .toList();
 
-    for (final String id :
-        List.of(
-            "demo-cart-first-purchase",
-            "demo-cart-bulk-silver",
-            "demo-cart-manager-quote",
-            "demo-cart-empty")) {
-      final CartDocument seeded = cart(id);
-      assertNull(seeded.ownerId());
-      seeded.lines().forEach(line -> assertTrue(known.containsKey(line.productId()), id));
-    }
-    assertEquals(2, cart("demo-cart-first-purchase").lines().size());
-    assertTrue(cart("demo-cart-empty").lines().isEmpty());
-  }
-
-  private CartDocument cart(String id) {
-    return Objects.requireNonNull(mongo.findById(id, CartDocument.class).block(), id);
+    Objects.requireNonNull(products.findAll().collectList().block()).stream()
+        .filter(doc -> doc.price() != null && doc.id().startsWith("prod-"))
+        .forEach(
+            doc ->
+                assertTrue(
+                    ruleIds.contains(PriceRuleDocument.idFor(ScopeKind.CATEGORY, doc.categoryId())),
+                    "no margin rule for " + doc.id()));
   }
 }

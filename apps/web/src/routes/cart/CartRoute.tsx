@@ -37,7 +37,7 @@ export function CartRoute() {
     );
   } else {
     body = (
-      <>
+      <div className="md-split">
         <table className="md-table">
           <caption className="md-sr-only">{t("cart.caption")}</caption>
           <thead>
@@ -109,18 +109,20 @@ export function CartRoute() {
             })}
           </tbody>
         </table>
-        {cart.totals ? (
-          <section aria-labelledby="cart-totals">
-            <h2 id="cart-totals">{t("cart.totals")}</h2>
-            <TotalsSummary totals={cart.totals} />
-          </section>
-        ) : null}
-        {cart.complete ? (
-          <Link to="/checkout">{t("cart.checkout")}</Link>
-        ) : (
-          <p role="status">{t("cart.incomplete")}</p>
-        )}
-      </>
+        <aside className="md-summary" aria-labelledby="cart-totals">
+          <h2 id="cart-totals">{t("cart.totals")}</h2>
+          {cart.totals ? <TotalsSummary totals={cart.totals} /> : null}
+          <div className="md-summary__block">
+            {cart.complete ? (
+              <Link className="md-button md-button--lg md-button--block" to="/checkout">
+                {t("cart.checkout")}
+              </Link>
+            ) : (
+              <p role="status">{t("cart.incomplete")}</p>
+            )}
+          </div>
+        </aside>
+      </div>
     );
   }
 

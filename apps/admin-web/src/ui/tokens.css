@@ -1,16 +1,25 @@
 /*
- * The back office's theme, as tokens. It has no theme switch: it follows the device's
- * `prefers-color-scheme`. The palette matches the storefront's (indigo accent, slate neutrals) so
- * staff and customers see one product.
+ * The back office's theme, as tokens. Colours are defined once, here, and switched at the root: the
+ * page's `data-theme` is "light" or "dark" (set by `applyTheme`, from the staff member's choice or,
+ * for "system", from the device's `prefers-color-scheme`), and nothing else mentions a theme. Before
+ * the script has run (no attribute) the device's preference decides, so there is no flash. The
+ * palette matches the storefront's (indigo accent, slate neutrals) so staff and customers see one
+ * product.
  */
-:root {
-  color-scheme: light dark;
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
   --color-bg: #f6f7fb;
   --color-surface: #ffffff;
   --color-surface-2: #f1f5f9;
-  --color-sidebar: #0f172a;
-  --color-sidebar-fg: #cbd5e1;
+  --color-sidebar: #ffffff;
+  --color-sidebar-fg: #475569;
   --color-sidebar-muted: #64748b;
+  --color-sidebar-strong: #0f172a;
+  --color-sidebar-border: #e2e8f0;
+  --color-sidebar-hover: #f1f5f9;
+  --color-sidebar-active: color-mix(in srgb, #4f46e5 10%, transparent);
+  --color-sidebar-active-edge: #4f46e5;
   --color-fg: #0f172a;
   --color-muted: #475569;
   --color-border: #e2e8f0;
@@ -34,11 +43,19 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
+    color-scheme: dark;
     --color-bg: #0b1020;
     --color-surface: #111827;
     --color-surface-2: #1e293b;
     --color-sidebar: #070b16;
+    --color-sidebar-fg: #cbd5e1;
+    --color-sidebar-muted: #64748b;
+    --color-sidebar-strong: #ffffff;
+    --color-sidebar-border: #1f2a3d;
+    --color-sidebar-hover: rgb(255 255 255 / 0.06);
+    --color-sidebar-active: rgb(129 140 248 / 0.18);
+    --color-sidebar-active-edge: #818cf8;
     --color-fg: #f1f5f9;
     --color-muted: #94a3b8;
     --color-border: #1f2a3d;
@@ -54,6 +71,35 @@
     --shadow-md: 0 4px 16px rgb(0 0 0 / 0.35);
     --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.5);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0b1020;
+  --color-surface: #111827;
+  --color-surface-2: #1e293b;
+  --color-sidebar: #070b16;
+  --color-sidebar-fg: #cbd5e1;
+  --color-sidebar-muted: #64748b;
+  --color-sidebar-strong: #ffffff;
+  --color-sidebar-border: #1f2a3d;
+  --color-sidebar-hover: rgb(255 255 255 / 0.06);
+  --color-sidebar-active: rgb(129 140 248 / 0.18);
+  --color-sidebar-active-edge: #818cf8;
+  --color-fg: #f1f5f9;
+  --color-muted: #94a3b8;
+  --color-border: #1f2a3d;
+  --color-border-strong: #334155;
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b4fc;
+  --color-accent-fg: #0b1020;
+  --color-accent-soft: color-mix(in srgb, #818cf8 14%, transparent);
+  --color-danger: #f87171;
+  --color-warning: #fbbf24;
+  --color-success: #4ade80;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.5);
 }
 
 *,

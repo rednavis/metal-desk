@@ -5,6 +5,7 @@ import { signInResponseSchema } from "../../api/types";
 import { useApi } from "../../api/useApi";
 import { useSignedIn } from "../../api/useSignedIn";
 import { AuthContext, type AuthState } from "./AuthContext";
+import { useSessionKeepAlive } from "./useSessionKeepAlive";
 
 /**
  * Signing in and out, and what each does to the data on screen.
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const tokenStore = useContext(TokenStoreContext);
   const signedIn = useSignedIn();
+  useSessionKeepAlive(client, tokenStore, signedIn);
 
   const state = useMemo<AuthState>(() => {
     if (tokenStore === null) throw new Error("AuthProvider needs a TokenStoreContext");

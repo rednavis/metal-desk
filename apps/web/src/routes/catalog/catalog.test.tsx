@@ -66,6 +66,7 @@ describe("the catalog", () => {
 
     await screen.findByText("Platinum Bar");
     expect(card("Platinum Bar").getByText("Out of stock")).toBeInTheDocument();
+    expect(card("Platinum Bar").getByTestId("price")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Add to cart/ })).not.toBeInTheDocument();
     unmount();
 
@@ -73,6 +74,22 @@ describe("the catalog", () => {
     await screen.findByRole("heading", { name: "Platinum Bar" });
     expect(screen.getAllByText("Out of stock").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /Add to cart/ })).not.toBeInTheDocument();
+  });
+
+  it("shows no price and no purchase buttons for a product whose stock is on request", async () => {
+    const onRequest: ShopProduct = {
+      id: "p5",
+      name: "Palladium Bar",
+      stock: "ON_REQUEST",
+      price: "900.00",
+    };
+    const shop = createShop({ products: [onRequest] });
+    renderApp({ path: "/catalog", fetchImpl: shop.fetchImpl });
+
+    await screen.findByText("Palladium Bar");
+    expect(card("Palladium Bar").queryByTestId("price")).not.toBeInTheDocument();
+    expect(card("Palladium Bar").getByTestId("price-on-request")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Add to cart|Buy now/ })).not.toBeInTheDocument();
   });
 
   it("pages a category instead of requesting all of it", async () => {

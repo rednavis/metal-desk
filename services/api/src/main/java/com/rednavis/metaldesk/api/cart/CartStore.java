@@ -108,6 +108,16 @@ public class CartStore {
   }
 
   /**
+   * Removes a cart, whoever owns it. Removing one that is gone changes nothing.
+   *
+   * @param id the cart's reference
+   * @return a signal that completes when it is removed
+   */
+  public Mono<Void> delete(String id) {
+    return mongo.remove(Query.query(Criteria.where(ID).is(id)), CartDocument.class).then();
+  }
+
+  /**
    * Gives an anonymous cart to a customer.
    *
    * @param id the anonymous cart's reference

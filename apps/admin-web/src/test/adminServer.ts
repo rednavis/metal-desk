@@ -25,6 +25,7 @@ export interface FakeOrder {
   weightGrams?: string | null;
   boundCeiling?: "VALUE" | "WEIGHT" | "NO_TIER_FOR_REGION" | "WITHIN_TIERS";
   shipment?: { carrier: string; trackingReference: string };
+  payment?: { method: string; methodGroup: string; status: string; reference: string };
 }
 
 const ACCEPTED: Partial<Record<OrderStatus, TransitionTrigger[]>> = {
@@ -87,8 +88,7 @@ export function createAdminServer(
 
   const detail = (o: FakeOrder) => ({
     summary: summary(o),
-    customerName: "Ann Example",
-    contact: { email: "ann@example.com", phone: "+4930123456" },
+    contact: { name: "Ann Example", email: "ann@example.com", phone: "+4930123456" },
     destination: "1 Main Street, 10115 Berlin, DE",
     lines: [
       {
@@ -104,6 +104,7 @@ export function createAdminServer(
     tax: o.tax ?? "38.00",
     delivery: "0.00",
     ...(o.shipment ? { shipment: o.shipment } : {}),
+    ...(o.payment ? { payment: o.payment } : {}),
     ...(o.status === "AWAITING_MANAGER_QUOTE"
       ? {
           handoff: {
@@ -231,6 +232,13 @@ export function createAdminServer(
         if (!accepts("FULFILLMENT_STARTED")) return reply(illegal("FULFILLMENT_STARTED"));
         found.status = "FULFILLING";
         found.actions = undefined;
+        return reply(json(detail(found)));
+      }
+      if (rest === "/payment-received") {
+        if (!accepts("PAYMENT_CAPTURED")) return reply(illegal("PAYMENT_CAPTURED"));
+        found.status = "PAID";
+        found.actions = undefined;
+        if (found.payment) found.payment = { ...found.payment, status: "CAPTURED" };
         return reply(json(detail(found)));
       }
       if (rest === "/delivery") {

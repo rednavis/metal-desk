@@ -8,7 +8,14 @@ import { usePreferences } from "../../preferences/usePreferences";
 export function HandoffOutcome({ reference }: { reference: string }) {
   const { t } = usePreferences();
   return (
-    <section aria-labelledby="handoff-done-title" data-testid="handoff-receipt">
+    <section
+      className="md-receipt"
+      aria-labelledby="handoff-done-title"
+      data-testid="handoff-receipt"
+    >
+      <span className="md-receipt__glyph" aria-hidden="true">
+        {"✓"}
+      </span>
       <h2 id="handoff-done-title">{t("checkout.handoff.done.title")}</h2>
       <p data-testid="handoff-reference">{t("checkout.handoff.done.reference", { reference })}</p>
       <p>{t("checkout.handoff.done.next")}</p>

@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.payments.wallet;
 import com.rednavis.metaldesk.payments.http.JsonHttpClient;
 import com.rednavis.metaldesk.payments.provider.PaymentProviderException;
 import java.util.Map;
+import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -13,10 +14,14 @@ import reactor.core.publisher.Mono;
  * <p>Taking a payment is never retried, because a timeout does not prove it failed and repeating it
  * could charge the wallet twice. Confirming only reads a payment's state, so it is retried on a
  * transport failure up to the configured budget.
+ *
+ * <p><strong>Stub.</strong> When the configuration says {@code stub}, neither call goes out: both
+ * answer {@code captured} with a made-up reference, for development and demonstration.
  */
 final class WalletClient {
 
   private final JsonHttpClient http;
+  private final boolean stub;
 
   /**
    * Creates a client for the wallet provider.
@@ -25,6 +30,7 @@ final class WalletClient {
    */
   /* default */ WalletClient(WalletConfiguration configuration) {
     this.http = new JsonHttpClient(configuration.endpoint());
+    this.stub = configuration.stub();
   }
 
   /**
@@ -34,7 +40,9 @@ final class WalletClient {
    * @return the provider's answer, or an error of type {@link PaymentProviderException}
    */
   /* default */ Mono<WalletResponse> authorise(WalletRequest request) {
-    return http.post("/v1/wallet/payments", request, WalletResponse.class);
+    return stub
+        ? Mono.fromSupplier(WalletClient::captured)
+        : http.post("/v1/wallet/payments", request, WalletResponse.class);
   }
 
   /**
@@ -45,7 +53,14 @@ final class WalletClient {
    * @return the provider's answer, or an error of type {@link PaymentProviderException}
    */
   /* default */ Mono<WalletResponse> confirm(String reference) {
-    return http.postIdempotent(
-        "/v1/wallet/payments/" + reference + "/confirm", Map.of(), WalletResponse.class);
+    return stub
+        ? Mono.fromSupplier(WalletClient::captured)
+        : http.postIdempotent(
+            "/v1/wallet/payments/" + reference + "/confirm", Map.of(), WalletResponse.class);
+  }
+
+  /** The canned answer of a stubbed wallet provider: the payment was taken. */
+  private static WalletResponse captured() {
+    return new WalletResponse("captured", "stub-" + UUID.randomUUID(), null);
   }
 }

@@ -101,7 +101,11 @@ export const orderSummaryViewSchema = z.object({
 });
 export type OrderSummaryView = z.infer<typeof orderSummaryViewSchema>;
 
-export const contactViewSchema = z.object({ email: z.string(), phone: z.string().optional() });
+export const contactViewSchema = z.object({
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().optional(),
+});
 export type ContactView = z.infer<typeof contactViewSchema>;
 
 export const lineViewSchema = z.object({
@@ -126,6 +130,14 @@ export type QuoteInfo = z.infer<typeof quoteInfoSchema>;
 export const shipmentViewSchema = z.object({ carrier: z.string(), trackingReference: z.string() });
 export type ShipmentView = z.infer<typeof shipmentViewSchema>;
 
+export const paymentInfoSchema = z.object({
+  method: z.string(),
+  methodGroup: z.string(),
+  status: z.string(),
+  reference: z.string(),
+});
+export type PaymentInfo = z.infer<typeof paymentInfoSchema>;
+
 /** Absent weight and ceiling mean a product is gone from the catalog: they are not guessed. */
 export const handoffContextSchema = z.object({
   region: z.string(),
@@ -136,7 +148,6 @@ export type HandoffContext = z.infer<typeof handoffContextSchema>;
 
 export const orderDetailViewSchema = z.object({
   summary: orderSummaryViewSchema,
-  customerName: z.string().optional(),
   contact: contactViewSchema.optional(),
   destination: z.string(),
   lines: z.array(lineViewSchema),
@@ -145,6 +156,8 @@ export const orderDetailViewSchema = z.object({
   delivery: z.string(),
   quote: quoteInfoSchema.optional(),
   shipment: shipmentViewSchema.optional(),
+  /** Absent until a payment was started. */
+  payment: paymentInfoSchema.optional(),
   /** Present only while the order awaits a manager quote. */
   handoff: handoffContextSchema.optional(),
   /** What the server's state machine accepts now; the screens offer exactly these. */
@@ -307,6 +320,12 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: ADMIN + "order/dto/OrderDetailView.java",
     record: "ShipmentView",
     schema: shipmentViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "order/dto/OrderDetailView.java",
+    record: "PaymentInfo",
+    schema: paymentInfoSchema,
   },
   {
     kind: "record",

@@ -22,6 +22,8 @@ export interface Order {
   /** What the lines really add up to: the screen must not show this instead of `total`. */
   lineSum?: string;
   shipment?: { carrier: string; trackingReference: string };
+  /** An invoice was issued and awaits payment. */
+  invoicePending?: boolean;
 }
 
 export const ADA: Account = {
@@ -156,6 +158,14 @@ export function createAccountServer(options: AccountOptions = {}) {
         })),
       });
     }
+    const payment = /^\/orders\/([^/]+)\/payment-session$/.exec(path);
+    if (payment && method === "POST") {
+      const awaiting = who?.orders.find((o) => o.number === payment[1]);
+      if (!awaiting) return error(404, "order.not-found", "No such order");
+      return awaiting.status === "AWAITING_PAYMENT"
+        ? reply({ checkoutId: "resumed-1" })
+        : error(409, "order.not-payable", "This order is not awaiting payment");
+    }
     const detail = /^\/orders\/([^/]+)$/.exec(path);
     if (detail) {
       const order = who?.orders.find((o) => o.number === detail[1]);
@@ -188,7 +198,8 @@ export function createAccountServer(options: AccountOptions = {}) {
           delivery: money("14.90"),
           grandTotal: money(order.total),
         },
-        paymentMethod: "CARD",
+        paymentMethod: order.invoicePending ? "INVOICE" : "CARD",
+        ...(order.invoicePending ? { paymentStatus: "PENDING" } : {}),
         ...(order.shipment ? { shipment: order.shipment } : {}),
       });
     }

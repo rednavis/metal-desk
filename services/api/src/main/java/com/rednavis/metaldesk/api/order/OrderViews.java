@@ -64,6 +64,7 @@ public final class OrderViews {
             price(totals.delivery()),
             price(totals.grandTotal())),
         order.payment().map(payment -> payment.method().name()).orElse(null),
+        order.payment().map(payment -> payment.status().name()).orElse(null),
         shipment
             .filter(details -> OrderStatusLabels.shipped(order.status()))
             .map(details -> new ShipmentView(details.carrier(), details.trackingReference()))

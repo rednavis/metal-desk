@@ -42,7 +42,10 @@ public class PaymentProvidersConfiguration {
     final PaymentsProperties.Endpoint endpoint = properties.gateway();
     return new GatewayProvider(
         new GatewayConfiguration(
-            URI.create(endpoint.baseUrl()), endpoint.timeout(), endpoint.retryBudget()));
+            URI.create(endpoint.baseUrl()),
+            endpoint.timeout(),
+            endpoint.retryBudget(),
+            endpoint.stub()));
   }
 
   /**
@@ -56,7 +59,10 @@ public class PaymentProvidersConfiguration {
     final PaymentsProperties.Endpoint endpoint = properties.wallet();
     return new WalletProvider(
         new WalletConfiguration(
-            URI.create(endpoint.baseUrl()), endpoint.timeout(), endpoint.retryBudget()));
+            URI.create(endpoint.baseUrl()),
+            endpoint.timeout(),
+            endpoint.retryBudget(),
+            endpoint.stub()));
   }
 
   /**

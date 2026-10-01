@@ -28,7 +28,9 @@ metaldesk:
   jwt:
     issuer: metal-desk-api
     audience: metal-desk-storefront
-    ttl: 15m
+    # The idle timeout: a token lives this long and the clients swap it for a new one while the user is
+    # active (POST /api/auth/refresh), so a session ends after this long without activity.
+    ttl: 30m
     # Base64 of at least 32 random bytes, supplied by the deployment (Secret Manager). Left empty, a
     # random key is generated at startup: fine for development, never for a deployment.
     signing-key: ${JWT_SIGNING_KEY:}
@@ -72,10 +74,13 @@ metaldesk:
       base-url: http://localhost:9091
       timeout: 10s
       retry-budget: 1
+      # true: no request is made; every payment answers "captured" (development and demonstration).
+      stub: true
     wallet:
       base-url: http://localhost:9092
       timeout: 10s
       retry-budget: 1
+      stub: true
   fx:
     # Display-currency conversion (FR-1.8) for the catalog and the cart. Orders are always priced and
     # charged in the settlement currency. THESE RATES ARE FAKE (ADR-0002: no rate source exists in

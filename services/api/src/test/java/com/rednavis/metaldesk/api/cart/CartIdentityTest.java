@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 /**
- * A cart's identity survives signing in and out (BRD FR-2.7): the anonymous cart is still there
- * after sign-in and after sign-out, and merging it into a customer's cart happens once.
+ * A cart's identity survives signing in and out (BRD FR-2.7): the customer's cart is back after
+ * signing in again, but an anonymous visitor never sees it, and merging an anonymous cart into a
+ * customer's cart happens once.
  */
 class CartIdentityTest extends CartTestSupport {
 
@@ -22,7 +23,7 @@ class CartIdentityTest extends CartTestSupport {
   }
 
   @Test
-  void anonymousCartIsReadableAfterSignInAndAfterSignOut() {
+  void anonymousCartIsReadableAfterSignInButNotAfterSignOut() {
     final Called anonymous = add(null, null, GOLD_1);
     changeQuantity(anonymous.cookie(), GOLD_1, 4);
     final String token = signedInToken();
@@ -31,10 +32,16 @@ class CartIdentityTest extends CartTestSupport {
     assertEquals(4, signedIn.quantityOf(GOLD_1));
     assertNotNull(signedIn.cookie(), "the cookie must keep pointing at a cart that exists");
 
-    // Signing out is just dropping the token; the cookie is all that is left.
+    // Signing out is just dropping the token; the cookie is all that is left, and it must not
+    // open the customer's cart to whoever uses the browser next.
     final Called signedOut = read(signedIn.cookie(), null);
-    assertEquals(4, signedOut.quantityOf(GOLD_1));
-    assertEquals(signedIn.body().get(CART_ID), signedOut.body().get(CART_ID));
+    assertEquals(0, signedOut.lines().size());
+    assertEquals(0, signedOut.quantityOf(GOLD_1));
+
+    // The customer finds the cart again by signing in.
+    final Called back = read(signedOut.cookie(), token);
+    assertEquals(4, back.quantityOf(GOLD_1));
+    assertEquals(signedIn.body().get(CART_ID), back.body().get(CART_ID));
   }
 
   @Test
@@ -52,7 +59,7 @@ class CartIdentityTest extends CartTestSupport {
   void anonymousCartIsMergedIntoTheCustomersCartByProductWithinTheCap() {
     final String token = signedInToken();
     final Called own = add(null, token, GOLD_1);
-    changeQuantity(own.cookie(), GOLD_1, 8);
+    changeQuantity(own.cookie(), token, GOLD_1, 8);
     final Called anonymous = add(null, null, GOLD_1);
     changeQuantity(anonymous.cookie(), GOLD_1, 6);
     add(anonymous.cookie(), null, GOLD_2);
@@ -69,7 +76,7 @@ class CartIdentityTest extends CartTestSupport {
   void mergingTwiceDoesNotDoubleTheQuantities() {
     final String token = signedInToken();
     final Called own = add(null, token, GOLD_1);
-    changeQuantity(own.cookie(), GOLD_1, 3);
+    changeQuantity(own.cookie(), token, GOLD_1, 3);
     final Called anonymous = add(null, null, GOLD_1);
     changeQuantity(anonymous.cookie(), GOLD_1, 2);
 
@@ -86,7 +93,7 @@ class CartIdentityTest extends CartTestSupport {
   void simultaneousRequestsMergeTheAnonymousCartOnlyOnce() {
     final String token = signedInToken();
     final Called own = add(null, token, GOLD_1);
-    changeQuantity(own.cookie(), GOLD_1, 3);
+    changeQuantity(own.cookie(), token, GOLD_1, 3);
     final Called anonymous = add(null, null, GOLD_1);
     changeQuantity(anonymous.cookie(), GOLD_1, 2);
 

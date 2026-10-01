@@ -14,9 +14,13 @@ import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;
 import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
+import com.rednavis.metaldesk.share.domain.payment.PaymentMethodGroup;
+import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
+import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
 import com.rednavis.metaldesk.share.error.ConflictException;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import java.time.Clock;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -80,6 +84,45 @@ public class OrderAdminService {
    */
   public OrderDetailView detail(String id) {
     return view(store.require(id));
+  }
+
+  /**
+   * Records that the payment of an invoiced order arrived: the pending invoice payment is captured
+   * and the order becomes {@code PAID}, from where fulfillment can start.
+   *
+   * @param id the order id
+   * @return the order, now {@code PAID}
+   * @throws ConflictException {@code order.no-pending-invoice} if the order has no invoice payment
+   *     that is waiting to be paid; the state machine refuses it if the order is not awaiting
+   *     payment
+   */
+  public OrderDetailView markInvoicePaid(String id) {
+    final Order before = store.require(id);
+    final PaymentRecord pending =
+        before
+            .payment()
+            .filter(payment -> payment.method().group() == PaymentMethodGroup.INVOICE)
+            .filter(payment -> payment.status() == PaymentStatus.PENDING)
+            .orElseThrow(
+                () ->
+                    new ConflictException(
+                        "order.no-pending-invoice",
+                        "Order " + id + " has no invoice payment waiting to be paid"));
+    final Instant now = clock.instant();
+    final PaymentRecord captured =
+        new PaymentRecord(
+            pending.providerId(),
+            pending.method(),
+            PaymentStatus.CAPTURED,
+            pending.reference(),
+            pending.amount());
+    final Order after =
+        OrderTransitions.advance(
+            OrderTransitions.withPayment(before, captured, now),
+            TransitionTrigger.PAYMENT_CAPTURED,
+            now);
+    store.settle(before, after);
+    return view(after);
   }
 
   /**

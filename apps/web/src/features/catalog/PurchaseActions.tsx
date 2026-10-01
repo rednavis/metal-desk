@@ -15,9 +15,10 @@ interface PurchaseActionsProps {
 }
 
 /**
- * Add to cart and Buy now (BRD FR-3.1, FR-3.2), offered only where they can succeed: an on-request
- * product has neither (the server refuses both with a 400, and a button that always fails is worse
- * than none), and an out-of-stock one cannot be added.
+ * Add to cart and Buy now (BRD FR-3.1, FR-3.2), offered only where they can succeed: only an
+ * in-stock, priced product can be bought. An on-request product has neither, and an out-of-stock
+ * one shows its price but cannot be added (the server refuses both with a 400, and a button that
+ * always fails is worse than none).
  *
  * Add to cart sends the request and the badge follows the response, so a repeat add shows whatever
  * the server did with it. Buy now does not touch the cart: it opens checkout step 1 for one unit of
@@ -28,7 +29,7 @@ export function PurchaseActions({ productId, name, pricingMode, stock }: Purchas
   const { cart, busy, failure, add } = useCart();
   const navigate = useNavigate();
 
-  if (!isPriced(pricingMode) || stock === "OUT_OF_STOCK") return null;
+  if (!isPriced(pricingMode) || stock !== "IN_STOCK") return null;
 
   const inCart = cart?.lines.some((line) => line.productId === productId) ?? false;
   return (

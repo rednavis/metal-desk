@@ -471,10 +471,14 @@ export const orderDetailViewSchema = z.object({
   deliveryAddress: orderAddressViewSchema.optional(),
   totals: orderTotalsViewSchema,
   paymentMethod: z.string().optional(),
+  paymentStatus: z.string().optional(),
   /** Absent, not empty, before the order ships. */
   shipment: shipmentViewSchema.optional(),
 });
 export type OrderDetailView = z.infer<typeof orderDetailViewSchema>;
+
+export const resumedPaymentViewSchema = z.object({ checkoutId: z.string() });
+export type ResumedPaymentView = z.infer<typeof resumedPaymentViewSchema>;
 
 export const inquiryReceiptSchema = z.object({ reference: z.string(), message: z.string() });
 export type InquiryReceipt = z.infer<typeof inquiryReceiptSchema>;
@@ -842,6 +846,12 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: API + "order/dto/OrderDetailView.java",
     record: "OrderDetailView",
     schema: orderDetailViewSchema,
+  },
+  {
+    kind: "record",
+    java: API + "checkout/payment/dto/ResumedPaymentView.java",
+    record: "ResumedPaymentView",
+    schema: resumedPaymentViewSchema,
   },
   {
     kind: "record",

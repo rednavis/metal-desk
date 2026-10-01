@@ -185,7 +185,20 @@ allowed, reuse is not.
 by a single `@RestControllerAdvice` in `api` (domain `ValidationException` → 400, `NotFoundException` → 404,
 `ConflictException` → 409, anything else → 500 with no detail). Responses are separate view types, never domain
 aggregates, so the wire format is not coupled to the domain and the margin behind a sellable price is not exposed.
-A product without a derivable price is `ON_REQUEST` and carries no price field. `api` reads reference prices
+A product without a derivable price, or whose stock status is `ON_REQUEST`, has pricing mode `ON_REQUEST` and carries no
+price field. Only an `IN_STOCK` priced product can be put in a cart or bought now: an `OUT_OF_STOCK` one shows its price but
+is refused with `cart.product-out-of-stock`, a stock-`ON_REQUEST` one with `cart.product-unpriced`. A cart belongs to a
+customer through `CartDocument.ownerId` (one per customer; an anonymous cart is adopted or merged at sign-in; an anonymous request never opens a customer's cart,
+and a manager handoff deletes the cart the order was made from). An order awaiting payment is paid from the order itself:
+`POST /api/orders/{number}/payment-session` starts a checkout session around that order (its lines, address and quote, a
+payment state bound to it), so the ordinary payment path charges the same order at the total it carries; a customer without
+a phone number is asked to add one (`order.payment-details-missing`). An invoice payment stays `PENDING` and the order
+`AWAITING_PAYMENT` until staff record it as received (`POST /api/admin/orders/{id}/payment-received`: payment `CAPTURED`,
+trigger `PAYMENT_CAPTURED`, order `PAID`); only a pending invoice can be marked, and the customer's order page offers no
+second payment once an invoice was issued.
+The gateway and wallet providers have a `stub` switch (`metaldesk.payments.{gateway,wallet}.stub`, on in the development
+`application.yml`): when true no request is made and every payment answers `captured` with a made-up `stub-…` reference,
+so a card payment completes to `PAID` without WireMock; the integration tests turn it off to exercise the real adapters. `api` reads reference prices
 through a `MarketDataClient` port, polled into an in-memory latest-and-previous cache; a stale or failing feed
 keeps the last known prices rather than failing requests.
 
@@ -193,13 +206,16 @@ keeps the last known prices rather than failing requests.
 with no shared session store. A bearer token is validated per request; CPU-bound crypto work is
 explicitly scheduled off the reactive event loop rather than blocking it.
 
-Concretely (task T-032): sign-in returns a 15-minute HS256 token carrying only the customer id and their
+Concretely (task T-032): sign-in returns a 30-minute HS256 token carrying only the customer id and their
 verification state; a filter chain that is default-deny, with an explicit allowlist of public routes, validates
 signature, expiry, issuer and audience on every other request. Password hashing runs on the bounded-elastic
 scheduler inside one adapter. A failed sign-in is one response whatever the cause (BRD FR-2.2), and repeated
 failures from a source are throttled — by a per-instance, in-memory counter, which is weaker than the FR
 implies in a scaled deployment and needs a shared store before it is a real control. There are no refresh
-tokens and no revocation yet.
+tokens and no revocation yet; instead the token lifetime is the idle timeout, and an authenticated
+`POST /api/auth/refresh` swaps it for a new one (the clients call it while the user is active, at most once a minute), so a
+session ends 30 minutes after the last action. Both web apps keep the token in `localStorage` so it survives a reload and a
+closed tab (an XSS flaw could read it; the idle timeout bounds how long a stolen or forgotten token works).
 
 The account lifecycle (task T-033) sits on a purpose-agnostic verification primitive (issue a code by mail,
 bind it to a subject, confirm it), so registration, password reset and checkout's quick registration share one
@@ -329,8 +345,9 @@ services cannot share a classpath, and called over HTTP.
 customers (`customers` + `credentials`) and issues a token for audience `metal-desk-storefront`; `apps/admin` signs in
 staff (`users`: login, BCrypt hash, one role of `ADMIN`/`MANAGER`) and issues a token for audience `metal-desk-staff`
 with its own key (`ADMIN_JWT_SIGNING_KEY`). Each service validates signature, expiry, issuer and audience, so neither
-accepts the other's token. Staff tokens last 30 minutes with no refresh or revocation, and `admin-web` keeps them in
-memory only. Roles are carried in the token but no endpoint restricts by role yet.
+accepts the other's token. Staff tokens last 30 minutes, the idle timeout: `POST /api/admin/auth/refresh` swaps one for a new
+token (re-reading the user, so a removed or disabled user, or a changed role, takes effect) while the user is active, there
+is no revocation, and `admin-web` keeps the token in `localStorage`, so a session survives a reload. Roles are carried in the token but no endpoint restricts by role yet.
 
 **Identity-Aware Proxy is not deployed.** Nothing authenticates staff at the edge: `apps/admin` requires its own bearer
 token ([ADR-0006](adr/0006-staff-login-and-mongock-migrations.md)) and reads no IAP header, so a forged

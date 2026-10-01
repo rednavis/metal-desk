@@ -9,13 +9,16 @@ import reactor.core.publisher.Mono;
 /**
  * Decides which cart a request acts on, so that a cart survives signing in and out (BRD FR-2.7).
  *
- * <p>A cart is found by its <strong>reference</strong>, which the browser holds in a cookie and
- * which works as a capability: whoever presents it can act on that cart, signed in or not. That is
- * what lets a cart outlive a sign-out. In order, the request's cart is:
+ * <p>A cart is found by its <strong>reference</strong>, which the browser holds in a cookie. For an
+ * <em>anonymous</em> cart the reference works as a capability: whoever presents it can act on that
+ * cart. A cart that belongs to a customer is not: it is reachable only while signed in as that
+ * customer, so after a sign-out the next visitor to the browser sees no cart, and the customer
+ * finds theirs again by signing in (BRD FR-2.7). In order, the request's cart is:
  *
  * <ol>
- *   <li><em>Anonymous request:</em> the cart the reference names; otherwise a new one if the
- *       request is changing something, or none if it is only reading.
+ *   <li><em>Anonymous request:</em> the anonymous cart the reference names (a customer's cart is
+ *       ignored); otherwise a new one if the request is changing something, or none if it is only
+ *       reading.
  *   <li><em>Signed-in request:</em> the customer's own cart. If the reference names an
  *       <em>anonymous</em> cart, it is first brought in: given to the customer if they have no cart
  *       yet, or merged into theirs (union by product, quantity capped) if they do. The merge takes
@@ -52,7 +55,11 @@ public class CartResolver {
   }
 
   private Mono<Cart> anonymous(String reference) {
-    return reference == null ? Mono.empty() : store.find(reference);
+    // A cart with an owner belongs to that customer: whoever is left in a browser after they sign
+    // out must not see it, so an anonymous request only ever resolves an anonymous cart.
+    return reference == null
+        ? Mono.empty()
+        : store.find(reference).filter(cart -> cart.owner().isEmpty());
   }
 
   private Mono<Cart> signedIn(String reference, String customerId) {

@@ -149,6 +149,22 @@ class CartApiTest extends CartTestSupport {
   }
 
   @Test
+  void outOfStockProductCannotBeAdded() {
+    final Called refused = add(null, null, OUT_OF_STOCK);
+
+    assertEquals(400, refused.status());
+    assertEquals("cart.product-out-of-stock", refused.body().get(CODE));
+  }
+
+  @Test
+  void productWhoseStockIsOnRequestCannotBeAdded() {
+    final Called refused = add(null, null, STOCK_ON_REQUEST);
+
+    assertEquals(400, refused.status());
+    assertEquals("cart.product-unpriced", refused.body().get(CODE));
+  }
+
+  @Test
   void unknownProductIs404AndMalformedIdIs400() {
     assertEquals(404, add(null, null, "no-such-product").status());
     assertEquals(400, add(null, null, "bad.id").status());

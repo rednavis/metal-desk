@@ -1,5 +1,6 @@
 import "./ui.css";
 
+export { AmountSummary } from "./AmountSummary";
 export { Button } from "./Button";
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";

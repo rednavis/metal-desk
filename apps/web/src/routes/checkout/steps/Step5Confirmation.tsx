@@ -20,23 +20,36 @@ export function Step5Confirmation({ checkout }: { checkout: CheckoutApi }) {
     return <HandoffOutcome reference={confirmation.orderNumber} />;
   }
   return (
-    <section aria-labelledby="step5-title" data-kind={confirmation.kind}>
+    <section className="md-receipt" aria-labelledby="step5-title" data-kind={confirmation.kind}>
+      <span className="md-receipt__glyph" aria-hidden="true">
+        {confirmation.kind === "PAID" ? "✓" : "…"}
+      </span>
       <h2 id="step5-title">{t("checkout.step5.title")}</h2>
       <p>
         <strong>{t(headline(confirmation.kind))}</strong>
       </p>
-      <p data-testid="order-number">
-        {t("checkout.confirmation.orderNumber", { number: confirmation.orderNumber })}
-      </p>
-      <p>{t("checkout.confirmation.status", { status: confirmation.statusLabel })}</p>
-      {confirmation.total ? (
-        <p>{t("checkout.confirmation.total", { total: format.money(confirmation.total) })}</p>
-      ) : null}
-      {confirmation.invoiceNumber ? (
-        <p data-testid="invoice-number">
-          {t("checkout.confirmation.invoice", { number: confirmation.invoiceNumber })}
-        </p>
-      ) : null}
+      <dl>
+        <div>
+          <dt>{t("checkout.confirmation.orderNumber.label")}</dt>
+          <dd data-testid="order-number">{confirmation.orderNumber}</dd>
+        </div>
+        <div>
+          <dt>{t("checkout.confirmation.status.label")}</dt>
+          <dd>{confirmation.statusLabel}</dd>
+        </div>
+        {confirmation.total ? (
+          <div>
+            <dt>{t("checkout.confirmation.total.label")}</dt>
+            <dd>{format.money(confirmation.total)}</dd>
+          </div>
+        ) : null}
+        {confirmation.invoiceNumber ? (
+          <div>
+            <dt>{t("checkout.confirmation.invoice.label")}</dt>
+            <dd data-testid="invoice-number">{confirmation.invoiceNumber}</dd>
+          </div>
+        ) : null}
+      </dl>
       <p>{confirmation.message}</p>
       <Link to="/catalog">{t("checkout.confirmation.continue")}</Link>
     </section>

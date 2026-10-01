@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,6 +56,18 @@ public class AuthController {
                   new ErrorEnvelope(
                       THROTTLED, "Too many attempts, try again later", correlationId));
     };
+  }
+
+  /**
+   * Swaps the bearer token for a new one with a full lifetime, so a user who keeps working stays
+   * signed in and one who stops is signed out when the last token expires.
+   *
+   * @param staff who is acting
+   * @return 200 with a new token; 401 if the user was removed or disabled
+   */
+  @PostMapping("/refresh")
+  public SignInResponse refresh(@AuthenticationPrincipal StaffPrincipal staff) {
+    return service.refresh(staff);
   }
 
   /**

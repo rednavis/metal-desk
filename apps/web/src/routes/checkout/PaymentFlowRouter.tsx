@@ -130,7 +130,11 @@ function PaymentElement({
 }) {
   const { t } = usePreferences();
   return (
-    <section aria-labelledby="payment-element-title" data-handle={clientHandle}>
+    <section
+      className="md-panel md-payment-element"
+      aria-labelledby="payment-element-title"
+      data-handle={clientHandle}
+    >
       <h2 id="payment-element-title">{t("checkout.element.title")}</h2>
       <p>{t("checkout.element.note")}</p>
       <Button

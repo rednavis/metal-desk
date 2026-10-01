@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../features/auth/useAuth";
 import { useStaff } from "../features/staff/useStaff";
-import { BoxIcon, Button, Layout, OverviewIcon, QuoteIcon, TruckIcon } from "../ui";
+import { BoxIcon, Button, Layout, OverviewIcon, QuoteIcon, ThemeSwitcher, TruckIcon } from "../ui";
 
 /**
  * The frame every page of the back office sits in. The header says who the server sees the staff
@@ -36,6 +36,7 @@ export function AppShell() {
       }
       actions={
         <>
+          <ThemeSwitcher />
           <span className="md-identity">
             {staff.data ? (
               <span className="md-avatar" aria-hidden="true">

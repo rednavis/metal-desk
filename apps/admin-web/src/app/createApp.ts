@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { createApiClient, type ApiClientOptions } from "../api/client";
-import { createMemoryTokenStore } from "../api/tokenStore";
+import { createMemoryTokenStore, createPersistentTokenStore } from "../api/tokenStore";
 import { appRoutes } from "../routes/routes";
 
 export interface AppOptions {
@@ -14,13 +14,16 @@ export interface AppOptions {
 /**
  * Builds the pieces of the running app and wires them together: the router, the API client, the
  * token store and the query cache. Nothing here renders, so tests build the very same app `main.tsx` does, with a
- * memory history and a stubbed `fetch`. The token lives in memory only: see `api/tokenStore.ts`.
+ * memory history and a stubbed `fetch`. See `api/tokenStore.ts` for where the token lives.
  */
 export function createApp(options: AppOptions = {}) {
   const router = options.initialEntries
     ? createMemoryRouter(appRoutes, { initialEntries: options.initialEntries })
     : createBrowserRouter(appRoutes);
-  const tokenStore = createMemoryTokenStore();
+  // Tests (which run on a memory history) keep the token in memory; the real app persists it.
+  const tokenStore = options.initialEntries
+    ? createMemoryTokenStore()
+    : createPersistentTokenStore();
   const client = createApiClient({
     baseUrl: options.baseUrl,
     fetchImpl: options.fetchImpl,

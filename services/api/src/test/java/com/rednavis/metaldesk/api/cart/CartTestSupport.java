@@ -7,6 +7,7 @@ import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
 import com.rednavis.metaldesk.persistence.mapper.ValueMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Category;
+import com.rednavis.metaldesk.share.domain.catalog.StockStatus;
 import com.rednavis.metaldesk.share.domain.catalog.TaxCategory;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,12 @@ public class CartTestSupport extends AccountTestSupport {
   /** A product the catalog sells on request. */
   protected static final String ON_REQUEST = "ct-onreq";
 
+  /** A priced product that is out of stock. */
+  protected static final String OUT_OF_STOCK = "ct-oos";
+
+  /** A priced product whose stock status is on request. */
+  protected static final String STOCK_ON_REQUEST = "ct-stock-onreq";
+
   private static final Pattern CART_COOKIE = Pattern.compile(CartController.COOKIE + "=([^;]+)");
 
   private static final ParameterizedTypeReference<Map<String, Object>> MAP =
@@ -64,6 +71,8 @@ public class CartTestSupport extends AccountTestSupport {
     seed.pricedProduct(GOLD_1, "Cart gold one", bars);
     seed.pricedProduct(GOLD_2, "Cart gold two", bars);
     seed.unpricedProduct(ON_REQUEST, "Cart on request", bars);
+    seed.pricedProduct(OUT_OF_STOCK, "Cart out of stock", bars, StockStatus.OUT_OF_STOCK);
+    seed.pricedProduct(STOCK_ON_REQUEST, "Cart stock on request", bars, StockStatus.ON_REQUEST);
     final Category standard = seed.category(STANDARD, TaxCategory.STANDARD);
     seed.marginForCategory(standard, "10");
     seed.pricedProduct(TAXED, "Cart taxed", standard);
@@ -190,6 +199,24 @@ public class CartTestSupport extends AccountTestSupport {
   protected Called changeQuantity(String cookie, String productId, int quantity) {
     return call(
         HttpMethod.PUT, "/api/cart/lines/" + productId, cookie, null, Map.of("quantity", quantity));
+  }
+
+  /**
+   * Sets a line's quantity as a signed-in customer.
+   *
+   * @param cookie the cart cookie, or null
+   * @param token the customer's token
+   * @param productId the product
+   * @param quantity the quantity
+   * @return the response
+   */
+  protected Called changeQuantity(String cookie, String token, String productId, int quantity) {
+    return call(
+        HttpMethod.PUT,
+        "/api/cart/lines/" + productId,
+        cookie,
+        token,
+        Map.of("quantity", quantity));
   }
 
   /**

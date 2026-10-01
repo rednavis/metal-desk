@@ -83,7 +83,10 @@ covering both outcomes.
 - GitHub Actions, path-filtered so a change scoped to one module only triggers that module's build —
   a monorepo without affected-target filtering means every PR rebuilds everything, which is exactly
   the kind of avoidable friction [Lessons Learned](lessons-learned.md) is about.
-- Gradle build cache (local + remote) for reasonable build times as the module count grows.
+- Gradle build cache for reasonable build times as the module count grows: the local cache everywhere, and in CI
+  that same cache persisted through the GitHub Actions cache (read-only except on `master`). This is **not** a
+  shared Gradle remote build-cache node — no such backend exists for this repository, so a true remote node
+  is deferred.
 - Dependency and secret scanning on every PR from the start, not bolted on later.
 
 **Exit criteria:** a PR touching only `apps/web` does not trigger a JVM build; a PR touching

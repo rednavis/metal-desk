@@ -110,7 +110,7 @@ leaves alone.
   on failure only.
 - **Permissions** are `contents: read`; there are no secrets or credentials in the workflow.
 - **Concurrency:** a superseded run of the same pull request is cancelled; a `master` run never is.
-- No build cache yet — runs are slow until `T-063`.
+- **Build cache:** see [The Gradle build cache](#the-gradle-build-cache) below.
 
 ## The `frontend-build` job
 
@@ -136,3 +136,27 @@ leaves alone.
   resolves nothing and so applies no release-age policy. Nothing is declared. The policy matters only to a
   non-frozen install (adding or updating a dependency on a developer machine), which CI never does.
 - **Permissions** are `contents: read`; nothing is uploaded and there are no credentials.
+
+## The Gradle build cache
+
+`gradle.properties` turns on the build cache, parallel execution, an explicit daemon heap (`-Xmx3g`) and the
+configuration cache. `settings.gradle.kts` enables the **local** build cache only.
+
+- **What "remote" means here — be exact.** This repository has no Gradle remote build-cache node. In CI,
+  `gradle/actions/setup-gradle` persists the *local* cache (`~/.gradle/caches/build-cache-1`) and the dependency
+  cache through the **GitHub Actions cache**. That is scoped per branch with GitHub's eviction rules (a pull
+  request can read `master`'s entries; sibling branches cannot see each other's). It is **not** a shared
+  `HttpBuildCache`. A true remote node is deferred (T-063 §7: out of scope).
+- **Write policy.** `cache-read-only: ${{ github.ref != 'refs/heads/master' }}` — only pushes to `master` write;
+  pull requests only read. Fork pull requests get a read-only `GITHUB_TOKEN` and no secrets, so they cannot write
+  either. There is no token, key or credential for the cache anywhere in the repository.
+- **Never cached: `build/` directories.** Restoring them would mark tasks `UP-TO-DATE` against stale outputs and
+  produce a green build that verified nothing. The cache is keyed on task inputs; the workflow caches no build output
+  path.
+- **A failing gate is never cached**, so the cache cannot mask a failing Checkstyle/Spotless/SpotBugs/PMD run
+  (verified locally with a deliberate `LineLength` violation: `BUILD FAILED` with caching on).
+- **Configuration cache:** enabled. Spotless, Checkstyle, SpotBugs, PMD, Jacoco and the Spring Boot plugin all pass
+  with it. The one incompatibility was ours: `services/api/build.gradle.kts` passed the `adminRuntime` classpath to
+  tests from a `doFirst` lambda that captured the script object. It now uses a `CommandLineArgumentProvider` over a
+  file collection. No suppression flags are used.
+- **Bypass locally:** `./gradlew build --no-build-cache` (and `--no-configuration-cache`).

@@ -55,6 +55,10 @@ for the JVM modules, `pnpm run lint` / `pnpm run format:check` cover the fronten
   `@RequiredArgsConstructor` and `@Slf4j` if used at all — prefer records and constructor injection
   first. Target runtime is Java 25 / Spring Boot 4 — see
   [ADR-0004](docs/adr/0004-java25-spring-boot4-runtime.md).
+- **Local build cache** — `gradle.properties` enables the Gradle build cache, parallel execution and the
+  configuration cache, so a repeat `./gradlew build` reuses task outputs from `~/.gradle/caches/build-cache-1`.
+  To bypass it for one run: `./gradlew build --no-build-cache` (add `--no-configuration-cache` if you suspect
+  the configuration cache). Delete `~/.gradle/caches/build-cache-1` to empty it.
 - **TypeScript/React** — ESLint + Prettier, strict `tsconfig`. Function components and hooks only;
   no class components. One frontend stack for both `apps/web` and `apps/admin-web` — see
   [ADR-0005](docs/adr/0005-consolidated-react-frontend.md).

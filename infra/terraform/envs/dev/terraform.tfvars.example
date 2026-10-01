@@ -28,3 +28,8 @@ admin_web_domain = "<staff-domain>"
 
 # REQUIRED: who may fetch the staff SPA, as CIDR ranges (office / VPN egress). An empty list is rejected.
 admin_web_allowed_ip_ranges = []
+
+# REQUIRED before a real plan, and applied first: the billing account the project is billed to (three groups of six hex
+# characters) and who is emailed at the budget thresholds. These addresses are personal: keep them only in terraform.tfvars.
+billing_account_id  = "<billing-account-id>"
+budget_alert_emails = []

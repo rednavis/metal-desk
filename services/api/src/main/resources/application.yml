@@ -14,6 +14,16 @@ spring:
       # deployment that manages indexes itself should switch this off.
       auto-index-creation: true
 
+# Cloud Run's probes use the liveness group, which answers "is the process healthy" and has no external dependency, so a
+# database outage does not restart instances. Readiness answers "can it serve traffic" and so includes MongoDB: it reports
+# not-ready while the database is unreachable. The MongoDB health indicator stays on, in the aggregate and in readiness.
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,mongo
+
 metaldesk:
   jwt:
     issuer: metal-desk-api

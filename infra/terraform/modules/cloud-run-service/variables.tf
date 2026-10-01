@@ -169,9 +169,15 @@ variable "vpc_egress" {
 }
 
 variable "health_path" {
-  description = "The path of the startup and liveness probes. Architecture section 7 puts Actuator on /actuator."
+  description = <<-EOT
+    The path of the startup and liveness probes: the Actuator LIVENESS group, /actuator/health/liveness. Liveness answers "is
+    the process healthy" and has no external dependency, so a database outage does not restart or hold back instances. The
+    aggregate /actuator/health and the readiness group include MongoDB and report DOWN while it is unreachable, which is a real
+    signal that is kept, not one to hide: Cloud Run has no readiness probe, so readiness is for people and dashboards, not for
+    this module's probes.
+  EOT
   type        = string
-  default     = "/actuator/health"
+  default     = "/actuator/health/liveness"
 }
 
 variable "startup_timeout_seconds" {

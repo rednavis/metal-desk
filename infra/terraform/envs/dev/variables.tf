@@ -59,3 +59,13 @@ variable "admin_web_allowed_ip_ranges" {
   description = "CIDR ranges allowed to fetch the staff SPA (office and VPN egress). Required, no default: with none, nobody could reach it."
   type        = list(string)
 }
+
+variable "billing_account_id" {
+  description = "The billing account the project is billed to (three groups of six hexadecimal characters). Required, no default: the budget watches the project's spend on it."
+  type        = string
+}
+
+variable "budget_alert_emails" {
+  description = "Who is emailed when a budget threshold is crossed. Required, no default, not empty; personal addresses, so only in the gitignored terraform.tfvars."
+  type        = list(string)
+}

@@ -39,6 +39,10 @@ jobs:
         working-directory: infra/terraform
         run: terraform fmt -check -recursive -diff
 
+      # dev, staging and prod must declare the same modules and differ only in values (values.tf, backend, tfvars example).
+      - name: Environment roots are in parity
+        run: infra/scripts/check-env-parity.sh
+
       - name: Validate every directory that holds Terraform
         working-directory: infra/terraform
         run: |

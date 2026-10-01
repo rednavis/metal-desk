@@ -65,10 +65,20 @@ output "sites" {
 }
 
 output "github_actions" {
-  description = "The values of the dev GitHub environment's variables (identifiers, not secrets): WIF_PROVIDER and WIF_SERVICE_ACCOUNT, and the condition the provider enforces."
+  description = "The values of this environment's GitHub environment variables (identifiers, not secrets): WIF_PROVIDER and WIF_SERVICE_ACCOUNT, and the condition the provider enforces."
   value = {
     WIF_PROVIDER        = module.github_oidc.workload_identity_provider
     WIF_SERVICE_ACCOUNT = module.github_oidc.deployer_service_account_email
     attribute_condition = module.github_oidc.attribute_condition
   }
+}
+
+output "api_url" {
+  description = "The api's Cloud Run URL. Its /actuator/health/liveness answers once the revision is up; see infra/README.md for the health check and what it depends on."
+  value       = module.api.uri
+}
+
+output "budget" {
+  description = "The monthly budget this environment's project is held to."
+  value       = module.budget.amount
 }

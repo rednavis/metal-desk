@@ -373,6 +373,74 @@ repository-variable gates (`IMAGE_PUSH_ENABLED`, `FRONTEND_DEPLOY_ENABLED`) are 
 itself. **Staging and prod registries:** images are pushed only to dev's registries today; how an image reaches another
 environment's registry (a promotion) is open for `T-078`, and `deploy.yml` fails clearly if the image is not there.
 
+## Phase 5 gate: bootstrap, manual prerequisites, cost and teardown (`T-078`)
+
+> **Status: the gate is authored, not yet run.** The budget module, the `staging`/`prod` roots, the parity check and the
+> health-probe configuration are built and validated offline. **No `terraform apply` has been run, no project exists and
+> no health response has been recorded**, so the exit criterion is *not yet claimed as met*. Run the sequence below with
+> a real project, then record the evidence in `tasks/README.md` and issue #5. `staging` and `prod` are **not applied**.
+
+### Order of operations
+
+1. Create the `dev` project and link billing (outside Terraform: a project cannot create itself).
+2. `infra/terraform/bootstrap/create-state-bucket.sh dev <dev-project-id>` (see [The state buckets](#the-state-buckets)).
+3. Fill the gitignored `terraform.tfvars` (`project_id`, `project_number`, `billing_account`, `budget_alert_emails`, domains, Atlas attachments).
+4. `terraform apply -target=module.budget`: the **budget exists before anything billable**. Every billable module
+   `depends_on` it, so a full apply cannot create one first. Dev budget: **150 EUR/month**, alerts at the thresholds in
+   `values.tf` plus a forecast alert.
+5. Populate the four secrets ([Secrets](#populating-a-value-once-per-environment-before-the-services-are-applied)).
+6. Push an `api` image (`image.yml`), set its digest/tag in the service inputs, then `terraform apply`.
+7. `terraform plan` again: it must report **No changes**. Record both outputs.
+8. `curl -sS "$(terraform output -raw api_url)/actuator/health/liveness"`: record the response.
+
+### The health check does not depend on Atlas
+
+Cloud Run's startup and liveness probes call `/actuator/health/liveness` (`health_path` in `modules/cloud-run-service`).
+Liveness has no external dependency, so `api` deploys and serves without an Atlas cluster. **The MongoDB health indicator is
+not disabled:** the aggregate `/actuator/health` and the readiness group (`readinessState,mongo`, in each app's
+`application.yml`) include it. **Without Atlas, `/actuator/health` and `/actuator/health/readiness` report DOWN. That is
+expected and correct**, not a defect to hide: the service is alive but cannot serve traffic that needs the database.
+
+### Manual prerequisites: what `terraform apply` does not do
+
+| Prerequisite | Command / action | Why it is outside `apply` |
+|---|---|---|
+| Project and billing link | Console or `gcloud projects create`, `gcloud billing projects link` | A project cannot create itself, and the billing account is organisational |
+| State bucket | `infra/terraform/bootstrap/create-state-bucket.sh <env> <project-id>` | Terraform cannot create its own backend |
+| Secret values (4) | `gcloud secrets versions add` ([Secrets](#secrets)) | A value written by Terraform lives in state forever, which `T-075` forbids |
+| Atlas cluster and private endpoint | Atlas console/API; supply the attachments in `terraform.tfvars` | Outside this repository. Needed for readiness and every database call, **not** for `api`'s liveness |
+| Container image | `image.yml` pushes it; set the digest in the service inputs | The image must exist before the service that runs it |
+| DNS for the sites' managed certificates | Create the records the output lists | The domain is not managed here; the SPAs stay un-served without it |
+| GitHub environments with reviewers | Commands in [CI to CD authentication](#environments-and-who-may-deploy) | Not Terraform-managed |
+
+So the criterion holds **with named exceptions**: after the bootstrap, secrets and image above, `api` serves its liveness
+check after one `terraform apply`. It is not "no manual step at all".
+
+### Cost
+
+| Item | Standing cost? |
+|---|---|
+| `api`, min instance 1 | Yes, continuous: the largest idle cost |
+| `pricing-bridge`, min 1, CPU always allocated | Yes, continuous |
+| Two HTTPS load balancers (forwarding rules, one per listener) | Yes, hourly per rule |
+| Static IPs | Yes while reserved |
+| `admin` (min 0), Artifact Registry, Secret Manager, buckets | Small or usage-based |
+
+The budget warns, it does not cap spend.
+
+### Teardown
+
+```bash
+cd infra/terraform/envs/dev && terraform destroy
+# Orphan check: each of these must print nothing billable.
+gcloud compute forwarding-rules list --project <dev-project-id>
+gcloud compute addresses list        --project <dev-project-id>
+gcloud run services list             --project <dev-project-id>    # any service with a non-zero min instance count is billing
+```
+
+`terraform destroy` does **not** remove the state bucket, the secret versions you added, or any OAuth brand. Delete the
+bucket and unlink or delete the project to end all billing. Not yet executed (nothing applied).
+
 ## Running it
 
 ```bash

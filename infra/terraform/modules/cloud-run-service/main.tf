@@ -31,6 +31,17 @@ resource "google_service_account" "this" {
 }
 
 resource "google_cloud_run_v2_service" "this" {
+  # Terraform owns the service's SHAPE (ingress, scaling, egress, secrets, probes); the CI deployer owns which image it runs
+  # once the service exists (T-077), by deploying new revisions. So Terraform must not revert an image it did not set, and
+  # must not fight the fields the deploy tooling stamps.
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      client,
+      client_version,
+    ]
+  }
+
   name                = local.full_name
   location            = var.region
   description         = "MetalDesk ${var.name}"
@@ -137,4 +148,24 @@ resource "google_cloud_run_v2_service_iam_member" "invoker" {
   name     = google_cloud_run_v2_service.this.name
   role     = "roles/run.invoker"
   member   = each.value
+}
+
+# The CI deployer: deploy revisions of THIS service (developer, not admin: admin can also rewrite the IAM policy, which
+# would let CI make the service public), and act as this service's own runtime account to attach it. Nothing project-wide.
+resource "google_cloud_run_v2_service_iam_member" "deployer" {
+  for_each = toset(var.deployer_members)
+
+  project  = google_cloud_run_v2_service.this.project
+  location = google_cloud_run_v2_service.this.location
+  name     = google_cloud_run_v2_service.this.name
+  role     = "roles/run.developer"
+  member   = each.value
+}
+
+resource "google_service_account_iam_member" "deployer_acts_as" {
+  for_each = toset(var.deployer_members)
+
+  service_account_id = google_service_account.this.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = each.value
 }

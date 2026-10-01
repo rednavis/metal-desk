@@ -8,6 +8,7 @@ module "registry_api" {
   name           = "api"
   region         = var.region
   reader_members = [module.api.service_account_member]
+  writer_members = [module.github_oidc.deployer_member]
 }
 
 module "registry_pricing_bridge" {
@@ -17,6 +18,7 @@ module "registry_pricing_bridge" {
   name           = "pricing-bridge"
   region         = var.region
   reader_members = [module.pricing_bridge.service_account_member]
+  writer_members = [module.github_oidc.deployer_member]
 }
 
 module "registry_admin" {
@@ -26,4 +28,5 @@ module "registry_admin" {
   name           = "admin"
   region         = var.region
   reader_members = [module.admin.service_account_member]
+  writer_members = [module.github_oidc.deployer_member]
 }

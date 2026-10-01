@@ -1,0 +1,98 @@
+name: Deploy
+
+# Deploys already-pushed images to a Cloud Run environment by creating new revisions. It runs for dev right after the Image
+# workflow pushes, and by hand (workflow_dispatch) for any environment. Authentication is Workload Identity Federation (T-077):
+# a short-lived token that Google grants only to this repository, on master, for a job that declares the environment; there is
+# no stored credential. staging and prod are GitHub environments with REQUIRED REVIEWERS, so a run waits for approval before
+# the job starts. See infra/README.md ("CI to CD authentication").
+#
+# CI never applies Terraform. It changes only which image a service runs.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      sha:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy to
+        type: choice
+        options: [dev, staging, prod]
+        default: dev
+        required: true
+      sha:
+        description: Full commit SHA (40 hex) of an image already pushed to that environment's registries
+        type: string
+        required: true
+
+# No permission by default; the one job asks only for what it needs.
+permissions: {}
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.service }} to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    # The environment is where protection rules and required reviewers are applied, and the name the federation provider
+    # checks: a job that does not declare it cannot obtain a token for it.
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write # exchanged for a short-lived Google token through Workload Identity Federation
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, pricing-bridge, admin]
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      SHA: ${{ inputs.sha }}
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+    steps:
+      - name: Check the inputs
+        run: |
+          case "$ENVIRONMENT" in dev | staging | prod) ;; *) echo "unknown environment: $ENVIRONMENT" >&2; exit 1 ;; esac
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "sha must be a full 40-character commit SHA" >&2; exit 1; }
+          # Only master may deploy. The federation provider enforces this too; failing here says why instead of "denied".
+          [ "$GITHUB_REF" = "refs/heads/master" ] || { echo "deploys run from master only (this run is on $GITHUB_REF)" >&2; exit 1; }
+
+      - name: Is federation configured for this environment?
+        id: cfg
+        env:
+          WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}
+          WIF_SERVICE_ACCOUNT: ${{ vars.WIF_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$WIF_SERVICE_ACCOUNT" ] && [ -n "$PROJECT_ID" ] && [ -n "$REGION" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workload Identity Federation is not configured for the $ENVIRONMENT environment yet; nothing is deployed."
+          fi
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        if: steps.cfg.outputs.configured == 'true'
+
+      # The revision runs exactly the image built from this commit. Tags are immutable, so what is found here is what runs.
+      - name: Deploy the revision
+        if: steps.cfg.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          service="${{ matrix.service }}"
+          image="${REGION}-docker.pkg.dev/${PROJECT_ID}/metaldesk-${ENVIRONMENT}-${service}/${service}:${SHA}"
+          gcloud artifacts docker images describe "$image" >/dev/null \
+            || { echo "no image $image: push it first (the Image workflow, or a promotion into this environment)" >&2; exit 1; }
+          gcloud run services update "metaldesk-${ENVIRONMENT}-${service}" \
+            --project="$PROJECT_ID" --region="$REGION" --image="$image"

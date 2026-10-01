@@ -63,3 +63,12 @@ output "sites" {
     }
   }
 }
+
+output "github_actions" {
+  description = "The values of the dev GitHub environment's variables (identifiers, not secrets): WIF_PROVIDER and WIF_SERVICE_ACCOUNT, and the condition the provider enforces."
+  value = {
+    WIF_PROVIDER        = module.github_oidc.workload_identity_provider
+    WIF_SERVICE_ACCOUNT = module.github_oidc.deployer_service_account_email
+    attribute_condition = module.github_oidc.attribute_condition
+  }
+}

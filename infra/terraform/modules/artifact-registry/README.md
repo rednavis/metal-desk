@@ -6,7 +6,7 @@ service only. `envs/dev/registry.tf` calls it three times (`api`, `pricing-bridg
 
 ## Contract
 
-**Inputs:** `name_prefix`, `name`, `region`, `reader_members`, `keep_recent_count` (20), `delete_after_days` (90),
+**Inputs:** `name_prefix`, `name`, `region`, `reader_members`, `writer_members`, `keep_recent_count` (20), `delete_after_days` (90),
 `delete_untagged_after_days` (7). **Outputs:** `repository_id`, `repository_url`, `location`.
 
 ## Tags
@@ -34,8 +34,8 @@ would lose it, and a rollback to it would then need a rebuild. At this project's
 
 Pull is granted **per repository, per member**, with `roles/artifactregistry.reader` (`reader_members`). The dev root
 passes each Cloud Run service's own account to its own repository only, so `pricing-bridge` cannot pull `api`'s image.
-**No push role is granted to anyone** here: CI pushes through Workload Identity Federation (`T-077`), never a
-long-lived key.
+Push (`roles/artifactregistry.writer`, `writer_members`) is for the **CI deployer only**, which authenticates through
+Workload Identity Federation (`T-077`), never a long-lived key; nothing else, and no person, holds it.
 
 ## Also required before apply
 

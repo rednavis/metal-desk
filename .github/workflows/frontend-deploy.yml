@@ -1,8 +1,8 @@
 name: Frontend deploy
 
-# Builds both single-page apps, checks that no secret or hard-coded host is in either bundle, and, only when switched on,
-# uploads them to their buckets. The upload is OFF until Workload Identity Federation exists (T-077); it is enabled by
-# repository variables and never by a credential in this file. See infra/README.md.
+# Builds both single-page apps, checks that no secret or hard-coded host is in either bundle, and on master uploads them to
+# the dev buckets, authenticating with Workload Identity Federation (T-077): a short-lived token for one repository, one
+# branch and one GitHub environment, and no stored credential. See infra/README.md.
 
 on:
   push:
@@ -72,16 +72,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Uploads only on master, only when explicitly enabled. Until T-077 creates Workload Identity Federation there is
-  # nothing to authenticate with, so this job is skipped; no credential is, or may be, added here to make it run sooner.
-  #   FRONTEND_DEPLOY_ENABLED         "true" to upload (repository variable)
-  #   WEB_BUCKET, ADMIN_WEB_BUCKET    the `bucket_name` outputs of the web and admin_web sites
-  #   WIF_PROVIDER, WIF_SERVICE_ACCOUNT   outputs of T-077
+  # Uploads the bundle to dev. Only a run on master can get a token (the federation provider rejects any other ref, repository
+  # or job that does not declare the dev environment), and this job runs only on a push to master, so a pull request never
+  # reaches it. The job's variables are the GitHub environment `dev`'s, set from `terraform output`: WIF_PROVIDER,
+  # WIF_SERVICE_ACCOUNT, WEB_BUCKET and ADMIN_WEB_BUCKET. Until they exist the job does nothing and says so; there is no
+  # separate on/off switch.
   deploy:
     name: Deploy ${{ matrix.app }}
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && vars.FRONTEND_DEPLOY_ENABLED == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       contents: read
       id-token: write # exchanged for a short-lived Google token through Workload Identity Federation
@@ -93,29 +94,45 @@ jobs:
             bucket: WEB_BUCKET
           - app: admin-web
             bucket: ADMIN_WEB_BUCKET
+    env:
+      BUCKET: ${{ vars[matrix.bucket] }}
     steps:
+      - name: Is federation configured for this environment?
+        id: cfg
+        env:
+          WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}
+          WIF_SERVICE_ACCOUNT: ${{ vars.WIF_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$WIF_SERVICE_ACCOUNT" ] && [ -n "$BUCKET" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workload Identity Federation or the bucket is not configured for the dev environment yet; nothing is uploaded."
+          fi
+
       - uses: actions/download-artifact@v8
+        if: steps.cfg.outputs.configured == 'true'
         with:
           name: bundle-${{ matrix.app }}
           path: dist
 
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        if: steps.cfg.outputs.configured == 'true'
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        if: steps.cfg.outputs.configured == 'true'
 
       # Order matters. Hashed assets go first, then the other files, and index.html LAST: nobody can load a page that
       # names assets which are not there yet. Cache headers are set at upload time and match the policy in
       # modules/static-site/cdn.tf: a year and immutable for hashed files, no-cache for index.html (so a deploy takes
       # effect at once and no cache invalidation is needed).
       - name: Upload
-        env:
-          BUCKET: ${{ vars[matrix.bucket] }}
+        if: steps.cfg.outputs.configured == 'true'
         run: |
           set -euo pipefail
-          [ -n "$BUCKET" ] || { echo "the bucket variable for ${{ matrix.app }} is not set" >&2; exit 1; }
 
           gcloud storage cp --recursive dist/assets "gs://${BUCKET}/" \
             --cache-control="public, max-age=31536000, immutable"

@@ -24,6 +24,12 @@ variable "reader_members" {
   default     = []
 }
 
+variable "writer_members" {
+  description = "IAM members (serviceAccount:<email>) that may push images to this repository: the CI deployer, which authenticates through Workload Identity Federation (T-077), never a long-lived key. Granted on this repository only. Not for a person or a runtime service account."
+  type        = list(string)
+  default     = []
+}
+
 variable "keep_recent_count" {
   description = "Always keep this many of the most recent image versions, however old."
   type        = number

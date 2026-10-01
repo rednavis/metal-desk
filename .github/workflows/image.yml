@@ -86,7 +86,8 @@ jobs:
           if docker history --no-trunc "$image" | grep -iE 'secret|password|signing|credential|MONGODB_URI'; then
             echo "a credential-looking string is in the image history" >&2; exit 1
           fi
-          leftovers=$(docker run --rm --entrypoint sh "$image" -c 'find / -xdev \( -name ".env*" -o -name "application-local*" \) 2>/dev/null')
+          # `find` exits 1 when it cannot read some directory, which says nothing about what it found; only its output counts.
+          leftovers=$(docker run --rm --entrypoint sh "$image" -c 'find / -xdev \( -name ".env*" -o -name "application-local*" \) 2>/dev/null || true')
           [ -z "$leftovers" ] || { echo "local configuration in the image: $leftovers" >&2; exit 1; }
 
       # pricing-bridge is the one service that needs no database, so it can start here. api and admin need MongoDB at

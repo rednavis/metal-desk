@@ -44,15 +44,22 @@ Rules the module enforces, each with a validation that fails `terraform validate
 
 ## Health checks
 
-Startup and liveness probes both call `health_path` (`/actuator/health`, Architecture §7). The startup probe is
-generous on purpose: `startup_timeout_seconds` defaults to **180** (10-second period, 18 failures), because a Spring
-Boot JVM takes far longer to start than a native binary, and a probe tuned for one kills the other mid-startup and looks
-like a crash loop. Cloud Run caps it at 240. `startup_cpu_boost` is on for the same reason. The liveness probe tolerates
-three consecutive failures at a 30-second period.
+Startup and liveness probes both call `health_path`, which defaults to the Actuator **liveness group**,
+`/actuator/health/liveness`. Liveness answers "is the process healthy" and has **no external dependency**, so a database outage
+does not restart instances or hold back a new revision. The **readiness** group (`/actuator/health/readiness`) and the aggregate
+`/actuator/health` **include MongoDB** (`api` and `admin` configure that in `application.yml`) and report `DOWN`/`503` while it
+is unreachable: that is a real signal and the MongoDB health indicator is **not** disabled. Cloud Run has no readiness probe,
+so readiness is for people and dashboards, not for these probes.
 
-> `/actuator/health` reports the application's dependencies as well, and `admin` and `api` depend on MongoDB. A database
-> outage can therefore fail the liveness probe and restart instances. The applications expose only `health` today
-> (`management.endpoints.web.exposure.include`); a dedicated liveness group would be an application change.
+The startup probe is generous on purpose: `startup_timeout_seconds` defaults to **180** (10-second period, 18 failures),
+because a Spring Boot JVM takes far longer to start than a native binary, and a probe tuned for one kills the other mid-startup
+and looks like a crash loop. Cloud Run caps it at 240. `startup_cpu_boost` is on for the same reason. The liveness probe
+tolerates three consecutive failures at a 30-second period.
+
+> **A database is still required to start.** `api` and `admin` run their Mongock migrations before the server accepts a request
+> (ADR-0006), so with MongoDB unreachable they do not start at all and liveness never answers (verified: the process exits with
+> `Application run failed`). The liveness/readiness split protects a *running* instance from a *later* outage; it cannot make a
+> service start without its database.
 
 ## Container port
 

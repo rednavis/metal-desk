@@ -12,7 +12,14 @@ spring:
     # belongs in this file (ADR-0002).
     uri: ${MONGODB_URI:mongodb://admin:admin@localhost:27017/metaldesk?authSource=admin}
 
+# Cloud Run's probes use the liveness group, which has no external dependency, so a database outage does not restart
+# instances. Readiness includes MongoDB and reports not-ready while it is unreachable. The MongoDB health indicator stays on.
 management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,mongo
   endpoints:
     web:
       exposure:

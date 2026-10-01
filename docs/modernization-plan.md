@@ -110,6 +110,10 @@ required checks and whether it has been applied.
 **Exit criteria:** `terraform plan` is clean for a `dev` environment; deploying `api` to Cloud Run
 serves a health check with no manual configuration step beyond `terraform apply`.
 
+**Status (T-078): authored, not yet proven.** The roots validate offline and `api`'s probes use the liveness group, but no
+`apply` has run. When it does, the criterion holds **with named exceptions**: project and billing, state bucket, secret
+values, Atlas, the first image and DNS (see `infra/README.md`). Phase 5 is not recorded as met until that evidence exists.
+
 ## Standards that apply across every phase
 
 - **Single-version policy.** A dependency version is declared exactly once

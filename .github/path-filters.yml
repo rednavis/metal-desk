@@ -23,10 +23,10 @@ jvm-shared:
   - ".github/path-filters.yml"
   - ".github/scripts/**"
 
-# Frontend sources and the root files that configure both apps. None of these affect a JVM module.
+# Root files that configure every pnpm app. A hit marks all apps affected; none of them affects a JVM
+# module. The apps themselves are not listed: each app's own directory is derived from
+# pnpm-workspace.yaml, the way JVM module directories are derived from settings.gradle.kts.
 frontend:
-  - "apps/web/**"
-  - "apps/admin-web/**"
   - "package.json"
   - "pnpm-lock.yaml"
   - "pnpm-workspace.yaml"

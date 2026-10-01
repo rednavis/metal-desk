@@ -350,7 +350,9 @@ against its base and marks a JVM module affected when its directory changed or a
 module graph is read from `settings.gradle.kts` and each module's `project(":…")` references, never maintained
 by hand; `libs/share` therefore affects every module. Changes to the version catalog, `build-logic/`, the
 Checkstyle/SpotBugs/PMD config or the workflows affect all JVM modules; frontend-only files affect the
-frontend and no JVM module. A push to `master` builds everything. Details:
+frontend and no JVM module. The pnpm apps are read from `pnpm-workspace.yaml` the same way: the `frontend-build` job
+builds only the apps whose directory (or a root file shared by all apps) changed, then runs the root-scoped
+typecheck, lint, format and test once. A push to `master` builds everything. Details:
 [`.github/workflows/README.md`](https://github.com/rednavis/metal-desk/blob/master/.github/workflows/README.md).
 
 An architectural rule enforces the domain-model boundary in the build, not just in a code review comment:

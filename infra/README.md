@@ -124,6 +124,22 @@ the one resource that needs it.
 - **Not covered:** `pricing-bridge` as a Cloud Run Job. A poll-based feed would want that shape; this module models the
   always-on service `T-039` built.
 
+## Images: tags, retention and who may pull
+
+Each service has **its own repository**, `metaldesk-<env>-<service>`, created by
+[`modules/artifact-registry`](terraform/modules/artifact-registry/README.md) in `envs/dev/registry.tf`. The images are
+built by [`deploy/images/Dockerfile`](../deploy/README.md).
+
+- **Tag = the full commit SHA**, `<repository>/<service>:<sha>`. **Tags are immutable** (an Artifact Registry setting),
+  so a tag can never be repointed and "commit SHA, never a mutable tag" is enforced by the registry, not by convention.
+  The Cloud Run module accepts only a digest or such a tag.
+- **Retention**, per repository: keep the **20** most recent versions whatever their age; delete anything older than
+  **90 days** unless it is among those 20; delete **untagged** versions after **7 days**. The policy cannot know what is
+  deployed, so raise the numbers for `prod` (`T-078`) rather than assume a deployed image is always recent.
+- **Pull**: each Cloud Run service's own account gets `roles/artifactregistry.reader` on **its own repository only**.
+  **Push is granted to nobody here**: CI pushes through Workload Identity Federation (`T-077`), never a key.
+- Storing images is not free; the retention policy is part of the cost control, not an optimisation.
+
 ## Running it
 
 ```bash

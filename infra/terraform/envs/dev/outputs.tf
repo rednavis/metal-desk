@@ -36,3 +36,12 @@ output "services" {
     admin          = { uri = module.admin.uri, service_account_email = module.admin.service_account_email }
   }
 }
+
+output "registries" {
+  description = "Each service's image repository address. CI pushes <repository>/<service>:<commit-sha> here (T-077)."
+  value = {
+    api            = module.registry_api.repository_url
+    pricing_bridge = module.registry_pricing_bridge.repository_url
+    admin          = module.registry_admin.repository_url
+  }
+}

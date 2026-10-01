@@ -7,6 +7,7 @@
 # Not watched: the container image tags run by docker in .github/workflows/ci.yml
 # (ghcr.io/google/osv-scanner, and the TruffleHog image pinned by `version:`). Dependabot's `docker`
 # ecosystem reads Dockerfiles and compose files, not workflow steps — bump those by hand with the action.
+# (The Dockerfile's base images, deploy/images/Dockerfile, ARE watched: see the docker entry below.)
 version: 2
 updates:
   # For this ecosystem Dependabot always scans .github/workflows/; "/" is the only value that works.
@@ -47,4 +48,16 @@ updates:
       prefix: "build"
     groups:
       npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # The base images in deploy/images/Dockerfile (the only place a container base-image version is written).
+  - package-ecosystem: "docker"
+    directory: "/deploy/images"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "build"
+    groups:
+      docker-minor-patch:
         update-types: ["minor", "patch"]

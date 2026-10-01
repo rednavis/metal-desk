@@ -1,6 +1,6 @@
 # CI workflows
 
-`ci.yml` is the only workflow. Jobs:
+Two workflows: `ci.yml` (below) and [`infra.yml`](infra.yml), which checks the Terraform under `infra/` and is described at the end. `ci.yml` jobs:
 
 | Job | Runs | What it does |
 |---|---|---|
@@ -230,3 +230,15 @@ a workflow cannot**):
 
 `Build docs site` is deliberately not required in this list; add it if a broken Jekyll build should block merges.
 `Detect affected modules` is covered through both aggregating jobs (they fail if it does).
+
+## `infra.yml` — Terraform checks
+
+Runs on a pull request or push to `master` that touches `infra/**` or the workflow itself. One job, **`Terraform checks`**,
+with no cloud credentials and no state: `terraform fmt -check -recursive`, then `terraform init -backend=false` and
+`terraform validate` in **every directory that holds a `.tf` file**, then `tflint --recursive` (the built-in ruleset,
+no plugin download). It never plans or applies. The Terraform version is pinned to an exact release here and constrained
+with `~>` in `infra/terraform/envs/*/versions.tf`; an upgrade edits both. Third-party actions are pinned to a commit.
+
+It is deliberately **not** one of the required checks yet: it is path-filtered, so a required path-filtered check would
+block every pull request that does not touch `infra/`. Make it required only with the always-run result-job pattern
+used for `JVM build` and `Frontend build result` (`T-078`).

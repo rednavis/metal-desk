@@ -36,7 +36,7 @@ export function OrderDetailRoute() {
       <p>{t("orders.detail.placed", { date: format.dateTime(data.createdAt) })}</p>
 
       <h2>{t("orders.detail.lines")}</h2>
-      <table className="md-cart-table">
+      <table className="md-table">
         <thead>
           <tr>
             <th scope="col">{t("cart.col.product")}</th>

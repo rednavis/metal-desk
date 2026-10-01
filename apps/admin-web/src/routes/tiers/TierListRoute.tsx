@@ -29,9 +29,11 @@ export function TierListRoute() {
 
   return (
     <>
-      <h1>Delivery tiers</h1>
-      <div className="md-actions">
-        <Link to="/tiers/new">New tier</Link>
+      <div className="md-page-header">
+        <h1>Delivery tiers</h1>
+        <Link to="/tiers/new" className="md-button">
+          New tier
+        </Link>
       </div>
       <WarningList warnings={warnings} />
       {remove.isError ? <ErrorState error={remove.error} /> : null}

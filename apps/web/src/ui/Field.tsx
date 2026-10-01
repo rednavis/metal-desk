@@ -4,16 +4,20 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   /** The message to show under the input; also marks it invalid for assistive technology. */
   error?: string;
+  /** Keeps the label for screen readers only, for a field whose purpose its context makes plain (a search box). */
+  hideLabel?: boolean;
 }
 
 /** A labelled input with its error message, wired together for screen readers. */
-export function Field({ label, error, id, ...rest }: FieldProps) {
+export function Field({ label, error, hideLabel, id, ...rest }: FieldProps) {
   const generated = useId();
   const inputId = id ?? generated;
   const errorId = `${inputId}-error`;
   return (
     <div className="md-field">
-      <label htmlFor={inputId}>{label}</label>
+      <label htmlFor={inputId} className={hideLabel ? "md-sr-only" : undefined}>
+        {label}
+      </label>
       <input
         id={inputId}
         className="md-field__input"

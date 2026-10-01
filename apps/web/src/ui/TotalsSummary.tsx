@@ -5,7 +5,7 @@ import { usePreferences } from "../preferences/usePreferences";
 export function TotalsSummary({ totals }: { totals: TotalsView }) {
   const { t, format } = usePreferences();
   return (
-    <dl>
+    <dl className="md-totals">
       <dt>{t("totals.net")}</dt>
       <dd data-testid="net">{format.money(totals.net)}</dd>
       <dt>{t("totals.tax")}</dt>

@@ -8,9 +8,7 @@ export function Spinner({ label = "Loading" }: SpinnerProps) {
   return (
     <span role="status" aria-live="polite">
       <span className="md-spinner" aria-hidden="true" />
-      <span className="md-visually-hidden" style={{ position: "absolute", left: "-9999px" }}>
-        {label}
-      </span>
+      <span className="md-sr-only">{label}</span>
     </span>
   );
 }

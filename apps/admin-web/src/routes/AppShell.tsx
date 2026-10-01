@@ -1,8 +1,7 @@
-import { NavLink, Outlet } from "react-router";
-import { useNavigate } from "react-router";
+import { NavLink, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../features/auth/useAuth";
 import { useStaff } from "../features/staff/useStaff";
-import { Button, Layout } from "../ui";
+import { BoxIcon, Button, Layout, OverviewIcon, QuoteIcon, TruckIcon } from "../ui";
 
 /**
  * The frame every page of the back office sits in. The header says who the server sees the staff
@@ -17,19 +16,38 @@ export function AppShell() {
       title="MetalDesk Admin"
       nav={
         <>
-          <NavLink to="/">Overview</NavLink>
-          <NavLink to="/tiers">Delivery tiers</NavLink>
-          <NavLink to="/quotes">Manager quotes</NavLink>
-          <NavLink to="/orders">Orders</NavLink>
+          <NavLink to="/" end>
+            <OverviewIcon />
+            Overview
+          </NavLink>
+          <NavLink to="/quotes">
+            <QuoteIcon />
+            Manager quotes
+          </NavLink>
+          <NavLink to="/orders">
+            <BoxIcon />
+            Orders
+          </NavLink>
+          <NavLink to="/tiers">
+            <TruckIcon />
+            Delivery tiers
+          </NavLink>
         </>
       }
       actions={
         <>
-          <span data-testid="staff-identity">
-            {staff.data
-              ? `Signed in as ${staff.data.login} (${staff.data.role})`
-              : "Identity unavailable"}
-          </span>{" "}
+          <span className="md-identity">
+            {staff.data ? (
+              <span className="md-avatar" aria-hidden="true">
+                {staff.data.login.slice(0, 1)}
+              </span>
+            ) : null}
+            <span data-testid="staff-identity">
+              {staff.data
+                ? `Signed in as ${staff.data.login} (${staff.data.role})`
+                : "Identity unavailable"}
+            </span>
+          </span>
           <Button
             variant="secondary"
             onClick={() => {

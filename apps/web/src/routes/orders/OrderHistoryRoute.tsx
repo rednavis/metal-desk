@@ -32,7 +32,7 @@ export function OrderHistoryRoute() {
     );
   } else {
     body = (
-      <table className="md-cart-table">
+      <table className="md-table">
         <thead>
           <tr>
             <th scope="col">{t("orders.col.number")}</th>

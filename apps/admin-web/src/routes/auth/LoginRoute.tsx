@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { isApiError } from "../../api/errors";
 import { safeDestination } from "../../features/auth/destination";
 import { useAuth } from "../../features/auth/useAuth";
-import { Button, ErrorState, Field } from "../../ui";
+import { BrandMark, Button, ErrorState, Field } from "../../ui";
 
 type Failure = "rejected" | "throttled" | { other: unknown };
 
@@ -44,42 +44,56 @@ export function LoginRoute() {
 
   return (
     <main className="md-login">
-      <h1>MetalDesk Admin</h1>
-      <h2>Sign in</h2>
-      <form
-        onSubmit={(event) => {
-          void submit(event);
-        }}
-        noValidate
-      >
-        {failure === "rejected" ? <p role="alert">Invalid login or password.</p> : null}
-        {failure === "throttled" ? (
-          <p role="alert">Too many attempts. Wait a few minutes and try again.</p>
-        ) : null}
-        {typeof failure === "object" ? <ErrorState error={failure.other} /> : null}
-        <Field
-          label="Login"
-          name="login"
-          autoComplete="username"
-          value={login}
-          onChange={(event) => {
-            setLogin(event.target.value);
-          }}
-        />
-        <Field
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-          }}
-        />
-        <Button type="submit" disabled={busy}>
-          Sign in
-        </Button>
-      </form>
+      <section className="md-login__brand">
+        <h1>
+          <BrandMark />
+          MetalDesk Admin
+        </h1>
+        <p className="md-login__pitch">
+          Delivery tiers, manager quotes and orders, in one back office.
+        </p>
+        <p className="md-login__note">Staff only. Every action is recorded under your login.</p>
+      </section>
+      <section className="md-login__panel">
+        <div className="md-login__card">
+          <h2>Sign in</h2>
+          <p>Use your staff login.</p>
+          <form
+            onSubmit={(event) => {
+              void submit(event);
+            }}
+            noValidate
+          >
+            {failure === "rejected" ? <p role="alert">Invalid login or password.</p> : null}
+            {failure === "throttled" ? (
+              <p role="alert">Too many attempts. Wait a few minutes and try again.</p>
+            ) : null}
+            {typeof failure === "object" ? <ErrorState error={failure.other} /> : null}
+            <Field
+              label="Login"
+              name="login"
+              autoComplete="username"
+              value={login}
+              onChange={(event) => {
+                setLogin(event.target.value);
+              }}
+            />
+            <Field
+              label="Password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+              }}
+            />
+            <Button type="submit" disabled={busy}>
+              Sign in
+            </Button>
+          </form>
+        </div>
+      </section>
     </main>
   );
 }

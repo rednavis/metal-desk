@@ -1,26 +1,17 @@
 .md-cart-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 1.25rem;
+  height: 1.25rem;
   margin-left: 0.25rem;
-  padding: 0 0.3rem;
-  border-radius: 999px;
+  padding: 0 0.375rem;
+  border-radius: var(--radius-pill);
   background: var(--color-accent);
   color: var(--color-accent-fg);
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.md-cart-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.md-cart-table th,
-.md-cart-table td {
-  text-align: left;
-  vertical-align: top;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .md-quantity {
@@ -33,33 +24,6 @@
   margin: 0;
 }
 
-.md-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0 0 0 / 0.5);
-}
-
-.md-dialog {
-  max-width: 28rem;
-  margin: var(--space);
-  padding: calc(var(--space) * 2);
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-}
-
-.md-status {
-  padding: 0.1rem 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-}
-
-.md-switcher {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
+.md-quantity .md-field__input {
+  width: 6rem;
 }

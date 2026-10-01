@@ -10,7 +10,7 @@ import "./catalog.css";
 export function ProductCard({ product }: { product: ProductSummaryView }) {
   const { t } = usePreferences();
   return (
-    <article className="md-product-card" data-testid="product-card">
+    <article className="md-product-card" data-testid="product-card" data-metal={product.metal}>
       <h3>
         <Link to={`/catalog/products/${encodeURIComponent(product.id)}`}>{product.name}</Link>
       </h3>

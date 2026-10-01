@@ -8,7 +8,7 @@ export function OrderFacts({ order }: { order: OrderDetailView }) {
   return (
     <>
       <p>
-        <span className="md-status" data-testid="order-status">
+        <span className="md-status" data-testid="order-status" data-status={summary.status}>
           {STATUS_LABEL[summary.status]}
         </span>
       </p>

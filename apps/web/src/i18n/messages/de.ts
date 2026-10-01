@@ -358,4 +358,21 @@ export const de = {
   "totals.net": "Netto",
   "totals.tax": "Steuer",
   "totals.total": "Gesamt",
+  "a11y.skipToContent": "Zum Inhalt springen",
+  "footer.copyright": "© {year} MetalDesk",
+  "footer.tagline": "Edelmetalle zu Live-Preisen.",
+  "home.hero.eyebrow": "Edelmetallhandel, live",
+  "home.hero.description":
+    "Gold, Silber, Platin und Palladium zu Live-Referenzpreisen. Netto, Steuer und Lieferung sehen Sie vor dem Bezahlen, größere Bestellungen erhalten ein persönliches Angebot.",
+  "home.hero.browse": "Zum Katalog",
+  "home.hero.contact": "Kontakt aufnehmen",
+  "home.features.title": "Warum MetalDesk",
+  "home.feature.live.title": "Live-Referenzpreise",
+  "home.feature.live.body":
+    "Die Preise aktualisieren sich selbst, und ein veralteter Preis ist immer als solcher markiert.",
+  "home.feature.transparent.title": "Transparente Summen",
+  "home.feature.transparent.body":
+    "Netto, Steuer und Lieferung sind aufgeschlüsselt, bevor Sie sich festlegen.",
+  "home.feature.quote.title": "Persönliche Angebote",
+  "home.feature.quote.body": "Bestellungen über den Standard-Lieferlimits bepreist ein Manager.",
 } as const satisfies Record<MessageKey, string>;

@@ -72,7 +72,7 @@ export function Step4Overview({
       </Button>
 
       <h3>{t("checkout.overview.items")}</h3>
-      <table className="md-cart-table">
+      <table className="md-table">
         <thead>
           <tr>
             <th scope="col">{t("cart.col.product")}</th>

@@ -1,6 +1,6 @@
 # CI workflows
 
-Three workflows: `ci.yml` (below), [`infra.yml`](infra.yml), which checks the Terraform under `infra/`, and [`image.yml`](image.yml), which builds the service images; both are described at the end. `ci.yml` jobs:
+Four workflows: `ci.yml` (below), [`infra.yml`](infra.yml), which checks the Terraform under `infra/`, [`image.yml`](image.yml), which builds the service images, and [`frontend-deploy.yml`](frontend-deploy.yml), which builds and uploads the two SPAs; the last three are described at the end. `ci.yml` jobs:
 
 | Job | Runs | What it does |
 |---|---|---|
@@ -252,3 +252,12 @@ Gradle files), and asserts that the image runs as non-root with `java` as its en
 Artifact Registry **only on a push to `master` with the repository variable `IMAGE_PUSH_ENABLED=true`**, authenticating
 by Workload Identity Federation (`T-077`, not yet present), so it is skipped today. No credential is stored. Details and
 the variables: [`deploy/README.md`](../../deploy/README.md). Not a required check; it is path-filtered.
+
+## `frontend-deploy.yml` — the two SPAs
+
+On a pull request or push to `master` that touches `apps/web`, `apps/admin-web` or the pnpm root files, builds each app and
+fails if the bundle contains a secret-looking string or a hard-coded local host. A separate `deploy` job uploads to the
+buckets **only on `master` with the repository variable `FRONTEND_DEPLOY_ENABLED=true`**, authenticating by Workload Identity
+Federation (`T-077`, not yet present), so it is skipped today; no credential is stored. The upload order is hashed assets,
+other files, then `index.html` last, with `Cache-Control` set at upload (see `infra/terraform/modules/static-site/README.md`).
+`API_BASE_URL` (optional repository variable) sets `VITE_API_BASE_URL` at build time. Not a required check; it is path-filtered.

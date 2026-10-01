@@ -259,6 +259,27 @@ cannot do that by itself (a Cloud Run service that references a missing secret v
 common mistake, but an *empty* version would still trigger the fallback). Failing startup on a blank key outside a local
 profile is an **application change, raised here and not made** (`T-032`).
 
+## Staff access
+
+Staff reach the back office in two layers, and **no Identity-Aware Proxy is deployed** ([ADR-0006](../docs/adr/0006-staff-login-and-mongock-migrations.md)):
+
+| Layer | What | Where |
+|---|---|---|
+| Network | `admin` is `internal-load-balancer` ingress with no public invoker; `admin-web` is fetched only from `admin_web_allowed_ip_ranges` (Cloud Armor edge policy) | `envs/dev/services.tf`, `envs/dev/sites.tf` |
+| Identity | A staff user signs in to `apps/admin` (login and password from the `users` collection) and every call carries the 30-minute bearer token it returns; the application reads no IAP header | `apps/admin` |
+
+- **IAP could not have fronted `admin-web`:** Google does not support IAP with a Cloud Storage backend bucket or with Cloud CDN
+  (see [the two single-page sites](#the-two-single-page-sites)). For `admin` it is possible only as an optional outer gate through
+  an IAP-protected backend service; that was **deliberately not built** (it adds a load balancer's standing cost for a layer the
+  login already provides). If it is built later: the OAuth brand is a one-time, per-project, **manual** step that Terraform cannot
+  recreate; access is granted to a staff **group** with `roles/iap.httpsResourceAccessor`, not to individuals; and the bearer
+  token is still required.
+- **Open for `T-078`:** `admin` has **no load-balancer path** yet. Its ingress allows only internal and load-balancer traffic,
+  and nothing in this build puts a load balancer in front of it (the static-site balancers route only the bundles), so a browser
+  cannot reach `/api/admin` today. Same-origin `/api` routing for `api` and `admin` is the one piece of load-balancer work left.
+- **The seeded users** `admin/admin` and `manager/manager` exist in every environment the first migration runs in (ADR-0006);
+  change or remove them before an environment is reachable.
+
 ## Running it
 
 ```bash

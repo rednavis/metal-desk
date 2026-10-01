@@ -332,6 +332,14 @@ with its own key (`ADMIN_JWT_SIGNING_KEY`). Each service validates signature, ex
 accepts the other's token. Staff tokens last 30 minutes with no refresh or revocation, and `admin-web` keeps them in
 memory only. Roles are carried in the token but no endpoint restricts by role yet.
 
+**Identity-Aware Proxy is not deployed.** Nothing authenticates staff at the edge: `apps/admin` requires its own bearer
+token ([ADR-0006](adr/0006-staff-login-and-mongock-migrations.md)) and reads no IAP header, so a forged
+`X-Goog-Authenticated-User-Email` or IAP assertion authenticates no one (a test asserts it). IAP also cannot sit in front of
+`admin-web`, which is served from a Cloud Storage backend bucket: Google does not support IAP with backend buckets or with
+Cloud CDN. The staff surface is instead restricted by network: `admin`'s Cloud Run ingress is `internal-load-balancer` with no
+public invoker, and `admin-web` is limited at the edge to an allow list of addresses (Cloud Armor edge policy). If IAP is wanted
+later it can only be an outer gate for `admin`, through an IAP-protected backend service; the bearer token stays required.
+
 **Migrations.** The database is migrated by Mongock change units in `libs/migrations`, run by `services/api` and
 `apps/admin` at startup before they serve requests (the lock Mongock holds in the database makes two applications
 starting together safe). The first one creates `users` with its unique indexes and two development users

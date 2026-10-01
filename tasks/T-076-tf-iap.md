@@ -1,5 +1,13 @@
 # T-076 — Identity-Aware Proxy for `admin` and `admin-web`
 
+> [!IMPORTANT]
+> **Superseded by [ADR-0006](../docs/adr/0006-staff-login-and-mongock-migrations.md); read before the rest.** Staff now sign in to
+> `apps/admin` themselves and the application reads **no** IAP header, so the "verify the IAP assertion in
+> `StaffPrincipalResolver`" design below (and `T-040`'s "no application login") no longer exists. `T-074` also found that IAP
+> **cannot front a backend bucket** (and is incompatible with Cloud CDN), so `admin-web` could never sit behind it. ADR-0006
+> says that if IAP is still wanted it is only an **outer network gate**, with the bearer token still required. What was
+> actually done for this task, by decision, is in the ledger row: the IAP infrastructure was **not** built.
+
 > **Picking this up?** Read [`CONTRIBUTING.md`](../CONTRIBUTING.md) first, then claim the parent issue
 > and work on a branch. **If anything below disagrees with
 > [`docs/architecture.md` §7](../docs/architecture.md#7-reference-deployment-gcp), that document wins.** Update

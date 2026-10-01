@@ -72,8 +72,8 @@ for the JVM modules, `pnpm run lint` / `pnpm run format:check` cover the fronten
 
 The `docs/` directory is a Jekyll site (via `remote_theme: just-the-docs`) published to GitHub
 Pages. New pages need front matter (`title`, `nav_order`, and `parent` if nested under ADRs) to
-appear in navigation — see any existing page for the pattern. CI builds the site on every PR that
-touches `docs/` to catch config/front-matter errors before merge.
+appear in navigation — see any existing page for the pattern. CI builds the site on every PR to
+catch config/front-matter errors before merge.
 
 ## Questions
 

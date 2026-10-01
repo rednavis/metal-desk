@@ -9,6 +9,42 @@ permissions:
   contents: read
 
 jobs:
+  # Decides which parts of the repository a change affects. Build jobs (T-061, T-062) consume its
+  # outputs with `needs: changes`; none of them re-implements path matching. See workflows/README.md.
+  # Pull requests are filtered against their base; a push to master marks everything affected.
+  changes:
+    name: Detect affected modules
+    runs-on: ubuntu-latest
+    outputs:
+      libs-share: ${{ steps.affected.outputs.libs-share }}
+      libs-payments: ${{ steps.affected.outputs.libs-payments }}
+      libs-mail: ${{ steps.affected.outputs.libs-mail }}
+      libs-persistence: ${{ steps.affected.outputs.libs-persistence }}
+      services-api: ${{ steps.affected.outputs.services-api }}
+      services-pricing-bridge: ${{ steps.affected.outputs.services-pricing-bridge }}
+      apps-admin: ${{ steps.affected.outputs.apps-admin }}
+      jvm: ${{ steps.affected.outputs.jvm }}
+      jvm-modules: ${{ steps.affected.outputs.jvm-modules }}
+      frontend: ${{ steps.affected.outputs.frontend }}
+      docs: ${{ steps.affected.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Self-test the filter
+        run: node --test .github/scripts/
+      - name: Compute affected modules
+        id: affected
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            node .github/scripts/affected.mjs "$BASE_SHA" HEAD
+          else
+            node .github/scripts/affected.mjs --all
+          fi
+
   docs:
     name: Build docs site
     runs-on: ubuntu-latest

@@ -1,5 +1,5 @@
 # Version-bump pull requests for the actions pinned in .github/workflows/ci.yml:
-#   actions/checkout, actions/jekyll-build-pages, trufflesecurity/trufflehog.
+#   actions/checkout, actions/jekyll-build-pages, actions/setup-node, trufflesecurity/trufflehog.
 #
 # Deliberately left out, with what unblocks each:
 # gradle  — added by T-060..T-065, once a JVM build runs in CI.

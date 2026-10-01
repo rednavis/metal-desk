@@ -31,6 +31,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
       - name: Self-test the filter
         run: node --test ".github/scripts/*.test.mjs"
       - name: Compute affected modules

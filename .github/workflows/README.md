@@ -14,7 +14,7 @@ On a **pull request** it diffs the PR against its base (`git diff --name-only <b
 filters. On a **push to `master`** there is no sensible base, so everything is marked affected.
 
 All logic is in [`scripts/affected.mjs`](scripts/affected.mjs) (Node standard library only, no install
-step), driven by [`path-filters.yml`](../path-filters.yml). The same script runs locally:
+step; the job pins Node 26 with `actions/setup-node`, matching local development), driven by [`path-filters.yml`](../path-filters.yml). The same script runs locally:
 
 ```
 node .github/scripts/affected.mjs <base-sha> HEAD     # what would a PR against <base-sha> affect?

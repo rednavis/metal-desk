@@ -4,8 +4,8 @@ springBoot = "4.1.1"
 # Security floors over what Spring Boot 4.1.1's BOM manages (it ships jackson 3.1.5 and Tomcat 11.0.24, which
 # carry high-severity advisories); no later Boot patch exists yet. Delete these, and the constraints in
 # metaldesk.spring-boot-conventions, once Boot manages versions at or above them.
-jacksonFloor = "3.1.7"
-tomcatFloor = "11.0.25"
+jacksonFloor = "3.2.3"
+tomcatFloor = "11.0.26"
 spotless = "8.10.3"
 checkstyle = "14.3.0"
 pmd = "7.28.0"

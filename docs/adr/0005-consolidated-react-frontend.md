@@ -46,7 +46,7 @@ client, the same `api`/`web` split the customer side already has.
   [Lessons Learned](../lessons-learned.md#the-shared-library-nobody-depends-on), avoided by not
   having two frameworks for it to fork across in the first place.
 - `admin-web` deploys exactly like `web` — static assets on Cloud Storage + Cloud CDN
-  ([ADR-0003](0003-gcp-target-architecture.md)), just behind Identity-Aware Proxy — so
+  ([ADR-0003](0003-gcp-target-architecture.md)), and signs its users in itself ([ADR-0006](0006-staff-login-and-mongock-migrations.md)) — so
   [Architecture §7](../architecture.md#7-reference-deployment-gcp) doesn't need a second deployment
   shape for a second UI runtime.
 

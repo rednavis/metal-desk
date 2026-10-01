@@ -20,12 +20,16 @@ management:
 
 metaldesk:
   admin:
-    staff:
-      # The header the Identity-Aware Proxy puts the signed-in staff member's identity in
-      # (Architecture section 7). The service is only reachable through the proxy in a deployment.
-      identity-header: X-Goog-Authenticated-User-Email
-      dev-identity:
-        # LOCAL DEVELOPMENT ONLY. When true, a request with no proxy header is treated as this
-        # identity. It is a complete authentication bypass: never enable it in a deployment.
-        enabled: false
-        email: ""
+    jwt:
+      # The staff token (ADR-0006). Issuer and audience differ from services/api's on purpose, so a
+      # customer token is refused here and a staff token there. The key is never committed: a
+      # deployment supplies it as Base64 of at least 32 random bytes; empty generates a random one
+      # at startup (local development, tokens do not survive a restart).
+      issuer: metal-desk-admin
+      audience: metal-desk-staff
+      ttl: 30m
+      signing-key: ${ADMIN_JWT_SIGNING_KEY:}
+    auth:
+      throttle:
+        max-failures: 5
+        cool-down: 15m

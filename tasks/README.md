@@ -169,6 +169,10 @@ execution are three surfaces), [`T-054`](T-054-web-checkout.md) (five wizard ste
 [`T-040`](T-040-admin-api.md) (tiers, quotes and orders are three features) and
 [`T-074`](T-074-tf-web-cdn.md) (two sites, and an unresolved IAP question).
 
+> **Superseded in part.** [ADR-0006](../docs/adr/0006-staff-login-and-mongock-migrations.md) gave `apps/admin` its own
+> login (a `users` collection, bearer tokens) instead of trusting Identity-Aware Proxy. `T-040`, `T-050`, `T-056` and
+> `T-076` describe the IAP design in places; where they disagree with the ADR, the ADR wins.
+
 ## 5. Checkpoints worth pausing at
 
 - **After [`T-021`](T-021-domain-boundary-rule.md)** — the domain model exists, in one place, with the boundary enforced

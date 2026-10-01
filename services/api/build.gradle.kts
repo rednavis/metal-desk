@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":libs:payments"))
     implementation(project(":libs:mail"))
     implementation(project(":libs:persistence"))
+    implementation(project(":libs:migrations"))
     implementation(libs.spring.boot.starter.webflux)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.mongodb.reactive)

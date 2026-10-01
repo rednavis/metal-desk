@@ -37,6 +37,7 @@ include(
     "libs:payments",
     "libs:mail",
     "libs:persistence",
+    "libs:migrations",
     "services:api",
     "services:pricing-bridge",
     "apps:admin",

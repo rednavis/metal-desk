@@ -54,7 +54,17 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const refusal = (status: number, code: string, message: string) =>
   json({ code, message, correlationId: "corr-1" }, status);
 
-export function createAdminServer(initial: { tiers?: TierView[]; orders?: FakeOrder[] } = {}) {
+/** The users the server knows, the same two the first migration creates. */
+export const USERS = [
+  { login: "admin", password: "admin", email: "admin@admin.by", role: "ADMIN" },
+  { login: "manager", password: "manager", email: "manager@manager.by", role: "MANAGER" },
+] as const;
+
+export function createAdminServer(
+  initial: { tiers?: TierView[]; orders?: FakeOrder[]; throttled?: boolean } = {},
+) {
+  const throttled = initial.throttled ?? false;
+  let expired = false;
   let tiers = [...(initial.tiers ?? [])];
   const orders = new Map((initial.orders ?? []).map((o) => [o.id, { ...o }]));
   const sent: Sent[] = [];
@@ -132,7 +142,33 @@ export function createAdminServer(initial: { tiers?: TierView[]; orders?: FakeOr
     const path = url.pathname.replace(/^\/api\/admin/, "");
     const reply = (response: Response) => Promise.resolve(response);
 
-    if (path === "/me") return reply(json({ email: "staff@example.com" }));
+    if (path === "/auth/sign-in" && method === "POST") {
+      const attempt = body as { login?: string; password?: string };
+      if (throttled) return reply(refusal(429, "auth.throttled", "Too many attempts"));
+      const user = USERS.find((u) => u.login === attempt.login && u.password === attempt.password);
+      if (!user) return reply(refusal(401, "auth.invalid-credentials", "Invalid credentials"));
+      return reply(
+        json({
+          accessToken: `token-for-${user.login}`,
+          tokenType: "Bearer",
+          expiresInSeconds: 1800,
+          login: user.login,
+          role: user.role,
+        }),
+      );
+    }
+    if (path === "/auth/sign-out") return reply(new Response(null, { status: 204 }));
+
+    // Everything else needs the token sign-in handed out, the way the server's filter chain does.
+    const bearer = new Headers(init?.headers).get("Authorization");
+    const caller = USERS.find((u) => bearer === `Bearer token-for-${u.login}`);
+    if (!caller || expired) {
+      return reply(refusal(401, "auth.unauthorized", "A staff identity is required"));
+    }
+
+    if (path === "/me") {
+      return reply(json({ login: caller.login, email: caller.email, role: caller.role }));
+    }
 
     if (path === "/tiers" && method === "GET") {
       const region = url.searchParams.get("region");
@@ -290,5 +326,14 @@ export function createAdminServer(initial: { tiers?: TierView[]; orders?: FakeOr
     return json({ tier: saved, warnings: [] }, id === undefined ? 201 : 200);
   }
 
-  return { fetchImpl, sent, orders, tiers: () => tiers };
+  return {
+    fetchImpl,
+    sent,
+    orders,
+    tiers: () => tiers,
+    /** From now on every token is refused, as when it has expired. */
+    expireTokens: () => {
+      expired = true;
+    },
+  };
 }

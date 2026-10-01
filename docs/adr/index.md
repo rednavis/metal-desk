@@ -17,3 +17,4 @@ the benefits).
 | [0003](0003-gcp-target-architecture.md) | GCP as the reference deployment target |
 | [0004](0004-java25-spring-boot4-runtime.md) | Java 25 and Spring Boot 4 as the uniform runtime target |
 | [0005](0005-consolidated-react-frontend.md) | One React frontend stack for both customer and staff surfaces |
+| [0006](0006-staff-login-and-mongock-migrations.md) | Staff sign-in with their own users, and Mongock for migrations |

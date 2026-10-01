@@ -49,17 +49,18 @@ Resulting closure (what a change to the module in the left column affects):
 
 | Change in | Marks affected |
 |---|---|
-| `libs:share` | all seven JVM modules |
+| `libs:share` | all eight JVM modules |
 | `libs:payments` | itself, `services:api` |
 | `libs:mail` | itself, `services:api`, `apps:admin` |
-| `libs:persistence` | itself, `services:api`, `apps:admin` |
+| `libs:persistence` | itself, `libs:migrations` (its tests use the persistence test fixtures), `services:api`, `apps:admin` |
+| `libs:migrations` | itself, `services:api`, `apps:admin` |
 | `apps:admin` | itself, `services:api` (its tests run the admin application, `adminRuntime`) |
 | `services:api`, `services:pricing-bridge` | itself only |
 
 Verified against Gradle, not by reading build files:
 
 ```
-for m in libs:share libs:payments libs:mail libs:persistence services:api services:pricing-bridge apps:admin; do
+for m in libs:share libs:payments libs:mail libs:persistence libs:migrations services:api services:pricing-bridge apps:admin; do
   echo "== $m"; ./gradlew -q :$m:dependencies --configuration compileClasspath | grep -oE "project ':[a-z:-]+'" | sort -u
 done
 ```
@@ -178,7 +179,7 @@ findings block, results known to be dead credentials do not. The action is pinne
 | | |
 |---|---|
 | Scanner | [OSV-Scanner](https://google.github.io/osv-scanner/) `v2.6.0` (container image). No account, no token. |
-| JVM | Gradle has no lockfile here, so `./gradlew cyclonedxBom` exports the resolved graph of all seven modules (CycloneDX plugin, version in the catalog) to `build/reports/cyclonedx/bom.json`. |
+| JVM | Gradle has no lockfile here, so `./gradlew cyclonedxBom` exports the resolved graph of all eight modules (CycloneDX plugin, version in the catalog) to `build/reports/cyclonedx/bom.json`. |
 | npm | `pnpm-lock.yaml` directly. |
 | Permissions | `contents: read` only; the default `GITHUB_TOKEN`. |
 

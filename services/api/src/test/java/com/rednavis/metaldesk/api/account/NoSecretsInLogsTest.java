@@ -1,6 +1,7 @@
 package com.rednavis.metaldesk.api.account;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -15,7 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 /**
- * No verification code, reset code or reset link appears in any log output (BRD FR-2.2's spirit).
+ * No reset code, reset link or password appears in any log output (BRD FR-2.2's spirit). The one
+ * deliberate exception is the registration email-verification code, which is logged in plaintext on
+ * the project owner's instruction; a test pins that too.
  */
 class NoSecretsInLogsTest extends AccountTestSupport {
 
@@ -60,7 +63,7 @@ class NoSecretsInLogsTest extends AccountTestSupport {
   }
 
   @Test
-  void registrationConfirmationAndResetLogNoCodes() {
+  void registrationCodeIsLoggedButResetCodeAndPasswordsAreNot() {
     final String email = freshEmail();
     final Object reference = register(email).body().get(REFERENCE);
     final String typed = MailInspector.typedCode(mailTo(email).get(0));
@@ -101,6 +104,9 @@ class NoSecretsInLogsTest extends AccountTestSupport {
         .isOk();
 
     assertFalse(logged().isEmpty(), "the test captured no log output at all");
-    assertNeverLogged(typed, resetCode, "a-brand-new-password", PASSWORD, "code=" + resetCode);
+    assertTrue(
+        logged().stream().anyMatch(line -> line.contains(typed)),
+        "the registration verification code should be in the log");
+    assertNeverLogged(resetCode, "a-brand-new-password", PASSWORD, "code=" + resetCode);
   }
 }

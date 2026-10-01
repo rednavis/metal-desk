@@ -12,9 +12,17 @@ All implementation code is authored by Claude Code from human direction, not han
 ## Module structure — Gradle vs pnpm boundary is deliberate
 
 JVM modules, all under group `com.rednavis.metaldesk`, listed in `settings.gradle.kts`:
-- `libs:share`, `libs:payments`, `libs:mail`, `libs:persistence` — shared domain/abstractions; `libs:persistence`
+- `libs:share`, `libs:payments`, `libs:mail`, `libs:persistence`, `libs:migrations` — shared domain/abstractions; `libs:persistence`
   holds the Mongo documents and mappers only (no repositories, no driver: `services:api` has reactive
   repositories over them, `apps:admin` blocking ones)
+- `libs:migrations` holds the Mongock change units (ADR-0006); `services:api` and `apps:admin` import its
+  `MigrationsConfiguration`, so migrations run at startup in both (Mongock's DB lock makes that safe). Add a
+  migration as a class in `migrations.changes` plus a line in `MongoMigrations`; never edit one that has run.
+  Not Flyway: its MongoDB support needs an external `mongosh`.
+- Staff auth is **application login** (ADR-0006), not IAP: `apps:admin` signs in `users` and issues its own JWT
+  (audience `metal-desk-staff`, key `ADMIN_JWT_SIGNING_KEY`); `services:api` signs in customers only. The two
+  tokens must never be interchangeable — keep issuer/audience/key separate and the cross-rejection tests passing.
+  The first migration creates the development users `admin/admin` and `manager/manager`.
 - `services:api` (port 8082), `services:pricing-bridge` (port 8083), `apps:admin` (port 8081)
 
 `apps/web` and `apps/admin-web` (React 19/TS/Vite, pnpm workspace) are **intentionally excluded**
@@ -32,9 +40,9 @@ repositories.
 ## Build commands
 
 - Backend: `./gradlew build` (or `./gradlew clean build` for a full verification pass) — runs
-  Spotless, Checkstyle, SpotBugs, PMD, tests, and Jacoco for all 7 JVM modules via the `metaldesk.quality-conventions`
+  Spotless, Checkstyle, SpotBugs, PMD, tests, and Jacoco for all 8 JVM modules via the `metaldesk.quality-conventions`
   convention plugin.
-  `./gradlew projects` lists **10** projects, not 7 — `:apps`, `:libs`, `:services` are empty
+  `./gradlew projects` lists **11** projects, not 8 — `:apps`, `:libs`, `:services` are empty
   container projects with no build file. That is not a misconfiguration.
 - `gradle.properties` turns on the build cache, parallel execution and the **configuration cache**. A task
   action must not capture the script object (e.g. a `doFirst { }` reading a configuration) — pass values

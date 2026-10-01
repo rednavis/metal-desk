@@ -6,8 +6,6 @@ import com.rednavis.metaldesk.share.error.DomainException;
 import com.rednavis.metaldesk.share.error.NotFoundException;
 import com.rednavis.metaldesk.share.error.ValidationException;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -28,8 +26,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-  private static final String HEADER = "X-Correlation-Id";
-  private static final Pattern SAFE = Pattern.compile("[A-Za-z0-9._-]{1,64}");
+  private static final String HEADER = CorrelationId.HEADER;
 
   /**
    * Maps a missing staff identity to 401.
@@ -149,8 +146,6 @@ public class ApiExceptionHandler {
   }
 
   private static String correlationId(String supplied) {
-    return supplied != null && SAFE.matcher(supplied).matches()
-        ? supplied
-        : UUID.randomUUID().toString();
+    return CorrelationId.choose(supplied);
   }
 }

@@ -22,7 +22,7 @@ behind an ALB, deployed via CloudFormation. This reference build deliberately ta
 | Component | GCP service | Why |
 |---|---|---|
 | `api`, `pricing-bridge` | Cloud Run | Fully managed, scale-to-zero-capable containers; no cluster to operate for four small stateless services. |
-| `admin` | Cloud Run, behind Identity-Aware Proxy | IAP replaces a hand-rolled staff-auth layer entirely — one less thing this codebase has to get right. |
+| `admin` | Cloud Run | Staff sign in with their own users and a bearer token ([ADR-0006](0006-staff-login-and-mongock-migrations.md), which replaced the original plan of putting it behind Identity-Aware Proxy). |
 | `web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN | A static SPA needs a CDN and a bucket, not an application server or a container. |
 | Document store | MongoDB Atlas on GCP (Private Service Connect) | Keeps the document-model fit from [Architecture §3](../architecture.md#3-domain-model) without a first-party GCP document database or self-hosting MongoDB. |
 | Images | Artifact Registry | Immutable, commit-SHA-tagged images — never `latest` in any environment. |

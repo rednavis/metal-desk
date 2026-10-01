@@ -24,17 +24,21 @@ import tools.jackson.databind.json.JsonMapper;
  * passed in the {@code metaldesk.admin.classpath} system property, is loaded by a class loader
  * whose parent is only the platform loader. Nothing of this module's classes is visible to admin
  * and nothing of admin's to this module. It is pointed at the same MongoDB container, on a random
- * port, and with no development identity: every call carries the proxy's identity header.
+ * port, and every call carries the bearer token of the migrated {@code manager} user, obtained by
+ * signing in the way the back office does.
  */
 public final class AdminHarnessTestSupport implements AutoCloseable {
 
-  private static final String STAFF = "accounts.google.com:e2e-staff@example.com";
+  private static final int HTTP_OK = 200;
+  private static final String STAFF_LOGIN = "manager";
+  private static final String STAFF_PASSWORD = "manager";
   private static final JsonMapper JSON = JsonMapper.builder().build();
 
   private final URLClassLoader loader;
   private final Closeable context;
   private final int port;
   private final HttpClient http = HttpClient.newHttpClient();
+  private String bearerToken;
 
   private AdminHarnessTestSupport(URLClassLoader loader, Closeable context, int port) {
     this.loader = loader;
@@ -114,7 +118,7 @@ public final class AdminHarnessTestSupport implements AutoCloseable {
   }
 
   /**
-   * Calls admin as the proxy's staff member.
+   * Calls admin as the migrated manager, signing in on the first call.
    *
    * @param method the HTTP method
    * @param path the path
@@ -127,7 +131,7 @@ public final class AdminHarnessTestSupport implements AutoCloseable {
       throws IOException, InterruptedException {
     final HttpRequest.Builder request =
         HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
-            .header("X-Goog-Authenticated-User-Email", STAFF)
+            .header("Authorization", "Bearer " + token())
             .header("Content-Type", "application/json")
             .method(
                 method,
@@ -141,6 +145,29 @@ public final class AdminHarnessTestSupport implements AutoCloseable {
     final Map<String, Object> parsed =
         body == null || body.isBlank() ? Map.of() : JSON.readValue(body, Map.class);
     return new Answer(response.statusCode(), parsed);
+  }
+
+  private String token() throws IOException, InterruptedException {
+    if (bearerToken == null) {
+      final HttpRequest signIn =
+          HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/admin/auth/sign-in"))
+              .header("Content-Type", "application/json")
+              .POST(
+                  HttpRequest.BodyPublishers.ofString(
+                      "{\"login\":\""
+                          + STAFF_LOGIN
+                          + "\",\"password\":\""
+                          + STAFF_PASSWORD
+                          + "\"}"))
+              .build();
+      final HttpResponse<String> response = http.send(signIn, HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() != HTTP_OK) {
+        throw new IllegalStateException(
+            "The e2e staff user could not sign in: " + response.statusCode());
+      }
+      bearerToken = JSON.readTree(response.body()).get("accessToken").asString();
+    }
+    return bearerToken;
   }
 
   /**

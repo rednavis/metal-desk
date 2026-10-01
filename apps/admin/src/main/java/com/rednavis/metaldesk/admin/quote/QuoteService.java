@@ -117,7 +117,7 @@ public class QuoteService {
         OrderTransitions.withQuote(
             OrderTransitions.advance(before, TransitionTrigger.QUOTE_SET, now), delivery);
     store.advance(before, after);
-    quotes.save(quoteMapper.toDocument(after.id(), decided, request.validUntil(), staff.email()));
+    quotes.save(quoteMapper.toDocument(after.id(), decided, request.validUntil(), staff.login()));
     final CustomerDocument customer = customers.findById(after.customerId().value()).orElse(null);
     final String number = after.number().format();
     if (customer == null) {
@@ -154,7 +154,7 @@ public class QuoteService {
         OrderTransitions.advance(before, TransitionTrigger.QUOTE_DECLINED, clock.instant());
     store.advance(before, after);
     final String number = after.number().format();
-    final String who = staff.email();
+    final String who = staff.login();
     final String why =
         reason == null ? "no reason given" : reason.replaceAll("\\p{Cntrl}", " ").strip();
     log.info("Quote for order {} declined by {}: {}", number, who, why);

@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.admin;
 
+import com.rednavis.metaldesk.migrations.MigrationsConfiguration;
 import com.rednavis.metaldesk.persistence.PersistenceConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.Import;
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
-@Import(PersistenceConfiguration.class)
+@Import({PersistenceConfiguration.class, MigrationsConfiguration.class})
 public class AdminApplication {
 
   /**

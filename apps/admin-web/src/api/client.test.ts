@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "./client";
 import { ApiError } from "./errors";
+import { createMemoryTokenStore } from "./tokenStore";
 import { tierViewSchema } from "./types";
 
 function reply(status: number, body?: unknown) {
@@ -28,25 +29,29 @@ describe("the admin API client", () => {
     expect(failure).toMatchObject({ status: 409, code: "order.changed", correlationId: "abc-123" });
   });
 
-  it("sends no credential: nothing in the request identifies a user, the proxy does that", async () => {
+  it("sends the bearer token when there is one, and nothing when there is not", async () => {
     const transport = reply(200, {});
-    const client = createApiClient({ baseUrl: "/api", fetchImpl: transport });
+    const tokenStore = createMemoryTokenStore();
+    const client = createApiClient({ baseUrl: "/api", fetchImpl: transport, tokenStore });
 
     await client.get("/admin/tiers");
+    tokenStore.set("abc");
+    await client.get("/admin/tiers");
 
-    const sent = Object.keys(transport.mock.calls[0]?.[1]?.headers ?? {}).map((name) =>
-      name.toLowerCase(),
-    );
-    expect(sent.filter((name) => name.startsWith("auth") || name.includes("token"))).toEqual([]);
-    expect(transport.mock.calls[0]?.[1]?.credentials).toBe("same-origin");
+    const headers = (call: number) => new Headers(transport.mock.calls[call]?.[1]?.headers);
+    expect(headers(0).has("Authorization")).toBe(false);
+    expect(headers(1).get("Authorization")).toBe("Bearer abc");
   });
 
-  it("reports a 401 as an error and does nothing else: there is nowhere to go to get an identity", async () => {
+  it("drops the token on a 401, which is what sends the user back to the login form", async () => {
+    const tokenStore = createMemoryTokenStore();
+    tokenStore.set("expired");
     const client = createApiClient({
       baseUrl: "/api",
+      tokenStore,
       fetchImpl: reply(401, {
         code: "auth.unauthorized",
-        message: "No staff identity",
+        message: "A staff identity is required",
         correlationId: "c",
       }),
     });
@@ -55,6 +60,17 @@ describe("the admin API client", () => {
       status: 401,
       code: "auth.unauthorized",
     });
+    expect(tokenStore.get()).toBeNull();
+  });
+
+  it("keeps the token on any other failure", async () => {
+    const tokenStore = createMemoryTokenStore();
+    tokenStore.set("still-good");
+    const client = createApiClient({ baseUrl: "/api", tokenStore, fetchImpl: reply(409, {}) });
+
+    await client.get("/admin/tiers").catch(() => undefined);
+
+    expect(tokenStore.get()).toBe("still-good");
   });
 
   it("reports a dropped connection as unreachable", async () => {

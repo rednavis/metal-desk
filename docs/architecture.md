@@ -307,8 +307,8 @@ services cannot share a classpath, and called over HTTP.
 |---|---|---|
 | `api` | Cloud Run | Stateless, reactive; min-instances ≥ 1 to avoid cold-start latency on the checkout path. |
 | `pricing-bridge` | Cloud Run (or Cloud Run Job + Cloud Scheduler) | Always-on if the feed is a persistent subscription; scheduled if it's poll-based — a real deployment's choice depends on its actual market-data source. The service is built as the always-on streaming shape (T-039); the job shape is not supported by it as it stands. |
-| `admin` | Cloud Run, behind Identity-Aware Proxy | Internal-only; IAP replaces a hand-rolled staff auth flow. |
-| `admin-web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN, behind the same Identity-Aware Proxy as `admin` | Static SPA, internal-only. |
+| `admin` | Cloud Run | Staff sign in with a login and password from the `users` collection and receive a bearer token; see the note below and [ADR-0006](adr/0006-staff-login-and-mongock-migrations.md). Network-restrict it as far as the deployment allows. |
+| `admin-web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN | Static SPA with its own login form; it holds no secret, the API refuses everything without a token. |
 | `web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN | Static SPA; no application server needed for the frontend. |
 | Document store | MongoDB Atlas on GCP, via Private Service Connect | No first-party GCP document database with this data model's fit; Atlas keeps MongoDB without self-hosting it. |
 | Images | Artifact Registry | Per-service repositories, immutable tags (commit SHA, never `latest`). |
@@ -316,6 +316,18 @@ services cannot share a classpath, and called over HTTP.
 | CI → CD auth | Workload Identity Federation from GitHub Actions | No long-lived service-account JSON keys in CI. |
 | Observability | Cloud Logging + Cloud Trace, Spring Actuator on `/actuator` | |
 | IaC | Terraform, GCS backend, versioned state bucket per environment | |
+
+**Who signs in where.** `web` is for customers only and `admin-web` for staff only. `services/api` signs in
+customers (`customers` + `credentials`) and issues a token for audience `metal-desk-storefront`; `apps/admin` signs in
+staff (`users`: login, BCrypt hash, one role of `ADMIN`/`MANAGER`) and issues a token for audience `metal-desk-staff`
+with its own key (`ADMIN_JWT_SIGNING_KEY`). Each service validates signature, expiry, issuer and audience, so neither
+accepts the other's token. Staff tokens last 30 minutes with no refresh or revocation, and `admin-web` keeps them in
+memory only. Roles are carried in the token but no endpoint restricts by role yet.
+
+**Migrations.** The database is migrated by Mongock change units in `libs/migrations`, run by `services/api` and
+`apps/admin` at startup before they serve requests (the lock Mongock holds in the database makes two applications
+starting together safe). The first one creates `users` with its unique indexes and two development users
+(`admin/admin`, `manager/manager`) that a real deployment must change or remove.
 
 This target was chosen over the AWS shape a 2022-era version of this kind of system would typically
 use (ECS Fargate + CloudFormation) specifically as part of this reference build's modernization
@@ -337,6 +349,7 @@ libs/share            ← domain model + shared exceptions/utils (§3) — every
 libs/payments          ← PaymentProvider interface + adapters (§4)
 libs/mail              ← transactional mail abstraction
 libs/persistence       ← MongoDB documents and mappers shared by api and admin (no repositories, no driver)
+libs/migrations        ← Mongock change units and the startup runner, imported by api and admin
 
 services/api
 services/pricing-bridge

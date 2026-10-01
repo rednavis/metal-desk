@@ -118,7 +118,7 @@ class QuoteApiTest extends AdminTestSupport {
         before.totals().net().plus(before.totals().tax()).plus(stored.quote().orElseThrow().cost()),
         stored.totals().grandTotal());
     assertNotEquals(before.totals().grandTotal(), stored.totals().grandTotal());
-    assertEquals("staff@example.com", quotes.findById(ID).orElseThrow().staff());
+    assertEquals("staff", quotes.findById(ID).orElseThrow().staff());
   }
 
   @Test

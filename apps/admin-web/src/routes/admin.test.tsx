@@ -6,10 +6,13 @@ import { createApp } from "../app/createApp";
 import { createAdminServer, order, tier, type FakeOrder } from "../test/adminServer";
 import type { TierView } from "../api/types";
 
-function open(path: string, state: { tiers?: TierView[]; orders?: FakeOrder[] } = {}) {
+/** Opens a page as a signed-in manager and waits until the server has said who that is. */
+async function open(path: string, state: { tiers?: TierView[]; orders?: FakeOrder[] } = {}) {
   const server = createAdminServer(state);
   const app = createApp({ initialEntries: [path], baseUrl: "/api", fetchImpl: server.fetchImpl });
+  app.tokenStore.set("token-for-manager");
   render(<App app={app} />);
+  await screen.findByTestId("staff-identity");
   return { server, app };
 }
 
@@ -17,19 +20,19 @@ const posts = (server: ReturnType<typeof createAdminServer>, suffix: string) =>
   server.sent.filter((r) => r.method !== "GET" && r.url.endsWith(suffix));
 
 describe("the shell", () => {
-  it("shows who the server sees the staff member as, and never sends a credential", async () => {
-    const { server } = open("/tiers");
+  it("shows who the server says the user is, and sends the token with every call", async () => {
+    const { server } = await open("/tiers");
 
     await waitFor(() => {
-      expect(screen.getByTestId("staff-identity")).toHaveTextContent("Acting as staff@example.com");
+      expect(screen.getByTestId("staff-identity")).toHaveTextContent(
+        "Signed in as manager (MANAGER)",
+      );
     });
     await screen.findByRole("heading", { name: "Delivery tiers" });
 
     expect(server.sent.length).toBeGreaterThan(0);
     for (const request of server.sent) {
-      expect(
-        [...request.headers.keys()].some((name) => name.toLowerCase().startsWith("auth")),
-      ).toBe(false);
+      expect(request.headers.get("Authorization")).toBe("Bearer token-for-manager");
     }
   });
 });
@@ -52,7 +55,7 @@ describe("tiers", () => {
   };
 
   it("renders the server's own message beside the ceilings when they are invalid", async () => {
-    open("/tiers/new");
+    await open("/tiers/new");
     await fill({ ...VALID, "Value ceiling, before tax": "0" });
     await userEvent.click(screen.getByRole("button", { name: "Save tier" }));
 
@@ -68,7 +71,7 @@ describe("tiers", () => {
   });
 
   it("renders the server's message beside the price when it is invalid", async () => {
-    open("/tiers/new");
+    await open("/tiers/new");
     await fill({ ...VALID, "Delivery price, insurance included": "-3" });
     await userEvent.click(screen.getByRole("button", { name: "Save tier" }));
 
@@ -81,7 +84,7 @@ describe("tiers", () => {
   });
 
   it("renders the server's message beside the transit days when they are invalid", async () => {
-    open("/tiers/new");
+    await open("/tiers/new");
     await fill({ ...VALID, "Fewest days in transit": "6", "Most days in transit": "3" });
     await userEvent.click(screen.getByRole("button", { name: "Save tier" }));
 
@@ -96,7 +99,7 @@ describe("tiers", () => {
   });
 
   it("creates a tier and converts the weight to the unit asked for", async () => {
-    const { server } = open("/tiers/new");
+    const { server } = await open("/tiers/new");
     await fill(VALID);
     await userEvent.click(screen.getByRole("button", { name: "Save tier" }));
 
@@ -112,7 +115,7 @@ describe("tiers", () => {
   });
 
   it("states the tie-break outcome for two overlapping tiers", async () => {
-    open("/tiers", {
+    await open("/tiers", {
       tiers: [
         tier({ id: "standard", region: "DE", deliveryPrice: "15.00" }),
         tier({ id: "economy", region: "DE", deliveryPrice: "9.00", maxDays: 7 }),
@@ -128,7 +131,7 @@ describe("tiers", () => {
   });
 
   it("shows the orders that fall between two tiers as uncovered", async () => {
-    open("/tiers", {
+    await open("/tiers", {
       tiers: [
         tier({ id: "rich", region: "DE", valueCeiling: "5000.00", weightGrams: "1000" }),
         tier({ id: "heavy", region: "DE", valueCeiling: "500.00", weightGrams: "10000" }),
@@ -147,7 +150,7 @@ describe("tiers", () => {
   });
 
   it("requires the warning to be ticked before the last tier of a region is deleted", async () => {
-    const { server } = open("/tiers", { tiers: [tier({ id: "only", region: "DE" })] });
+    const { server } = await open("/tiers", { tiers: [tier({ id: "only", region: "DE" })] });
     await userEvent.click(await screen.findByRole("button", { name: "Delete only" }));
 
     const dialog = screen.getByRole("dialog");
@@ -166,7 +169,7 @@ describe("tiers", () => {
   });
 
   it("asks before deleting any tier, and leaves it if cancelled", async () => {
-    const { server } = open("/tiers", {
+    const { server } = await open("/tiers", {
       tiers: [
         tier({ id: "a", region: "DE" }),
         tier({ id: "b", region: "DE", deliveryPrice: "20.00" }),
@@ -194,7 +197,7 @@ describe("the quote queue and a quote", () => {
         status: "AWAITING_MANAGER_QUOTE",
       }),
     );
-    const { server } = open("/quotes", { orders: many });
+    const { server } = await open("/quotes", { orders: many });
 
     await screen.findAllByTestId("quote-row");
     expect(screen.getAllByTestId("quote-row")).toHaveLength(20);
@@ -208,7 +211,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("shows the full context on the detail screen", async () => {
-    open("/quotes/q1", { orders: [HANDED_OFF] });
+    await open("/quotes/q1", { orders: [HANDED_OFF] });
 
     await screen.findByRole("heading", { name: "Quote for order 100000000042" });
 
@@ -226,7 +229,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("says plainly when the weight and ceiling could not be worked out", async () => {
-    open("/quotes/q1", { orders: [{ ...HANDED_OFF, weightGrams: null }] });
+    await open("/quotes/q1", { orders: [{ ...HANDED_OFF, weightGrams: null }] });
 
     expect(await screen.findByTestId("weight")).toHaveTextContent("Unknown");
     expect(screen.getByTestId("bound-ceiling")).toHaveTextContent("Unknown");
@@ -241,7 +244,7 @@ describe("the quote queue and a quote", () => {
   }
 
   it("shows the resulting total before anything is sent", async () => {
-    const { server } = open("/quotes/q1", { orders: [HANDED_OFF] });
+    const { server } = await open("/quotes/q1", { orders: [HANDED_OFF] });
     await screen.findByRole("heading", { name: "Set the terms" });
 
     expect(screen.getByTestId("total-preview")).toHaveTextContent("Enter a delivery price");
@@ -253,7 +256,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("confirms the total, then sets the terms and returns the order to awaiting payment", async () => {
-    const { server } = open("/quotes/q1", { orders: [HANDED_OFF] });
+    const { server } = await open("/quotes/q1", { orders: [HANDED_OFF] });
     await screen.findByRole("heading", { name: "Set the terms" });
     await fillTerms("14.90");
 
@@ -274,7 +277,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("sends nothing while a term is missing or nonsensical", async () => {
-    const { server } = open("/quotes/q1", { orders: [HANDED_OFF] });
+    const { server } = await open("/quotes/q1", { orders: [HANDED_OFF] });
     await screen.findByRole("heading", { name: "Set the terms" });
     await userEvent.type(screen.getByLabelText("Delivery price (EUR)"), "0");
 
@@ -289,7 +292,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("requires a reason to decline, confirms, and cancels the order", async () => {
-    const { server } = open("/quotes/q1", { orders: [HANDED_OFF] });
+    const { server } = await open("/quotes/q1", { orders: [HANDED_OFF] });
     await screen.findByRole("heading", { name: "Decline the quote" });
 
     await userEvent.click(screen.getByRole("button", { name: "Decline the quote" }));
@@ -314,7 +317,7 @@ describe("the quote queue and a quote", () => {
   });
 
   it("keeps the order when the decline confirmation is dismissed", async () => {
-    const { server } = open("/quotes/q1", { orders: [HANDED_OFF] });
+    const { server } = await open("/quotes/q1", { orders: [HANDED_OFF] });
     await screen.findByRole("heading", { name: "Decline the quote" });
     await userEvent.type(screen.getByLabelText("Reason"), "No");
     await userEvent.click(screen.getByRole("button", { name: "Decline the quote" }));
@@ -330,7 +333,7 @@ describe("order management", () => {
   const button = (name: string) => screen.getByRole("button", { name });
 
   it("offers exactly what the server accepts, and shows the rest disabled", async () => {
-    open("/orders/o1", { orders: [order({ id: "o1", status: "PAID" })] });
+    await open("/orders/o1", { orders: [order({ id: "o1", status: "PAID" })] });
     await screen.findByRole("heading", { name: /Order/ });
 
     expect(button("Start fulfilment")).toBeEnabled();
@@ -339,7 +342,7 @@ describe("order management", () => {
   });
 
   it("follows the server's list, not the status: a status with other triggers gets those", async () => {
-    open("/orders/o1", {
+    await open("/orders/o1", {
       orders: [order({ id: "o1", status: "PAID", actions: ["DELIVERED"] })],
     });
     await screen.findByRole("heading", { name: /Order/ });
@@ -349,7 +352,9 @@ describe("order management", () => {
   });
 
   it("offers the shipment form only where shipping is legal, and needs both carrier and tracking", async () => {
-    const { server } = open("/orders/o1", { orders: [order({ id: "o1", status: "FULFILLING" })] });
+    const { server } = await open("/orders/o1", {
+      orders: [order({ id: "o1", status: "FULFILLING" })],
+    });
     await screen.findByRole("form", { name: "Shipment" });
 
     await userEvent.type(screen.getByLabelText("Carrier"), "DHL");
@@ -380,7 +385,7 @@ describe("order management", () => {
   });
 
   it("advances an order by the server's answer", async () => {
-    open("/orders/o1", { orders: [order({ id: "o1", status: "PAID" })] });
+    await open("/orders/o1", { orders: [order({ id: "o1", status: "PAID" })] });
     await userEvent.click(await screen.findByRole("button", { name: "Start fulfilment" }));
 
     await waitFor(() => {
@@ -397,7 +402,7 @@ describe("order management", () => {
       ),
       order({ id: "s1", number: "300000000001", status: "SHIPPED" }),
     ];
-    const { server } = open("/orders", { orders });
+    const { server } = await open("/orders", { orders });
     await screen.findAllByTestId("order-row");
     expect(screen.getAllByTestId("order-row")).toHaveLength(20);
 

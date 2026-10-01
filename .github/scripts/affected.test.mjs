@@ -9,8 +9,8 @@ const filters = parseFilters(readFileSync(".github/path-filters.yml", "utf8"));
 const ALL = graph.modules;
 const run = (...files) => affected(files, graph, filters);
 
-test("the graph is derived from the build files and covers all seven JVM modules", () => {
-  assert.equal(ALL.length, 7);
+test("the graph is derived from the build files and covers all eight JVM modules", () => {
+  assert.equal(ALL.length, 8);
   assert.deepEqual(graph.deps.get(":libs:share"), []);
   assert.deepEqual(graph.deps.get(":services:pricing-bridge"), [":libs:share"]);
 });
@@ -33,9 +33,18 @@ test("libs/payments marks itself and services:api only", () => {
   ]);
 });
 
-test("libs/persistence marks itself, services:api and apps:admin", () => {
+test("libs/persistence marks itself, libs:migrations (its tests use the Mongo fixtures), api and admin", () => {
   assert.deepEqual(run("libs/persistence/src/X.java").modules, [
     ":libs:persistence",
+    ":libs:migrations",
+    ":services:api",
+    ":apps:admin",
+  ]);
+});
+
+test("libs/migrations marks itself, services:api and apps:admin", () => {
+  assert.deepEqual(run("libs/migrations/src/X.java").modules, [
+    ":libs:migrations",
     ":services:api",
     ":apps:admin",
   ]);

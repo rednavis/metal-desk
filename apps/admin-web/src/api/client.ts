@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { ApiError } from "./errors";
+import type { TokenStore } from "./tokenStore";
 
 /** Options of a single call. */
 export interface RequestOptions<T> {
@@ -15,6 +16,8 @@ export interface RequestOptions<T> {
 export interface ApiClientOptions {
   /** Where calls go; the dev-server proxy path by default, never a hard-coded host. */
   baseUrl?: string;
+  /** The signed-in user's token, sent as a bearer credential if there is one. */
+  tokenStore?: TokenStore;
   /** Replaces the platform's `fetch`, for tests. */
   fetchImpl?: typeof globalThis.fetch;
 }
@@ -30,10 +33,9 @@ export interface ApiClient {
  * The only place in the app that talks to the network. It applies the base URL and a correlation id
  * to every call and turns every failure into an {@link ApiError}.
  *
- * It sends no credential of any kind and has no way to obtain one: staff are authenticated by the
- * Identity-Aware Proxy in front of `apps/admin` (Architecture section 7), which adds its own
- * identity to the request on the way in. A 401 therefore means the proxy refused the session, and
- * the app can only say so; establishing an identity is not something this app can do.
+ * On every call it sends the user's bearer token if there is one, and on a 401 it clears the token,
+ * which is what sends the user back to the login form (`RequireAuth` watches the store). Screens call
+ * this (through TanStack Query) and never `fetch`, so none of them can forget either.
  */
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const baseUrl = (options.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? "/api").replace(
@@ -47,6 +49,8 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       Accept: "application/json",
       "X-Correlation-Id": correlationId,
     };
+    const token = options.tokenStore?.get();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     if (call.body !== undefined) headers["Content-Type"] = "application/json";
 
     let response: Response;
@@ -67,6 +71,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
 
     const body = await readBody(response);
     if (!response.ok) {
+      if (response.status === 401) options.tokenStore?.clear();
       throw ApiError.fromResponse(response.status, body, correlationId);
     }
     if (call.schema === undefined) return body as T;

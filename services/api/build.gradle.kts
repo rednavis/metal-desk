@@ -31,7 +31,7 @@ dependencies {
 // MongoDB driver, this service is WebFlux with the reactive one. Only its runtime classpath is
 // resolved here, and it is handed to the test as a system property, so nothing of admin reaches
 // this module's own classpath.
-val adminRuntime by configurations.creating {
+val adminRuntime = configurations.create("adminRuntime") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
@@ -40,12 +40,17 @@ dependencies {
     adminRuntime(project(":apps:admin"))
 }
 
+// The classpath is handed over through a CommandLineArgumentProvider that captures only a file
+// collection, not the script object, so the task stays compatible with the configuration cache.
 tasks.test {
-    inputs.files(adminRuntime)
-    doFirst {
-        systemProperty(
-            "metaldesk.admin.classpath",
-            adminRuntime.files.joinToString(File.pathSeparator) { it.absolutePath },
-        )
-    }
+    val adminClasspath: FileCollection = adminRuntime
+    inputs.files(adminClasspath)
+    jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf(
+                "-Dmetaldesk.admin.classpath=" +
+                    adminClasspath.files.joinToString(File.pathSeparator) { it.absolutePath }
+            )
+        }
+    )
 }

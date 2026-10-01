@@ -20,6 +20,16 @@ dependencyResolutionManagement {
     }
 }
 
+// Local build cache only (under the Gradle user home, `~/.gradle/caches/build-cache-1`). There is no
+// remote cache node for this repository, so none is configured: CI persists that same local cache
+// through the GitHub Actions cache (gradle/actions/setup-gradle), read-only except on master — see
+// .github/workflows/README.md. A true remote node (HttpBuildCache) is deferred.
+buildCache {
+    local {
+        isEnabled = true
+    }
+}
+
 includeBuild("build-logic")
 
 include(

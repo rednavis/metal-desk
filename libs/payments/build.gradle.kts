@@ -16,6 +16,8 @@ dependencies {
     // services use, so this library and its consumers cannot disagree on a Reactor version. The BOM
     // is imported only for version alignment; nothing Spring is added to the classpath.
     implementation(platform(libs.spring.boot.dependencies))
+    // Security floor over the BOM's jackson (see jacksonFloor in the version catalog).
+    implementation(platform(libs.jackson.bom.floor))
     api(libs.reactor.core)
     implementation(libs.jackson.databind)
     implementation(libs.slf4j.api)

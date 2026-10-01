@@ -2,41 +2,165 @@
  * The theme, as tokens. Colours are defined once, here, and switched at the root: the page's
  * `data-theme` attribute is "light" or "dark" (set by `applyTheme`), and nothing else in the app
  * mentions a theme. Components use the variables and so follow without knowing.
+ *
+ * The palette follows the metals-api.com reference: neutral slate surfaces, an indigo accent for
+ * everything interactive, and a "precious metal" gradient (deep indigo to gold) kept for brand
+ * moments only — the header rule and the home hero — so it never competes with data.
  */
 :root,
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-bg: #ffffff;
-  --color-fg: #111827;
-  --color-muted: #4b5563;
-  --color-border: #d1d5db;
-  --color-accent: #1d4ed8;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-fg: #0f172a;
+  --color-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
   --color-accent-fg: #ffffff;
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 10%, transparent);
   --color-danger: #b91c1c;
+  --color-warning: #b45309;
+  --color-success: #15803d;
   --color-up: #15803d;
   --color-down: #b91c1c;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(15 23 42 / 0.12);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #0f172a;
+  --color-bg: #0b1020;
+  --color-surface: #111827;
+  --color-surface-2: #1e293b;
   --color-fg: #f1f5f9;
   --color-muted: #94a3b8;
-  --color-border: #334155;
-  --color-accent: #60a5fa;
-  --color-accent-fg: #0f172a;
+  --color-border: #1f2a3d;
+  --color-border-strong: #334155;
+  --color-accent: #818cf8;
+  --color-accent-hover: #a5b4fc;
+  --color-accent-fg: #0b1020;
   --color-danger: #f87171;
+  --color-warning: #fbbf24;
+  --color-success: #4ade80;
   --color-up: #4ade80;
   --color-down: #f87171;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.5);
+}
+
+:root {
+  --font-sans:
+    "Inter", "InterVariable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --gradient-brand: linear-gradient(90deg, #4f46e5, #8b5cf6, #ec4899, #f59e0b, #facc15);
+  --gradient-metal: linear-gradient(135deg, #1e1b4b 0%, #3b0764 40%, #7c2d12 75%, #b8860b 100%);
+  --metal-gold: #d4a017;
+  --metal-silver: #a8b0bd;
+  --metal-platinum: #8e9aaf;
+  --metal-palladium: #b5a99a;
+  --metal-rhodium: #6b7c93;
+  --metal-ruthenium: #5b6470;
+}
+
+/* Anything tagged with a metal can paint with its colour: `background: var(--metal)`. */
+[data-metal="GOLD"] {
+  --metal: var(--metal-gold);
+}
+
+[data-metal="SILVER"] {
+  --metal: var(--metal-silver);
+}
+
+[data-metal="PLATINUM"] {
+  --metal: var(--metal-platinum);
+}
+
+[data-metal="PALLADIUM"] {
+  --metal: var(--metal-palladium);
+}
+
+[data-metal="RHODIUM"] {
+  --metal: var(--metal-rhodium);
+}
+
+[data-metal="RUTHENIUM"] {
+  --metal: var(--metal-ruthenium);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
   background: var(--color-bg);
   color: var(--color-fg);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  font-weight: 750;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 a {
   color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+  width: 1rem;
+  height: 1rem;
 }

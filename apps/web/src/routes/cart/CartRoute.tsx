@@ -38,7 +38,7 @@ export function CartRoute() {
   } else {
     body = (
       <>
-        <table className="md-cart-table">
+        <table className="md-table">
           <caption className="md-sr-only">{t("cart.caption")}</caption>
           <thead>
             <tr>

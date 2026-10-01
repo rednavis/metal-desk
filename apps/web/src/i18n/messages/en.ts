@@ -352,6 +352,23 @@ export const en = {
   "totals.net": "Net",
   "totals.tax": "Tax",
   "totals.total": "Total",
+  "a11y.skipToContent": "Skip to content",
+  "footer.copyright": "© {year} MetalDesk",
+  "footer.tagline": "Precious metals, priced live.",
+  "home.hero.eyebrow": "Live precious-metal desk",
+  "home.hero.description":
+    "Gold, silver, platinum and palladium against live reference prices. Net, tax and delivery are shown before you pay, and larger orders get a personal quote.",
+  "home.hero.browse": "Browse the catalog",
+  "home.hero.contact": "Contact us",
+  "home.features.title": "Why MetalDesk",
+  "home.feature.live.title": "Live reference prices",
+  "home.feature.live.body":
+    "Prices refresh on their own, and a stale price is always marked as such.",
+  "home.feature.transparent.title": "Transparent totals",
+  "home.feature.transparent.body":
+    "Net, tax and delivery are itemised before you commit to anything.",
+  "home.feature.quote.title": "Personal quotes",
+  "home.feature.quote.body": "Orders beyond the standard delivery limits are priced by a manager.",
 } as const;
 
 export type MessageKey = keyof typeof en;

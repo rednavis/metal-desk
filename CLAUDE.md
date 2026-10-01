@@ -68,6 +68,15 @@ repositories.
 - `build-logic` is an *included build*, not a subproject, so the root `build.gradle.kts` explicitly
   wires `clean` to reach it. Don't remove that wiring.
 
+## Frontend styling conventions
+
+Both apps style through CSS custom properties: `apps/web/src/theme/tokens.css` and `apps/admin-web/src/ui/tokens.css`
+(palette, shadows, base type), then `ui/ui.css` for the kit and a feature `*.css` per feature. Use a token, never a
+literal colour, so dark mode keeps working. `web` switches theme on `<html data-theme>`; `admin-web` follows
+`prefers-color-scheme` and has no switch. Class names are `md-*`. Status and direction are never colour alone (label
+or glyph too). The brand mark and tokens are deliberately duplicated between the apps (T-079): a shared package would
+need `.github/scripts/affected.mjs` changed first.
+
 ## Quality gates are strict — what actually fails the build
 
 - Checkstyle: `maxWarnings = 0` and `severity` defaults to `warning`, so **every** violation fails.
@@ -112,6 +121,10 @@ repositories.
   module's `build.gradle.kts`. The one deliberate exception is the `foojay-resolver-convention`
   plugin version in `settings.gradle.kts` (a settings-level plugin can't reference a catalog it helps
   resolve).
+- `jacksonFloor` / `tomcatFloor` in the catalog raise jackson and Tomcat above what Spring Boot 4.1.1's BOM manages, to
+  clear high-severity advisories the dependency scan blocks on (applied in `metaldesk.spring-boot-conventions` and in
+  `libs:payments`, which imports the BOM itself). Remove them once Boot manages versions at or above the floor. Check a
+  change locally by running `cyclonedxBom`, then the same `osv-scanner` + `osv-gate.mjs` pair CI runs.
 - Shared build behavior lives in `build-logic/src/main/kotlin/metaldesk.*.gradle.kts` (java-conventions,
   spring-boot-conventions, quality-conventions), applied by every module — don't duplicate that
   config in a module's own `build.gradle.kts`.

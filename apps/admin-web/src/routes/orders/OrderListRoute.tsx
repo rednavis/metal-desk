@@ -50,7 +50,11 @@ export function OrderListRoute() {
                 <th scope="row">
                   <Link to={`/orders/${encodeURIComponent(order.id)}`}>{order.number}</Link>
                 </th>
-                <td>{STATUS_LABEL[order.status]}</td>
+                <td>
+                  <span className="md-status" data-status={order.status}>
+                    {STATUS_LABEL[order.status]}
+                  </span>
+                </td>
                 <td>{order.itemCount}</td>
                 <td>{amount(order.total, order.currency)}</td>
                 <td>{order.createdAt}</td>

@@ -27,6 +27,8 @@ export function SearchBox() {
     <form className="md-search" role="search" onSubmit={submit} noValidate>
       <Field
         label={t("search.label")}
+        hideLabel
+        placeholder={t("search.label")}
         type="search"
         value={text}
         error={tooShort ? t("search.tooShort", { min: SEARCH_MIN_LENGTH }) : undefined}

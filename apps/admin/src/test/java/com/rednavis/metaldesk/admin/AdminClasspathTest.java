@@ -7,15 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 
 /**
  * The module stays what ADR-0004 made it: MVC on virtual threads, with no WebFlux and no reactive
  * MongoDB driver anywhere on its runtime classpath.
  */
-@SpringBootTest
-class AdminClasspathTest {
+class AdminClasspathTest extends AdminTestSupport {
 
   @Autowired private Environment environment;
 

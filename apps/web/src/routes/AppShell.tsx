@@ -15,12 +15,9 @@ export function AppShell() {
       <CartProvider>
         <Layout
           title={t("app.title")}
-          actions={
-            <>
-              <SearchBox />
-              <PreferenceSwitcher />
-            </>
-          }
+          skipLabel={t("a11y.skipToContent")}
+          utility={<PreferenceSwitcher />}
+          actions={<SearchBox />}
           nav={
             <>
               <NavLink to="/">{t("nav.home")}</NavLink>
@@ -30,6 +27,12 @@ export function AppShell() {
               </NavLink>
               <NavLink to="/inquiry">{t("nav.contact")}</NavLink>
               <AccountMenu />
+            </>
+          }
+          footer={
+            <>
+              <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+              <span>{t("footer.tagline")}</span>
             </>
           }
         >

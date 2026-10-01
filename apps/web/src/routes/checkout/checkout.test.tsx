@@ -121,7 +121,7 @@ describe("step 1: your details", () => {
     expect(server.sent.find((r) => r.method === "PUT")?.body).toMatchObject({
       account: { rememberMe: true, password: "correct horse 9" },
     });
-    expect(screen.getByRole("status")).toHaveTextContent("conv-1");
+    expect(await screen.findByRole("status")).toHaveTextContent("conv-1");
     expect(server.sent.some((r) => r.url.endsWith("/confirm-email"))).toBe(false);
   });
 

@@ -1,4 +1,5 @@
 import { usePreferences } from "../../preferences/usePreferences";
+import "./cart.css";
 import { useCart } from "./useCart";
 
 /**

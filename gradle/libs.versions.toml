@@ -1,6 +1,11 @@
 [versions]
 java = "25"
 springBoot = "4.1.1"
+# Security floors over what Spring Boot 4.1.1's BOM manages (it ships jackson 3.1.5 and Tomcat 11.0.24, which
+# carry high-severity advisories); no later Boot patch exists yet. Delete these, and the constraints in
+# metaldesk.spring-boot-conventions, once Boot manages versions at or above them.
+jacksonFloor = "3.1.7"
+tomcatFloor = "11.0.25"
 spotless = "8.10.3"
 checkstyle = "14.3.0"
 pmd = "7.28.0"
@@ -31,6 +36,10 @@ spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
 spring-boot-starter-data-mongodb-reactive = { module = "org.springframework.boot:spring-boot-starter-data-mongodb-reactive" }
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+jackson-bom-floor = { module = "tools.jackson:jackson-bom", version.ref = "jacksonFloor" }
+tomcat-embed-core-floor = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcatFloor" }
+tomcat-embed-el-floor = { module = "org.apache.tomcat.embed:tomcat-embed-el", version.ref = "tomcatFloor" }
+tomcat-embed-websocket-floor = { module = "org.apache.tomcat.embed:tomcat-embed-websocket", version.ref = "tomcatFloor" }
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 spotbugs-gradle-plugin = { module = "com.github.spotbugs:com.github.spotbugs.gradle.plugin", version.ref = "spotbugsGradlePlugin" }

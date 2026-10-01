@@ -10,6 +10,7 @@ import { CheckoutRoute } from "./checkout/CheckoutRoute";
 import { CheckoutStartRoute } from "./checkout/CheckoutStartRoute";
 import { PaymentCancelRoute, PaymentReturnRoute } from "./checkout/PaymentReturnRoute";
 import { RequireAuth } from "../features/auth/RequireAuth";
+import { AuthFrame } from "./auth/AuthFrame";
 import { ForgotPasswordRoute } from "./auth/ForgotPasswordRoute";
 import { RegisterRoute } from "./auth/RegisterRoute";
 import { ResetPasswordRoute } from "./auth/ResetPasswordRoute";
@@ -37,12 +38,17 @@ export const appRoutes: RouteObject[] = [
       { path: "checkout/:checkoutId", element: <CheckoutRoute /> },
       { path: "checkout/:checkoutId/return", element: <PaymentReturnRoute /> },
       { path: "checkout/:checkoutId/cancel", element: <PaymentCancelRoute /> },
-      { path: "sign-in", element: <SignInRoute /> },
-      { path: "register", element: <RegisterRoute /> },
-      { path: "verify-email", element: <VerifyEmailRoute /> },
-      { path: "forgot-password", element: <ForgotPasswordRoute /> },
-      { path: "reset-password", element: <ResetPasswordRoute /> },
-      { path: "signed-out", element: <SignOutPrompt /> },
+      {
+        element: <AuthFrame />,
+        children: [
+          { path: "sign-in", element: <SignInRoute /> },
+          { path: "register", element: <RegisterRoute /> },
+          { path: "verify-email", element: <VerifyEmailRoute /> },
+          { path: "forgot-password", element: <ForgotPasswordRoute /> },
+          { path: "reset-password", element: <ResetPasswordRoute /> },
+          { path: "signed-out", element: <SignOutPrompt /> },
+        ],
+      },
       { path: "inquiry", element: <InquiryRoute /> },
       {
         element: <RequireAuth />,

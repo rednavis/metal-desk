@@ -2,3 +2,12 @@
 # credential. Authenticate with your own gcloud credentials (gcloud auth application-default login), never a key file.
 project_id = "metaldesk-dev-000000" # replace with the real project id
 region     = "europe-west3"
+
+# REQUIRED before a real plan, and deliberately empty here: these come from the Atlas console after you create a
+# Private Endpoint for this environment's region. An empty map is rejected with a pointer to the instructions.
+# See infra/terraform/modules/network/README.md.
+atlas_service_attachments = {
+  # "0" = "projects/<atlas-project>/regions/<region>/serviceAttachments/<name>"
+}
+atlas_dns_name = "<atlas-private-domain>." # from the Atlas private connection string; keep the trailing dot
+# atlas_hostnames = { "0" = "<hostname>." }

@@ -1,11 +1,11 @@
 # Modules
 
 Reusable building blocks. Environment roots (`../envs/*`) call these; they contain no logic of their own. Each module
-is created by the task named here, and none exists yet.
+is created by the task named here; those without a link do not exist yet.
 
 | Module | Task | What it will hold |
 |---|---|---|
-| `networking` | [T-071](../../../tasks/T-071-tf-networking.md) | VPC, serverless connector, Private Service Connect to MongoDB Atlas |
+| [`network`](network/README.md) | [T-071](../../../tasks/T-071-tf-networking.md) | **Written.** VPC, subnets, Direct VPC egress settings, Private Service Connect to MongoDB Atlas, default-deny egress firewall |
 | `cloud-run-service` | [T-072](../../../tasks/T-072-tf-cloud-run.md) | One Cloud Run service; `api`, `pricing-bridge` and `admin` are three instances of it |
 | `artifact-registry` | [T-073](../../../tasks/T-073-tf-artifact-registry.md) | Per-service image repositories, immutable tags |
 | `web-cdn` | [T-074](../../../tasks/T-074-tf-web-cdn.md) | Bucket, HTTPS load balancer and Cloud CDN for `web` and `admin-web` |

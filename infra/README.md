@@ -78,6 +78,28 @@ The script is idempotent. The bucket name must match `envs/<env>/backend.tf`.
 > them, `terraform init` *without* `-backend=false` fails with a backend error; that is expected, and it is why CI
 > uses `-backend=false`.
 
+## IP plan
+
+One VPC per environment. Each environment owns a `/16`, **chosen so the three never overlap**, so peering any two of
+them later stays possible. Only the first two subnets are carved out so far; the rest of the `/16` is reserved.
+
+| Environment | Reserved | `run` subnet (Cloud Run Direct VPC egress) | `psc` subnet (Atlas endpoints) | Wired in |
+|---|---|---|---|---|
+| `dev` | `10.10.0.0/16` | `10.10.0.0/24` | `10.10.1.0/26` | `envs/dev` ([T-071](../tasks/T-071-tf-networking.md)) |
+| `staging` | `10.20.0.0/16` | `10.20.0.0/24` | `10.20.1.0/26` | `T-078` |
+| `prod` | `10.30.0.0/16` | `10.30.0.0/24` | `10.30.1.0/26` | `T-078` |
+
+- **`run`, a `/24`:** Direct VPC egress takes one address per *running* instance, and Cloud Run needs at least a `/26`.
+  A `/24` (251 usable) leaves room for every service to scale out; widen it before the instance count approaches that.
+- **`psc`, a `/26`:** one address per Atlas service attachment. Atlas can issue several (the count depends on its
+  current scheme, which this repository has not confirmed); a `/26` (59 usable) leaves room for dozens.
+- **Egress mechanism:** Direct VPC egress, not a Serverless VPC Access connector. It has **no idle cost**, where a
+  connector bills around the clock. The comparison and what would make us switch are in
+  [`modules/network/README.md`](terraform/modules/network/README.md).
+- **Egress is default-deny** for Cloud Run instances: only the Atlas endpoints and Google APIs (HTTPS) are allowed.
+- **Manual prerequisite:** the Atlas service attachments belong to Atlas and have no default; a real `plan` needs
+  them. See the module README. `dev` fails its plan with a pointer to it until they are supplied.
+
 ## Running it
 
 ```bash

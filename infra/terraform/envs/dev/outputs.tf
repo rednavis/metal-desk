@@ -17,3 +17,13 @@ output "region" {
   description = "The default region of this environment."
   value       = var.region
 }
+
+output "network" {
+  description = "The network module's outputs, for the services that will attach to it."
+  value = {
+    network_id       = module.network.network_id
+    subnet_ids       = module.network.subnet_ids
+    cloud_run_egress = module.network.cloud_run_egress
+    atlas_dns_name   = module.network.atlas_dns_name
+  }
+}

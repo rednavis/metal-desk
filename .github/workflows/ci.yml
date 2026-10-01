@@ -32,6 +32,7 @@ jobs:
       jvm: ${{ steps.affected.outputs.jvm }}
       jvm-modules: ${{ steps.affected.outputs.jvm-modules }}
       frontend: ${{ steps.affected.outputs.frontend }}
+      frontend-apps: ${{ steps.affected.outputs.frontend-apps }}
       docs: ${{ steps.affected.outputs.docs }}
     steps:
       - uses: actions/checkout@v7
@@ -117,6 +118,67 @@ jobs:
           BUILD: ${{ needs.jvm-build.result }}
         run: |
           echo "changes=$CHANGES jvm-build=$BUILD"
+          [ "$CHANGES" = success ] && { [ "$BUILD" = success ] || [ "$BUILD" = skipped ]; }
+
+  # Builds, typechecks, lints and tests the pnpm apps. Skipped when no app is affected. Per-app
+  # filtering applies to the *build* only: typecheck, lint, format:check and test are root-scoped
+  # scripts that cover both apps, so they run once for any frontend change.
+  #
+  # EVERY COMMAND RUNS FROM THE REPOSITORY ROOT — never a `cd` into an app. CLAUDE.md: the ESLint flat
+  # config is root-scoped here, and running it from inside an app fails with an error that reads as
+  # a lint problem. Do not "simplify" this into per-app working directories.
+  frontend-build:
+    name: Frontend build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      # No `version:` — pnpm/action-setup reads `packageManager` from the root package.json, so
+      # there is one source of truth for the pnpm version.
+      - uses: pnpm/action-setup@v6
+      # Node's major matches `engines.node` (>=26). `cache: pnpm` keys the store on pnpm-lock.yaml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: pnpm
+      # --frozen-lockfile fails if pnpm-lock.yaml does not match package.json, instead of silently
+      # re-resolving. It also makes minimumReleaseAge irrelevant: nothing is resolved.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build the affected apps
+        env:
+          APPS: ${{ needs.changes.outputs.frontend-apps }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$APPS")
+          pnpm "${filters[@]}" run build
+      - name: Typecheck
+        run: pnpm run typecheck
+      - name: Lint
+        run: pnpm run lint
+      - name: Check formatting
+        run: pnpm run format:check
+      - name: Test
+        run: pnpm run test
+
+  # The single, stable check name for branch protection (T-065), for the same reason as `JVM build`:
+  # `frontend-build` is skipped on a JVM-only change. Passes when it succeeded or was skipped.
+  frontend-build-result:
+    name: Frontend build result
+    needs: [changes, frontend-build]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check the frontend build outcome
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          BUILD: ${{ needs.frontend-build.result }}
+        run: |
+          echo "changes=$CHANGES frontend-build=$BUILD"
           [ "$CHANGES" = success ] && { [ "$BUILD" = success ] || [ "$BUILD" = skipped ]; }
 
   docs:

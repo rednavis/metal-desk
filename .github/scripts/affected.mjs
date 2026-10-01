@@ -16,6 +16,19 @@ const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 /** Output name for a Gradle project path: `:libs:share` -> `libs-share`. */
 export const outputName = (project) => project.slice(1).replaceAll(":", "-");
 
+/** Frontend app directories from the `packages:` list of pnpm-workspace.yaml: `["apps/web", ...]`. */
+export function parseWorkspaceApps(workspace) {
+  const block = /^packages:\s*\n((?:[ \t]+-.*\n?)*)/m.exec(workspace);
+  const apps = [...(block?.[1] ?? "").matchAll(/^\s+-\s+["']?([^"'\s]+)["']?\s*$/gm)].map(
+    (m) => m[1],
+  );
+  if (apps.length === 0) throw new Error("no packages found in pnpm-workspace.yaml");
+  for (const app of apps) {
+    if (/[*?[{!]/.test(app)) throw new Error(`unsupported workspace glob "${app}"`);
+  }
+  return apps;
+}
+
 const projectDir = (project) => project.slice(1).replaceAll(":", "/");
 
 /** Module project paths from `include("a:b", ...)` in settings.gradle.kts. */
@@ -67,7 +80,8 @@ export function loadGraph(root = REPO_ROOT) {
     }
     deps.set(m, [...new Set(found)]);
   }
-  return { modules, deps };
+  const apps = parseWorkspaceApps(readFileSync(join(root, "pnpm-workspace.yaml"), "utf8"));
+  return { modules, deps, apps };
 }
 
 /** Parses the tiny YAML subset path-filters.yml uses: `key:` followed by `  - "glob"` lines. */
@@ -99,16 +113,20 @@ export const matches = (file, globs) =>
 
 /**
  * @param {string[]|null} files changed paths, or null to mean "everything" (push to master)
- * @returns {{modules: string[], frontend: boolean, docs: boolean}}
+ * @param {{modules: string[], deps: Map<string, string[]>, apps: string[]}} graph
+ * @returns {{modules: string[], apps: string[], frontend: boolean, docs: boolean}}
  */
-export function affected(files, { modules, deps }, filters) {
-  if (files === null) return { modules: [...modules], frontend: true, docs: true };
-  const frontend = files.some((f) =>
+export function affected(files, { modules, deps, apps }, filters) {
+  if (files === null) return { modules: [...modules], apps: [...apps], frontend: true, docs: true };
+  // The contract tests of every app read the same Java sources, so a hit there marks all apps.
+  const sharedHit = files.some((f) =>
     matches(f, [...filters.frontend, ...filters["frontend-contract"]]),
   );
+  const hitApps = apps.filter((app) => sharedHit || files.some((f) => matches(f, [`${app}/**`])));
   const docs = files.some((f) => matches(f, filters.docs));
+  const frontend = hitApps.length > 0;
   if (files.some((f) => matches(f, filters["jvm-shared"]))) {
-    return { modules: [...modules], frontend, docs };
+    return { modules: [...modules], apps: hitApps, frontend, docs };
   }
   const closure = affectedBy(modules, deps);
   const hit = new Set();
@@ -117,7 +135,7 @@ export function affected(files, { modules, deps }, filters) {
       closure.get(m).forEach((x) => hit.add(x));
     }
   }
-  return { modules: modules.filter((m) => hit.has(m)), frontend, docs };
+  return { modules: modules.filter((m) => hit.has(m)), apps: hitApps, frontend, docs };
 }
 
 function main(argv) {
@@ -138,6 +156,7 @@ function main(argv) {
     `jvm=${result.modules.length > 0}`,
     `jvm-modules=${JSON.stringify(result.modules)}`,
     `frontend=${result.frontend}`,
+    `frontend-apps=${JSON.stringify(result.apps)}`,
     `docs=${result.docs}`,
   ];
   console.log(lines.join("\n"));

@@ -7,6 +7,8 @@
 | `changes` | every push to `master` and every pull request | Decides which parts of the repository the change affects and exposes that as job outputs. Build jobs added by `T-061` (JVM) and `T-062` (frontend) read these with `needs: changes`; none of them re-implements path matching. |
 | `jvm-build` | every PR/push that affects a JVM module | One matrix entry per affected module, running `./gradlew :<module>:build` (Spotless, Checkstyle, SpotBugs, PMD, tests with Testcontainers, Jacoco). **Skipped** when no JVM module is affected. |
 | `JVM build` (`jvm-build-result`) | always | The one check name to require in branch protection (`T-065`). Passes when `jvm-build` succeeded **or was skipped**; fails if `changes` or any module failed. |
+| `frontend-build` | every PR/push that affects a pnpm app | `pnpm install --frozen-lockfile`, a build of each affected app, then the root-scoped typecheck, lint, format check and test. **Skipped** when no app is affected. |
+| `Frontend build result` (`frontend-build-result`) | always | The check name to require in branch protection (`T-065`) for the frontend; passes when `frontend-build` succeeded **or was skipped**. |
 | `docs` | every pull request and push | Builds the Jekyll site in `docs/` to catch config and front-matter errors. **Deliberately not path-filtered** — see below. |
 | `secrets-scan` | every pull request and push | TruffleHog filesystem scan. **Never path-filtered**: a secret can be committed in any file. |
 
@@ -31,7 +33,8 @@ node --test .github/scripts/                         # the assertions; the job r
 | `libs-share`, `libs-payments`, `libs-mail`, `libs-persistence`, `services-api`, `services-pricing-bridge`, `apps-admin` | `true` when that module must be built |
 | `jvm` | `true` when any JVM module is affected |
 | `jvm-modules` | JSON array of affected Gradle project paths, e.g. `[":libs:share",":services:api"]`, ready for a matrix |
-| `frontend` | `true` when `apps/web` or `apps/admin-web` must be built and tested |
+| `frontend` | `true` when any pnpm app must be built and tested |
+| `frontend-apps` | JSON array of affected app directories, e.g. `["apps/web"]`, read from `pnpm-workspace.yaml` |
 | `docs` | `true` when `docs/**` changed (informational; the `docs` job does not use it) |
 
 ### The reverse-dependency table is derived, not written
@@ -68,7 +71,8 @@ To update after adding a module: add it to `settings.gradle.kts` and the `output
 - `jvm-shared` in `path-filters.yml` (version catalog, settings, root build file, `build-logic/`,
   Checkstyle/SpotBugs/PMD config, the workflow files) marks **every** JVM module — they change every
   module's build behaviour.
-- `frontend` lists the app sources and the root files that configure both apps (`package.json`,
+- Each app's own directory (`apps/web/**`) is derived from `pnpm-workspace.yaml`, not listed in
+  `path-filters.yml`. `frontend` lists the root files that configure every app (`package.json`,
   `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `eslint.config.mjs`, `.prettierrc.json`). None of them
   affects a JVM module.
 - `frontend-contract` lists the Java sources the frontend contract tests read
@@ -107,3 +111,28 @@ leaves alone.
 - **Permissions** are `contents: read`; there are no secrets or credentials in the workflow.
 - **Concurrency:** a superseded run of the same pull request is cancelled; a `master` run never is.
 - No build cache yet — runs are slow until `T-063`.
+
+## The `frontend-build` job
+
+- **Every command runs from the repository root, never inside an app.** The ESLint flat config is
+  root-scoped (`CLAUDE.md`); `cd apps/web && pnpm lint` fails with an error that reads like a lint
+  problem. The job uses the root scripts, and the workflow carries a comment saying why.
+- **Per-app filtering applies to the build only.** `frontend-apps` selects which apps get
+  `pnpm --filter=./<app> run build`. `typecheck`, `lint`, `format:check` and `test` are root scripts that
+  cover **both** apps, so they run once for any frontend change — a change to `apps/web/src` still
+  typechecks, lints and tests `apps/admin-web`. Filtering them would need per-app tooling invocations,
+  which the root-only ESLint config rules out; the job does not pretend otherwise.
+- **What marks an app:** its own directory; or any root file shared by all apps (`package.json`,
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `eslint.config.mjs`, Prettier config, the workflows); or the
+  Java the contract tests read (both apps' contract tests read them, so it marks both). A JVM-only change
+  marks no app and a frontend-only change marks no JVM module.
+- **pnpm version** comes from `packageManager` in the root `package.json`: `pnpm/action-setup` is given no
+  `version:`. **Node** is `26`, the major of `engines.node` (`>=26`), as in the `changes` job.
+- **`--frozen-lockfile`** is required: a lockfile that does not match `package.json` fails the install.
+- **Store cache:** `actions/setup-node` with `cache: pnpm`, keyed on `pnpm-lock.yaml`.
+- **`minimumReleaseAge`:** `pnpm-workspace.yaml` excludes `prettier@3.9.8` from a policy it never declares.
+  Checked with a clean `HOME`/`XDG_CONFIG_HOME` and `minimumReleaseAge` left unset, set to `0` and set to
+  `100000`: `pnpm install --frozen-lockfile` succeeds identically each time, because a frozen install
+  resolves nothing and so applies no release-age policy. Nothing is declared. The policy matters only to a
+  non-frozen install (adding or updating a dependency on a developer machine), which CI never does.
+- **Permissions** are `contents: read`; nothing is uploaded and there are no credentials.

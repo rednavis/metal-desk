@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { affected, loadGraph, parseFilters } from "./affected.mjs";
+import { affected, loadGraph, parseFilters, parseWorkspaceApps } from "./affected.mjs";
 
 const graph = loadGraph();
 const filters = parseFilters(readFileSync(".github/path-filters.yml", "utf8"));
@@ -13,6 +13,13 @@ test("the graph is derived from the build files and covers all seven JVM modules
   assert.equal(ALL.length, 7);
   assert.deepEqual(graph.deps.get(":libs:share"), []);
   assert.deepEqual(graph.deps.get(":services:pricing-bridge"), [":libs:share"]);
+});
+
+test("the frontend apps are derived from pnpm-workspace.yaml", () => {
+  assert.deepEqual(graph.apps, ["apps/web", "apps/admin-web"]);
+  assert.deepEqual(parseWorkspaceApps('packages:\n  - "apps/a"\nminimumReleaseAgeExclude:\n'), [
+    "apps/a",
+  ]);
 });
 
 test("libs/share marks every module affected", () => {
@@ -46,6 +53,17 @@ test("apps/web alone marks the frontend and no JVM module", () => {
   const r = run("apps/web/src/main.tsx");
   assert.deepEqual(r.modules, []);
   assert.equal(r.frontend, true);
+  assert.deepEqual(r.apps, ["apps/web"]);
+});
+
+test("apps/admin-web alone marks only that app", () => {
+  assert.deepEqual(run("apps/admin-web/src/main.tsx").apps, ["apps/admin-web"]);
+});
+
+test("a module outside the contract marks no frontend app", () => {
+  const r = run("libs/mail/src/main/java/X.java");
+  assert.deepEqual(r.apps, []);
+  assert.equal(r.frontend, false);
 });
 
 for (const file of [
@@ -61,6 +79,7 @@ for (const file of ["package.json", "eslint.config.mjs", "pnpm-lock.yaml"]) {
     const r = run(file);
     assert.deepEqual(r.modules, []);
     assert.equal(r.frontend, true);
+    assert.deepEqual(r.apps, graph.apps);
   });
 }
 
@@ -77,7 +96,12 @@ test("a Java DTO the frontend contract tests read also marks the frontend", () =
 });
 
 test("a push to master (no file list) marks everything", () => {
-  assert.deepEqual(affected(null, graph, filters), { modules: ALL, frontend: true, docs: true });
+  assert.deepEqual(affected(null, graph, filters), {
+    modules: ALL,
+    apps: graph.apps,
+    frontend: true,
+    docs: true,
+  });
 });
 
 test("a workflow change marks everything JVM and the frontend", () => {

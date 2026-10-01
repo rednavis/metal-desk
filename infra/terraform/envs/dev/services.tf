@@ -16,6 +16,9 @@ module "api" {
   # The only service reachable from the internet: the storefront's backend.
   exposure = "public"
 
+  # CI deploys new revisions of this service as the deployer, and may act as nothing else.
+  deployer_members = [module.github_oidc.deployer_member]
+
   # Always keep one instance. The checkout path must not pay a JVM cold start (Architecture §7). This bills
   # continuously, with or without traffic, and is the largest idle cost of the deployment. A deliberate choice.
   min_instance_count = 1
@@ -41,8 +44,9 @@ module "pricing_bridge" {
   container_port = 8083 # services/pricing-bridge pins server.port: 8083
 
   # No public consumer: only api calls it, service to service. Not publicly invokable.
-  exposure        = "private"
-  invoker_members = [module.api.service_account_member]
+  exposure         = "private"
+  invoker_members  = [module.api.service_account_member]
+  deployer_members = [module.github_oidc.deployer_member]
 
   # Always keep one instance, with CPU allocated between requests. T-039 built a persistent market-data
   # subscription; a service scaled to zero holds none, and a throttled one cannot read its feed, so the storefront
@@ -66,7 +70,8 @@ module "admin" {
   container_port = 8081 # apps/admin pins server.port: 8081
 
   # Internal only: reachable through the load balancer (and IAP, T-076), never publicly invokable.
-  exposure = "internal-load-balancer"
+  exposure         = "internal-load-balancer"
+  deployer_members = [module.github_oidc.deployer_member]
 
   # An internal tool, so it may scale to zero and accept a cold start rather than bill an idle instance.
   min_instance_count = 0

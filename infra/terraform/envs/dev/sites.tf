@@ -12,6 +12,8 @@ module "web" {
 
   # The storefront is for everyone: an explicit opt-in to public. The bucket behind it is still not public.
   access = "public"
+
+  writer_members = [module.github_oidc.deployer_member]
 }
 
 module "admin_web" {
@@ -28,4 +30,6 @@ module "admin_web" {
   # own login (ADR-0006).
   access            = "restricted"
   allowed_ip_ranges = var.admin_web_allowed_ip_ranges
+
+  writer_members = [module.github_oidc.deployer_member]
 }

@@ -1,6 +1,6 @@
 # CI workflows
 
-Four workflows: `ci.yml` (below), [`infra.yml`](infra.yml), which checks the Terraform under `infra/`, [`image.yml`](image.yml), which builds the service images, and [`frontend-deploy.yml`](frontend-deploy.yml), which builds and uploads the two SPAs; the last three are described at the end. `ci.yml` jobs:
+Five workflows: `ci.yml` (below), [`infra.yml`](infra.yml), which checks the Terraform under `infra/`, [`image.yml`](image.yml), which builds, pushes and deploys the service images, [`frontend-deploy.yml`](frontend-deploy.yml), which builds and uploads the two SPAs, and [`deploy.yml`](deploy.yml), which deploys revisions; the last four are described at the end. `ci.yml` jobs:
 
 | Job | Runs | What it does |
 |---|---|---|
@@ -248,16 +248,24 @@ used for `JVM build` and `Frontend build result` (`T-078`).
 Builds `deploy/images/Dockerfile` for `api`, `pricing-bridge` and `admin` (one matrix entry each) on a pull request or
 push to `master` that touches an image input (`deploy/**`, the JVM modules, `build-logic/**`, `gradle/**`, the root
 Gradle files), and asserts that the image runs as non-root with `java` as its entrypoint and carries no credential;
-`pricing-bridge` is also started and shut down with SIGTERM. A separate `push` job pushes `<sha>`-tagged images to
-Artifact Registry **only on a push to `master` with the repository variable `IMAGE_PUSH_ENABLED=true`**, authenticating
-by Workload Identity Federation (`T-077`, not yet present), so it is skipped today. No credential is stored. Details and
+`pricing-bridge` is also started and shut down with SIGTERM. A `push` job (environment `dev`, master pushes only) pushes `<sha>`-tagged images to Artifact Registry, authenticating by
+Workload Identity Federation (`T-077`); `deploy-dev` then calls `deploy.yml`. `id-token: write` is on those jobs only, never on a
+pull request's. Details and
 the variables: [`deploy/README.md`](../../deploy/README.md). Not a required check; it is path-filtered.
 
 ## `frontend-deploy.yml` — the two SPAs
 
 On a pull request or push to `master` that touches `apps/web`, `apps/admin-web` or the pnpm root files, builds each app and
-fails if the bundle contains a secret-looking string or a hard-coded local host. A separate `deploy` job uploads to the
-buckets **only on `master` with the repository variable `FRONTEND_DEPLOY_ENABLED=true`**, authenticating by Workload Identity
-Federation (`T-077`, not yet present), so it is skipped today; no credential is stored. The upload order is hashed assets,
+fails if the bundle contains a secret-looking string or a hard-coded local host. A separate `deploy` job (environment `dev`, master pushes only) uploads to the dev buckets by Workload Identity Federation
+(`T-077`), with no stored credential. The upload order is hashed assets,
 other files, then `index.html` last, with `Cache-Control` set at upload (see `infra/terraform/modules/static-site/README.md`).
 `API_BASE_URL` (optional repository variable) sets `VITE_API_BASE_URL` at build time. Not a required check; it is path-filtered.
+
+## `deploy.yml` — revisions
+
+Creates new Cloud Run revisions that run an already-pushed image (`gcloud run services update --image`). Called by `image.yml`
+for `dev` after a push, and run by hand (`workflow_dispatch`: environment and a full commit SHA) for any environment. The job
+declares the GitHub **environment**, so `staging` and `prod` wait for their required reviewers; it runs from `master` only; and
+the federation provider enforces the same (repository, branch and environment) on Google's side. **CI never applies
+Terraform**: it changes which image a service runs and nothing else. A run for an environment whose federation variables are not
+set does nothing and says so. Not a required check.

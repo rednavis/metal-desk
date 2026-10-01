@@ -79,17 +79,18 @@ that it runs as non-root with `java` as the entrypoint, carries no credential, a
 service that needs no database), starts, answers `/actuator/health` and shuts down gracefully on SIGTERM. `api` and
 `admin` need MongoDB at startup, which the JVM build's Testcontainers tests already cover.
 
-**Pushing is off.** It pushes `<registry>/<repository>/<service>:<commit-sha>` only on a push to `master` **and** only when
-the repository variable `IMAGE_PUSH_ENABLED` is `true`. It needs Workload Identity Federation (`T-077`), which does not
-exist yet, so it authenticates with no stored credential and is skipped until then. Variables it reads:
+**Pushing authenticates with Workload Identity Federation** ([`T-077`](../tasks/T-077-tf-workload-identity.md)), with no stored
+credential. On a push to `master` (never on a pull request) the `push` job, which declares the GitHub environment `dev`,
+exchanges GitHub's short-lived token for the deployer account's and pushes
+`<region>-docker.pkg.dev/<project>/metaldesk-dev-<service>/<service>:<commit-sha>`; then `deploy-dev` rolls the new revisions out
+through [`deploy.yml`](../.github/workflows/deploy.yml). The jobs read the **`dev` GitHub environment's variables**, set from
+`terraform output github_actions` after the first apply; until they exist the jobs say so and do nothing (there is no separate
+on/off switch):
 
-| Variable | Meaning |
+| Variable (environment `dev`) | Meaning |
 |---|---|
-| `IMAGE_PUSH_ENABLED` | `true` to push |
-| `IMAGE_REGISTRY_HOST` | for example `europe-west3-docker.pkg.dev` |
-| `IMAGE_PROJECT_ID` | the GCP project holding the repositories |
-| `IMAGE_ENV` | `dev`, `staging` or `prod` (repositories are `metaldesk-<env>-<service>`) |
-| `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT` | outputs of `T-077` |
+| `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT` | the federation provider and the deployer account |
+| `GCP_PROJECT_ID`, `GCP_REGION` | where the repositories and services live |
 
 Tags are immutable, so a re-run for a commit that is already pushed finds the tag and stops. The push adds build
 provenance and an SBOM attestation, which cost nothing extra.

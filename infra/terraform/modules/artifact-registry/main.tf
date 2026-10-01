@@ -52,7 +52,7 @@ resource "google_artifact_registry_repository" "this" {
   }
 }
 
-# Pull access, per member, on this repository only. Not a project-level role, and never a push role.
+# Pull access, per member, on this repository only. Not a project-level role.
 resource "google_artifact_registry_repository_iam_member" "reader" {
   for_each = toset(var.reader_members)
 
@@ -60,5 +60,17 @@ resource "google_artifact_registry_repository_iam_member" "reader" {
   location   = google_artifact_registry_repository.this.location
   repository = google_artifact_registry_repository.this.name
   role       = "roles/artifactregistry.reader"
+  member     = each.value
+}
+
+# Push access, per member, on this repository only: for the CI deployer. Not a project-level role, and never granted to a
+# runtime account or to anything that holds a key.
+resource "google_artifact_registry_repository_iam_member" "writer" {
+  for_each = toset(var.writer_members)
+
+  project    = google_artifact_registry_repository.this.project
+  location   = google_artifact_registry_repository.this.location
+  repository = google_artifact_registry_repository.this.name
+  role       = "roles/artifactregistry.writer"
   member     = each.value
 }

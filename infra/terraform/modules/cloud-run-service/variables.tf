@@ -67,6 +67,12 @@ variable "invoker_members" {
   default     = []
 }
 
+variable "deployer_members" {
+  description = "IAM members (serviceAccount:<email>) that may deploy new revisions of this service: the CI deployer (T-077). Granted roles/run.developer on THIS service and act-as on this service's own runtime account, and nothing else. Not roles/run.admin, which can also rewrite the service's IAM policy and so make it public."
+  type        = list(string)
+  default     = []
+}
+
 variable "min_instance_count" {
   description = "Instances kept running with no traffic. Above zero this bills continuously; record why where the service is declared."
   type        = number

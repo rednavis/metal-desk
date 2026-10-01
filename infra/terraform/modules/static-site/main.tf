@@ -34,13 +34,23 @@ resource "google_storage_bucket" "site" {
 
 # The load balancer's own service agent may read objects; nobody else is granted anything. This identity exists only
 # once a backend bucket exists in the project, hence the dependency. Writing the bundle is CI's job, through
-# Workload Identity Federation (T-077), and is not granted here.
+# Workload Identity Federation (T-077): see the deployer grant below.
 resource "google_storage_bucket_iam_member" "load_balancer_reader" {
   bucket = google_storage_bucket.site.name
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:service-${var.project_number}@https-lb.iam.gserviceaccount.com"
 
   depends_on = [google_compute_backend_bucket.site]
+}
+
+# Upload access for the CI deployer, on this bucket only. objectUser can create, overwrite and delete objects but cannot
+# change the bucket's IAM, so CI cannot make the bundle public.
+resource "google_storage_bucket_iam_member" "deployer" {
+  for_each = toset(var.writer_members)
+
+  bucket = google_storage_bucket.site.name
+  role   = "roles/storage.objectUser"
+  member = each.value
 }
 
 # Single page application routing. A bucket-backed load balancer has no rewrite engine of its own and returns 404 for

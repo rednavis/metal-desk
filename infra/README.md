@@ -136,7 +136,7 @@ built by [`deploy/images/Dockerfile`](../deploy/README.md).
   **90 days** unless it is among those 20; delete **untagged** versions after **7 days**. The policy cannot know what is
   deployed, so raise the numbers for `prod` (`T-078`) rather than assume a deployed image is always recent.
 - **Pull**: each Cloud Run service's own account gets `roles/artifactregistry.reader` on **its own repository only**.
-  **Push is granted to nobody here**: CI pushes through Workload Identity Federation (`T-077`), never a key.
+  **Push** is granted only to the CI deployer (`roles/artifactregistry.writer`, on these repositories only), which authenticates through Workload Identity Federation: see [CI to CD authentication](#ci-to-cd-authentication). No key.
 - Storing images is not free; the retention policy is part of the cost control, not an optimisation.
 
 ## The two single-page sites
@@ -279,6 +279,99 @@ Staff reach the back office in two layers, and **no Identity-Aware Proxy is depl
   cannot reach `/api/admin` today. Same-origin `/api` routing for `api` and `admin` is the one piece of load-balancer work left.
 - **The seeded users** `admin/admin` and `manager/manager` exist in every environment the first migration runs in (ADR-0006);
   change or remove them before an environment is reachable.
+
+## CI to CD authentication
+
+GitHub Actions authenticates to Google with **Workload Identity Federation: no service-account key exists anywhere**
+(Architecture §7). A workflow run presents the short-lived OpenID Connect token GitHub issues to that run; Google checks it
+against the provider's **attribute condition**; a match may impersonate the **deployer** service account. Built by
+[`modules/github-oidc`](terraform/modules/github-oidc/README.md), wired in `envs/dev/cicd.tf`.
+
+### What the condition permits and excludes
+
+The provider accepts a token **only if all four hold** (the condition is also an output, `github_actions.attribute_condition`):
+
+```
+assertion.repository    == "rednavis/metal-desk"
+assertion.repository_id == "1371039595"
+assertion.ref           == "refs/heads/master"
+assertion.environment   == "dev"
+```
+
+In prose: **only a workflow run of `rednavis/metal-desk` itself, on its `master` branch, in a job that declares the GitHub
+environment `dev`, can obtain a token for the dev project.** It excludes every other repository on GitHub, **including every
+other repository in the `rednavis` organisation** (the condition names the full `owner/name`, not just the owner, and also the
+numeric repository id, so a deleted, renamed or re-created repository cannot inherit the trust); every other branch and tag;
+every pull request, **a fork's included** (its `ref` is `refs/pull/<n>/merge` and its repository is the fork); and any job that did not
+declare the environment (so one that skipped GitHub's protection rules). The staging and prod projects get their own pool, with
+`staging` and `prod` in the last clause, so a dev run cannot obtain prod credentials: they are separate projects with separate
+deployer accounts.
+
+### The three negative cases, and how each was checked
+
+**None of these was exercised against a live Google project** (none exists; nothing was applied). Each was checked by reading the
+claims GitHub puts in the token against the condition, and by an offline plan that shows the condition exactly as applied:
+
+| Attempt | The claim that differs | Clause that rejects it |
+|---|---|---|
+| A pull request from a **fork** | `repository` is the fork; `ref` is `refs/pull/<n>/merge`; no `environment` | `repository`, `repository_id`, `ref`, `environment` |
+| A push to a **non-`master` branch** of this repository | `ref` is `refs/heads/<branch>` | `ref` |
+| A workflow in **another repository in the organisation** (including one that calls a reusable workflow from this one) | `repository` and `repository_id` are the caller's | `repository`, `repository_id` |
+
+Before relying on it, make these real once the environment exists: run the Deploy workflow from a branch other than `master` (it
+must be refused), and from a throwaway repository in the organisation (it must be refused).
+
+### What the deployer may do
+
+Nothing project-wide. It holds **no project-level role**, and each grant is on one resource, from the module that owns it:
+
+| Resource | Role | Why |
+|---|---|---|
+| the three image repositories | `roles/artifactregistry.writer` | push the SHA-tagged images |
+| each of the three Cloud Run services | `roles/run.developer` | deploy revisions. **Not** `run.admin`, which can also rewrite the service's IAM policy and so make it public |
+| each runtime service account | `roles/iam.serviceAccountUser` | attach it to the revision it deploys |
+| the two site buckets | `roles/storage.objectUser` | upload the bundles; it cannot change the bucket's IAM |
+
+It has **no Secret Manager access**: CI deploys a secret *reference*, never a value. No `roles/editor`, no `roles/owner`.
+
+### CI does not apply Terraform
+
+**Decided: CI builds, pushes and deploys revisions; `terraform apply` stays a human operation with the operator's own
+credentials.** Applying Terraform needs far broader rights than deploying a revision (networks, load balancers, IAM, secrets'
+containers), so a CI identity that could do it would let a pull request that edits a `.tf` file rewrite IAM once merged. If that
+is ever wanted it needs a second, more privileged identity behind a protected environment with required reviewers; that is a
+separate decision, not a flag. Terraform owns a service's shape; CI owns which image it runs, so the Cloud Run module ignores
+changes to the image (and the fields `gcloud` stamps).
+
+### Environments and who may deploy
+
+| Environment | Project | Deployer | Approval |
+|---|---|---|---|
+| `dev` | dev project | `metaldesk-dev-deployer` | none |
+| `staging` | staging project | its own (wired in `T-078`) | **required reviewers** |
+| `prod` | prod project | its own (wired in `T-078`) | **required reviewers** |
+
+Distinct accounts and distinct projects are what separate them; the ref clause alone would not protect `prod`. **GitHub
+environments are not Terraform-managed.** Create them, with reviewers on `staging` and `prod`, **before** setting any of their
+variables, because a workflow that names an environment that does not exist creates it unprotected:
+
+```bash
+# once, by a repository admin (staging and prod: add yourself or a team as a required reviewer)
+gh api -X PUT repos/rednavis/metal-desk/environments/dev
+gh api -X PUT repos/rednavis/metal-desk/environments/staging --input - <<< '{"reviewers":[{"type":"Team","id":<team-id>}]}'
+gh api -X PUT repos/rednavis/metal-desk/environments/prod    --input - <<< '{"reviewers":[{"type":"Team","id":<team-id>}]}'
+```
+
+Then set each environment's variables from `terraform output github_actions` (identifiers, not secrets): `WIF_PROVIDER`,
+`WIF_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `GCP_REGION`, and for dev `WEB_BUCKET` and `ADMIN_WEB_BUCKET`. An environment with no
+variables cannot authenticate, which is why creating it unprotected by accident is harmless until it is configured.
+
+### Prerequisites and what this replaced
+
+The `iam.googleapis.com`, `iamcredentials.googleapis.com` and `sts.googleapis.com` APIs must be enabled. The earlier
+repository-variable gates (`IMAGE_PUSH_ENABLED`, `FRONTEND_DEPLOY_ENABLED`) are gone: there is one mechanism, the federation
+itself. **Staging and prod registries:** images are pushed only to dev's registries today; how an image reaches another
+environment's registry (a promotion) is open for `T-078`, and `deploy.yml` fails clearly if the image is not there.
 
 ## Running it
 

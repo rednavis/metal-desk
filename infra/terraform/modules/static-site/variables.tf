@@ -71,6 +71,12 @@ variable "allowed_ip_ranges" {
   }
 }
 
+variable "writer_members" {
+  description = "IAM members (serviceAccount:<email>) that may upload the bundle to this site's bucket: the CI deployer (T-077). roles/storage.objectUser on this bucket only (create, overwrite and delete objects; no IAM changes). The bucket stays unreadable to anyone else."
+  type        = list(string)
+  default     = []
+}
+
 variable "http_redirect" {
   description = "Also listen on port 80, only to redirect to https. Content is never served over http. Costs one more forwarding rule."
   type        = bool

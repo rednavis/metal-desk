@@ -11,7 +11,7 @@ is created by the task named here; those without a link do not exist yet.
 | [`static-site`](static-site/README.md) | [T-074](../../../tasks/T-074-tf-web-cdn.md) | **Written.** A private bucket behind an HTTPS load balancer with Cloud CDN, for `web` and `admin-web` (spec called it `web-cdn`) |
 | [`secret`](secret/README.md) | [T-075](../../../tasks/T-075-tf-secret-manager.md) | **Written.** One empty secret container with a single per-secret reader; never a version or a value (spec called it `secret-manager`) |
 | `iap` | [T-076](../../../tasks/T-076-tf-iap.md) | Identity-Aware Proxy for `admin` and `admin-web` (see the note on ADR-0006 in `tasks/README.md`) |
-| `workload-identity` | [T-077](../../../tasks/T-077-tf-workload-identity.md) | Workload Identity Federation for GitHub Actions |
+| [`github-oidc`](github-oidc/README.md) | [T-077](../../../tasks/T-077-tf-workload-identity.md) | **Written.** Workload Identity Federation for GitHub Actions: the pool, the provider with its attribute condition, and the deployer account (spec called it `workload-identity`) |
 
 Provider versions are pinned once, in the roots (`../envs/*/versions.tf`); a module declares which providers it needs
 but no version tighter than that.

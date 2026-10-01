@@ -53,6 +53,23 @@ public class AuthenticationService {
         : authenticate(request).map(found -> conclude(found, source));
   }
 
+  /**
+   * Issues a fresh token to a customer who is already signed in, which is what keeps a session
+   * alive while it is in use: each token lives for the idle timeout, so a session ends after that
+   * long without a refresh. The customer is read again, so one whose credential was disabled or
+   * removed since is not given another.
+   *
+   * @param customer the customer the presented token is for
+   * @return the new token, or empty if the customer may no longer sign in
+   */
+  public Mono<IssuedToken> refresh(AuthenticatedCustomer customer) {
+    return credentials
+        .findById(customer.id().value())
+        .filter(credential -> credential.state().canSignIn())
+        .flatMap(credential -> customers.findById(customer.id().value()))
+        .map(found -> issuer.issue(principal(found)));
+  }
+
   private SignInOutcome conclude(Optional<AuthenticatedCustomer> found, String source) {
     found.ifPresentOrElse(
         customer -> throttle.recordSuccess(source), () -> throttle.recordFailure(source));

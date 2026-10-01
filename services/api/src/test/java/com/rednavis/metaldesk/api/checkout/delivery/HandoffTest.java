@@ -10,6 +10,7 @@ import com.rednavis.metaldesk.api.persistence.repository.OrderRepository;
 import com.rednavis.metaldesk.mail.MailTemplate;
 import com.rednavis.metaldesk.mail.TransactionalMail;
 import com.rednavis.metaldesk.mail.fake.RecordedMail;
+import com.rednavis.metaldesk.persistence.document.CartDocument;
 import com.rednavis.metaldesk.persistence.document.CustomerDocument;
 import com.rednavis.metaldesk.persistence.document.OrderDocument;
 import com.rednavis.metaldesk.share.domain.customer.EmailAddress;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.http.HttpMethod;
 
 /**
@@ -41,6 +43,7 @@ class HandoffTest extends DeliveryTestSupport {
   private static final String STAFF = "staff@metal-desk.example.test";
 
   @Autowired private OrderRepository orders;
+  @Autowired private ReactiveMongoTemplate mongo;
   @Autowired private CustomerRepository customers;
 
   @BeforeEach
@@ -87,6 +90,21 @@ class HandoffTest extends DeliveryTestSupport {
     assertEquals(2, order.lines().get(0).quantity());
     assertNull(order.quote(), "no delivery quote: a manager sets the price");
     assertNull(order.payment(), "no payment was taken or attempted");
+  }
+
+  @Test
+  void handoffRemovesTheCartTheOrderWasMadeFrom() {
+    configureTier("SE", TIGHT, HEAVY, PRICE);
+    final Called cart = add(null, null, GOLD_1);
+    changeQuantity(cart.cookie(), GOLD_1, 2);
+    final String id = checkoutId(call(HttpMethod.POST, SESSIONS, cart.cookie(), null, null));
+    submit(id, null, with(validForm(freshEmail()), COUNTRY, "SE"));
+    assertEquals(2, read(cart.cookie(), null).quantityOf(GOLD_1));
+
+    assertEquals(200, handoff(id, null).status());
+
+    assertEquals(0, read(cart.cookie(), null).lines().size());
+    assertNull(mongo.findById(cart.cookie(), CartDocument.class).block(), "the document is gone");
   }
 
   @Test

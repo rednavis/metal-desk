@@ -21,8 +21,22 @@ import java.time.Duration;
  *     at most {@value HttpEndpoint#MAX_TIMEOUT_SECS} seconds
  * @param retryBudget how many extra attempts a {@code confirm} call may make after a transport
  *     failure, from 0 to {@value HttpEndpoint#MAX_RETRY_BUDGET}
+ * @param stub whether to answer every call with a canned {@code captured} response and make no
+ *     request at all, for development and demonstration; the base URL is still validated
  */
-public record WalletConfiguration(URI baseUrl, Duration timeout, int retryBudget) {
+public record WalletConfiguration(URI baseUrl, Duration timeout, int retryBudget, boolean stub) {
+
+  /**
+   * Builds a configuration that talks to the provider (not a stub).
+   *
+   * @param baseUrl where the provider is
+   * @param timeout how long to wait for one call
+   * @param retryBudget how many extra attempts an idempotent call may make
+   * @throws ValidationException if the base URL, timeout or retry budget is not valid
+   */
+  public WalletConfiguration(URI baseUrl, Duration timeout, int retryBudget) {
+    this(baseUrl, timeout, retryBudget, false);
+  }
 
   /**
    * Validates the fields (see {@link HttpEndpoint}) and drops a trailing slash from the base URL.
@@ -43,7 +57,8 @@ public record WalletConfiguration(URI baseUrl, Duration timeout, int retryBudget
    */
   public static WalletConfiguration withDefaults(URI baseUrl) {
     final HttpEndpoint endpoint = HttpEndpoint.withDefaults(baseUrl);
-    return new WalletConfiguration(endpoint.baseUrl(), endpoint.timeout(), endpoint.retryBudget());
+    return new WalletConfiguration(
+        endpoint.baseUrl(), endpoint.timeout(), endpoint.retryBudget(), false);
   }
 
   /**

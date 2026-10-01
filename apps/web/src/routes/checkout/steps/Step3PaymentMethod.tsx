@@ -41,57 +41,59 @@ export function Step3PaymentMethod({
 
   const current = choice ?? offer.selected;
   return (
-    <section aria-labelledby="step3-title">
-      <h2 id="step3-title">{t("checkout.step3.title")}</h2>
-      {decline ? (
-        <div role="alert" data-testid="decline-notice">
-          <strong>{t("checkout.decline.title")}</strong>
-          <p>{t("checkout.decline.body", { reason: decline })}</p>
-        </div>
-      ) : null}
-      <CheckoutSummary session={session} method={offer.selected} />
-      {offer.highValue ? <p role="note">{t("checkout.method.highValue")}</p> : null}
-      {offer.methods.length === 0 ? (
-        <EmptyState title={t("checkout.method.none")} />
-      ) : (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (current === undefined) return;
-            selectMethod.mutate(current, { onSuccess: onChosen });
-          }}
-        >
-          <fieldset>
-            <legend>{t("checkout.method.legend")}</legend>
-            {offer.methods.map(({ method, group }) => (
-              <div key={method} className="md-radio">
-                <label>
-                  <input
-                    type="radio"
-                    name="payment-method"
-                    value={method}
-                    checked={current === method}
-                    onChange={() => {
-                      setChoice(method);
-                    }}
-                  />
-                  <span>{t(`checkout.method.${method}`)}</span>
-                </label>
-                {group === "INVOICE" ? <p>{t("checkout.method.INVOICE.note")}</p> : null}
-              </div>
-            ))}
-          </fieldset>
-          {selectMethod.isError ? <ErrorState error={selectMethod.error} /> : null}
-          <div className="md-actions">
-            <Button variant="secondary" onClick={onBack}>
-              {t("checkout.back")}
-            </Button>
-            <Button type="submit" disabled={current === undefined || selectMethod.isPending}>
-              {t("checkout.continue")}
-            </Button>
+    <div className="md-split">
+      <section aria-labelledby="step3-title">
+        <h2 id="step3-title">{t("checkout.step3.title")}</h2>
+        {decline ? (
+          <div role="alert" data-testid="decline-notice">
+            <strong>{t("checkout.decline.title")}</strong>
+            <p>{t("checkout.decline.body", { reason: decline })}</p>
           </div>
-        </form>
-      )}
-    </section>
+        ) : null}
+        {offer.highValue ? <p role="note">{t("checkout.method.highValue")}</p> : null}
+        {offer.methods.length === 0 ? (
+          <EmptyState title={t("checkout.method.none")} />
+        ) : (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (current === undefined) return;
+              selectMethod.mutate(current, { onSuccess: onChosen });
+            }}
+          >
+            <fieldset>
+              <legend>{t("checkout.method.legend")}</legend>
+              {offer.methods.map(({ method, group }) => (
+                <div key={method} className="md-radio">
+                  <label>
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value={method}
+                      checked={current === method}
+                      onChange={() => {
+                        setChoice(method);
+                      }}
+                    />
+                    <span>{t(`checkout.method.${method}`)}</span>
+                  </label>
+                  {group === "INVOICE" ? <p>{t("checkout.method.INVOICE.note")}</p> : null}
+                </div>
+              ))}
+            </fieldset>
+            {selectMethod.isError ? <ErrorState error={selectMethod.error} /> : null}
+            <div className="md-actions">
+              <Button variant="secondary" onClick={onBack}>
+                {t("checkout.back")}
+              </Button>
+              <Button type="submit" disabled={current === undefined || selectMethod.isPending}>
+                {t("checkout.continue")}
+              </Button>
+            </div>
+          </form>
+        )}
+      </section>
+      <CheckoutSummary session={session} method={offer.selected} />
+    </div>
   );
 }

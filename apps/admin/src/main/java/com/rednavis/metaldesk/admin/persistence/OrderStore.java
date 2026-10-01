@@ -26,6 +26,8 @@ import org.springframework.stereotype.Component;
 public class OrderStore {
 
   private static final long ONE_DOCUMENT = 1L;
+  private static final String STATUS = "status";
+  private static final String UPDATED_AT = "updatedAt";
 
   private final OrderRepository orders;
   private final OrderMapper mapper;
@@ -54,13 +56,11 @@ public class OrderStore {
    */
   public void advance(Order before, Order after) {
     final OrderDocument next = mapper.toDocument(after);
-    final Query unchanged =
-        Query.query(
-            Criteria.where("_id").is(before.id().value()).and("status").is(before.status()));
+    final Query unchanged = unchanged(before);
     final Update update =
         new Update()
-            .set("status", next.status())
-            .set("updatedAt", next.updatedAt())
+            .set(STATUS, next.status())
+            .set(UPDATED_AT, next.updatedAt())
             .set("quote", next.quote());
     final long changed =
         mongo.updateFirst(unchanged, update, OrderDocument.class).getModifiedCount();
@@ -68,6 +68,36 @@ public class OrderStore {
       throw new ConflictException(
           "order.changed", "Order " + idOf(before) + " changed while it was being updated");
     }
+  }
+
+  /**
+   * Replaces the status, update time and payment of an order, if it is still as it was read. For
+   * the move that settles a payment: the order becomes paid and its payment record captured
+   * together.
+   *
+   * @param before the order as the caller read it
+   * @param after the order as it should be
+   * @throws ConflictException if the stored order is no longer in the status {@code before} had
+   */
+  public void settle(Order before, Order after) {
+    final OrderDocument next = mapper.toDocument(after);
+    final Query unchanged = unchanged(before);
+    final Update update =
+        new Update()
+            .set(STATUS, next.status())
+            .set(UPDATED_AT, next.updatedAt())
+            .set("payment", next.payment());
+    final long changed =
+        mongo.updateFirst(unchanged, update, OrderDocument.class).getModifiedCount();
+    if (changed != ONE_DOCUMENT) {
+      throw new ConflictException(
+          "order.changed", "Order " + idOf(before) + " changed while it was being updated");
+    }
+  }
+
+  private static Query unchanged(Order before) {
+    return Query.query(
+        Criteria.where("_id").is(before.id().value()).and(STATUS).is(before.status()));
   }
 
   private static String idOf(Order order) {

@@ -14,7 +14,7 @@ export function OrderFacts({ order }: { order: OrderDetailView }) {
       </p>
       <dl>
         <dt>Customer</dt>
-        <dd data-testid="customer-name">{order.customerName ?? "Customer record not found"}</dd>
+        <dd data-testid="customer-name">{order.contact?.name ?? "Customer record not found"}</dd>
         {order.contact ? (
           <>
             <dt>Email</dt>
@@ -25,6 +25,14 @@ export function OrderFacts({ order }: { order: OrderDetailView }) {
                 <dd data-testid="customer-phone">{order.contact.phone}</dd>
               </>
             ) : null}
+          </>
+        ) : null}
+        {order.payment ? (
+          <>
+            <dt>Payment</dt>
+            <dd data-testid="payment">
+              {`${order.payment.method}, ${order.payment.status.toLowerCase()}, ${order.payment.reference}`}
+            </dd>
           </>
         ) : null}
         <dt>Delivery address</dt>

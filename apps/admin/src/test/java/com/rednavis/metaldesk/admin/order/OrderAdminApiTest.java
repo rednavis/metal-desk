@@ -11,7 +11,12 @@ import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderStatus;
 import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
+import com.rednavis.metaldesk.share.domain.payment.PaymentMethod;
+import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
+import com.rednavis.metaldesk.share.domain.payment.PaymentStatus;
+import com.rednavis.metaldesk.share.domain.payment.ProviderReference;
 import com.rednavis.metaldesk.share.error.ConflictException;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.client.RestTestClient.ResponseSpec;
@@ -30,6 +35,30 @@ class OrderAdminApiTest extends AdminTestSupport {
   private void paid() {
     saveCustomer();
     save(OrderFixtures.paidOrder(ID, OrderFixtures.number(1)));
+  }
+
+  private void invoiced(PaymentMethod method) {
+    saveCustomer();
+    final Order paid = OrderFixtures.paidOrder(ID, OrderFixtures.number(1));
+    final PaymentRecord captured = paid.payment().orElseThrow();
+    save(
+        new Order(
+            paid.id(),
+            paid.number(),
+            paid.customerId(),
+            paid.deliveryAddress(),
+            paid.lines(),
+            paid.quote(),
+            Optional.of(
+                new PaymentRecord(
+                    "invoice",
+                    method,
+                    PaymentStatus.PENDING,
+                    new ProviderReference("INV-1"),
+                    captured.amount())),
+            OrderStatus.AWAITING_PAYMENT,
+            paid.createdAt(),
+            paid.updatedAt()));
   }
 
   private ResponseSpec fulfil() {
@@ -70,6 +99,41 @@ class OrderAdminApiTest extends AdminTestSupport {
 
     assertEquals(OrderStatus.DELIVERED, stored());
     assertEquals("DHL", shipments.findById(ID).orElseThrow().carrier());
+  }
+
+  @Test
+  void invoicePaymentReceivedMakesTheOrderPaidAndFulfillable() {
+    invoiced(PaymentMethod.INVOICE);
+
+    post(ORDERS + ID + "/payment-received")
+        .expectStatus()
+        .isOk()
+        .expectBody()
+        .jsonPath(SUMMARY_STATUS)
+        .isEqualTo("PAID")
+        .jsonPath("$.payment.status")
+        .isEqualTo("CAPTURED")
+        .jsonPath("$.payment.reference")
+        .isEqualTo("INV-1");
+
+    assertEquals(OrderStatus.PAID, stored());
+    fulfil().expectStatus().isOk();
+  }
+
+  @Test
+  void paymentReceivedIsRefusedWithoutPendingInvoice() {
+    invoiced(PaymentMethod.CARD);
+
+    post(ORDERS + ID + "/payment-received").expectStatus().isEqualTo(409);
+    assertEquals(OrderStatus.AWAITING_PAYMENT, stored());
+  }
+
+  @Test
+  void paymentReceivedIsRefusedOnOrderThatIsAlreadyPaid() {
+    paid();
+
+    post(ORDERS + ID + "/payment-received").expectStatus().isEqualTo(409);
+    assertEquals(OrderStatus.PAID, stored());
   }
 
   @Test
@@ -143,7 +207,7 @@ class OrderAdminApiTest extends AdminTestSupport {
         .expectStatus()
         .isOk()
         .expectBody()
-        .jsonPath("$.customerName")
+        .jsonPath("$.contact.name")
         .isEqualTo("Ann Example")
         .jsonPath("$.lines.length()")
         .isEqualTo(2)

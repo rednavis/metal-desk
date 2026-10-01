@@ -689,3 +689,315 @@ dl.md-totals dd:last-of-type {
     width: 100%;
   }
 }
+
+/* ---- split layout and summary card: the content beside a summary of the amounts, as on a payment page --- */
+
+.md-split {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 56rem) {
+  .md-split {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+}
+
+.md-summary {
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.md-summary h2,
+.md-summary h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.md-summary__due {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0 0 1.25rem;
+  color: var(--color-muted);
+}
+
+.md-summary__due strong {
+  color: var(--color-fg);
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.md-summary__rows {
+  margin: 0;
+}
+
+.md-summary__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.md-summary__rows dt {
+  color: var(--color-muted);
+}
+
+.md-summary__rows dd {
+  margin: 0;
+  text-align: right;
+}
+
+.md-summary__rows .md-summary__total {
+  margin-top: 0.5rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--color-border);
+  font-weight: 700;
+}
+
+.md-summary__rows .md-summary__total dt {
+  color: var(--color-fg);
+}
+
+.md-summary__block address {
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.md-summary__block .md-button {
+  width: 100%;
+}
+
+.md-summary__lines {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.md-summary__lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.375rem 0;
+}
+
+.md-summary__lines .md-summary__qty {
+  color: var(--color-muted);
+}
+
+.md-summary__block {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.md-summary__block p {
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.md-summary__block > :last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 56rem) {
+  .md-split > .md-summary {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+/* A boxed section of a page (a review block, a payment panel). */
+.md-panel {
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.md-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.md-panel p {
+  margin: 0 0 0.75rem;
+}
+
+.md-panel > :last-child {
+  margin-bottom: 0;
+}
+
+/* The end of a checkout: one centred card with a glyph, so the outcome is never colour alone. */
+.md-receipt {
+  max-width: 32rem;
+  margin: 1rem auto;
+  padding: 2rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.md-receipt__glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.75rem;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.md-receipt h2 {
+  margin: 0 0 0.5rem;
+}
+
+.md-receipt dl {
+  margin: 1.25rem 0;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-receipt dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.md-receipt dt {
+  color: var(--color-muted);
+}
+
+.md-receipt dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.md-payment-element {
+  max-width: 32rem;
+}
+
+.md-payment-element .md-button {
+  width: 100%;
+}
+
+/* Payment and shipment as a pair of cards under the order. */
+.md-info-cards {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 40rem) {
+  .md-info-cards {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}
+
+.md-info-cards .md-panel {
+  margin-bottom: 0;
+}
+
+.md-info-cards .md-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.md-panel__value {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.md-panel__rows {
+  margin: 0;
+}
+
+.md-panel__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.375rem 0;
+}
+
+.md-panel__rows dt {
+  color: var(--color-muted);
+}
+
+.md-panel__rows dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* The order's header: its number, then status and date as two labelled facts. */
+.md-order-header {
+  margin-bottom: 1.5rem;
+}
+
+.md-order-header h1 {
+  margin-bottom: 0.75rem;
+}
+
+.md-order-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin: 0;
+  padding: 0.875rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.md-order-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.md-order-meta dt {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.md-order-meta dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-button--block {
+  display: flex;
+  width: 100%;
+}
+
+/* The totals inside a summary card use the card's width, not their own. */
+.md-summary dl.md-totals {
+  max-width: none;
+  margin: 0;
+}

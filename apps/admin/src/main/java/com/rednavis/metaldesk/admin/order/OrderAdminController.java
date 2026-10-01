@@ -54,6 +54,17 @@ public class OrderAdminController {
   }
 
   /**
+   * Records that an invoice was paid: {@code AWAITING_PAYMENT -> PAID}.
+   *
+   * @param id the order id
+   * @return the order
+   */
+  @PostMapping("/{id}/payment-received")
+  public OrderDetailView markInvoicePaid(@PathVariable String id) {
+    return service.markInvoicePaid(id);
+  }
+
+  /**
    * Starts fulfillment: {@code PAID -> FULFILLING}.
    *
    * @param id the order id

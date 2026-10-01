@@ -79,6 +79,9 @@ public class PaymentTestSupport extends DeliveryTestSupport {
     final String base = "http://127.0.0.1:" + SERVER.port();
     registry.add("metaldesk.payments.gateway.base-url", () -> base);
     registry.add("metaldesk.payments.wallet.base-url", () -> base);
+    // application.yml stubs the providers for development; these tests exercise the real adapters.
+    registry.add("metaldesk.payments.gateway.stub", () -> "false");
+    registry.add("metaldesk.payments.wallet.stub", () -> "false");
     registry.add("metaldesk.payments.gateway.timeout", () -> "1s");
     registry.add("metaldesk.payments.wallet.timeout", () -> "1s");
   }

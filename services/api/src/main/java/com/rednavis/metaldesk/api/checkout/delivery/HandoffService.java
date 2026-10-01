@@ -2,6 +2,7 @@ package com.rednavis.metaldesk.api.checkout.delivery;
 
 import com.rednavis.metaldesk.api.account.LocaleParser;
 import com.rednavis.metaldesk.api.auth.AuthenticatedCustomer;
+import com.rednavis.metaldesk.api.cart.CartStore;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionService;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
@@ -22,6 +23,7 @@ import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -35,6 +37,8 @@ import reactor.core.publisher.Mono;
  * here assigns a status. The order number is allocated the usual way (BR-6) and <strong>is the
  * reference</strong> the customer is given, so there is one number to quote.
  *
+ * <p>When the basket came from the cart, the cart is removed once the order exists.
+ *
  * <p>The tiers are evaluated again first, live: if staff have widened one since the customer saw
  * the handoff action and the order now fits, the handoff is refused (409) and the customer pays
  * instead. It is idempotent: a session that already has a handoff returns it and sends nothing
@@ -46,6 +50,7 @@ import reactor.core.publisher.Mono;
  * reference without an order; the order id in the session record is what a reconciliation would
  * look for.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HandoffService {
@@ -55,6 +60,7 @@ public class HandoffService {
   private final DeliveryEvaluationService evaluation;
   private final HandoffCustomers customers;
   private final OrderNumberSequence numbers;
+  private final CartStore carts;
   private final OrderRepository orders;
   private final OrderMapper orderMapper;
   private final HandoffMails mails;
@@ -113,9 +119,25 @@ public class HandoffService {
     return won
         ? orders
             .save(orderMapper.toDocument(order))
+            .then(removeCart(claimed))
             .then(mails.announce(claimed, ours.reference(), language))
             .thenReturn(claimed)
         : Mono.just(claimed);
+  }
+
+  /**
+   * Removes the cart the order was made from: it now belongs to the order, and the customer's next
+   * add starts a fresh one. A cart that cannot be removed is logged and left, since the order
+   * exists and the handoff must not fail for it.
+   */
+  private Mono<Void> removeCart(CheckoutSession session) {
+    return session
+        .cart()
+        .map(cart -> carts.delete(cart.value()))
+        .orElseGet(Mono::empty)
+        .doOnError(failure -> log.warn("Could not remove the cart after a handoff", failure))
+        .onErrorResume(failure -> Mono.empty())
+        .then();
   }
 
   private static Order handedOff(

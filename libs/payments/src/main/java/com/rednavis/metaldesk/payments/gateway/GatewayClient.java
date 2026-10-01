@@ -3,6 +3,7 @@ package com.rednavis.metaldesk.payments.gateway;
 import com.rednavis.metaldesk.payments.http.JsonHttpClient;
 import com.rednavis.metaldesk.payments.provider.PaymentProviderException;
 import java.util.Map;
+import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -15,10 +16,14 @@ import reactor.core.publisher.Mono;
  * money twice. {@link #confirm} only asks the gateway for the state of a payment it already knows,
  * so it is retried on a transport failure, up to the configured budget, and never on a malformed
  * answer.
+ *
+ * <p><strong>Stub.</strong> When the configuration says {@code stub}, neither call goes out: both
+ * answer {@code captured} with a made-up reference, for development and demonstration.
  */
 final class GatewayClient {
 
   private final JsonHttpClient http;
+  private final boolean stub;
 
   /**
    * Creates a client for a gateway.
@@ -27,6 +32,7 @@ final class GatewayClient {
    */
   /* default */ GatewayClient(GatewayConfiguration configuration) {
     this.http = new JsonHttpClient(configuration.endpoint());
+    this.stub = configuration.stub();
   }
 
   /**
@@ -36,7 +42,9 @@ final class GatewayClient {
    * @return the gateway's answer, or an error of type {@link PaymentProviderException}
    */
   /* default */ Mono<GatewayResponse> authorise(GatewayRequest request) {
-    return http.post("/v1/payments", request, GatewayResponse.class);
+    return stub
+        ? Mono.fromSupplier(GatewayClient::captured)
+        : http.post("/v1/payments", request, GatewayResponse.class);
   }
 
   /**
@@ -47,7 +55,14 @@ final class GatewayClient {
    * @return the gateway's answer, or an error of type {@link PaymentProviderException}
    */
   /* default */ Mono<GatewayResponse> confirm(String reference) {
-    return http.postIdempotent(
-        "/v1/payments/" + reference + "/confirm", Map.of(), GatewayResponse.class);
+    return stub
+        ? Mono.fromSupplier(GatewayClient::captured)
+        : http.postIdempotent(
+            "/v1/payments/" + reference + "/confirm", Map.of(), GatewayResponse.class);
+  }
+
+  /** The canned answer of a stubbed gateway: the payment was taken. */
+  private static GatewayResponse captured() {
+    return new GatewayResponse("captured", "stub-" + UUID.randomUUID(), null, null);
   }
 }

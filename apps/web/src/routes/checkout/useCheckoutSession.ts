@@ -72,7 +72,11 @@ export function useCheckoutSession(checkoutId: string) {
   });
   const handoff = useMutation({
     mutationFn: () => client.post(`${base}/handoff`, { schema: handoffViewSchema }),
-    onSuccess: refresh,
+    onSuccess: async () => {
+      // The server removed the cart the order was made from; the badge and the cart page must follow.
+      void queryClient.invalidateQueries({ queryKey: ["cart"] });
+      await refresh();
+    },
   });
   const selectMethod = useMutation({
     mutationFn: (method: PaymentMethod) =>

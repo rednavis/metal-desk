@@ -213,6 +213,19 @@ describe("step 2: delivery and the manager branch", () => {
     expect(screen.queryByRole("button", { name: "Hand my order to a manager" })).toBeNull();
   });
 
+  it("reloads the cart after the handoff, because the server removed it", async () => {
+    const { server } = open({ exceeded: "VALUE", initial: { details: true } });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Hand my order to a manager" }),
+    );
+    await screen.findByTestId("handoff-reference");
+
+    const paths = server.sent.map((request) => `${request.method} ${request.url.split("?")[0]}`);
+    const handoffAt = paths.indexOf("POST /api/checkout/sessions/cs1/handoff");
+    expect(handoffAt).toBeGreaterThanOrEqual(0);
+    expect(paths.slice(handoffAt)).toContain("GET /api/cart");
+  });
+
   it("resumes a handed-over order at its receipt after a reload", async () => {
     const { server } = open({ exceeded: "VALUE", initial: { details: true } });
     await userEvent.click(

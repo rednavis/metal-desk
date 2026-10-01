@@ -19,6 +19,8 @@ import java.util.List;
  * @param deliveryAddress where it is delivered
  * @param totals the amounts, as snapshotted
  * @param paymentMethod the payment method, once there is a payment
+ * @param paymentStatus where that payment stands, by name; a {@code PENDING} invoice means the
+ *     invoice was issued and awaits payment
  * @param shipment carrier and tracking, from shipping onward
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -32,6 +34,7 @@ public record OrderDetailView(
     OrderAddressView deliveryAddress,
     OrderTotalsView totals,
     String paymentMethod,
+    String paymentStatus,
     ShipmentView shipment) {
 
   /** Copies the list, so the record cannot be changed through it. */

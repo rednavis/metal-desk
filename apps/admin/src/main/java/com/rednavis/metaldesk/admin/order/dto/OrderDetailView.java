@@ -9,8 +9,7 @@ import java.util.List;
  * One order in full.
  *
  * @param summary the order as listed
- * @param customerName the customer's name, or null if the customer record is gone
- * @param contact how to reach the customer, or null if the customer record is gone
+ * @param contact the customer's name and how to reach them, or null if the customer record is gone
  * @param destination the delivery address as one line
  * @param lines what was ordered
  * @param net the net of all lines
@@ -18,13 +17,13 @@ import java.util.List;
  * @param delivery the delivery cost, zero until a quote exists
  * @param quote the delivery quote, absent until one exists
  * @param shipment the shipment, absent until one was entered
+ * @param payment the payment, absent until one was started
  * @param handoff the context a manager needs to price an order awaiting a quote, absent otherwise
  * @param actions the triggers the state machine accepts now, for the UI to offer
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record OrderDetailView(
     OrderSummaryView summary,
-    String customerName,
     ContactView contact,
     String destination,
     List<LineView> lines,
@@ -33,6 +32,7 @@ public record OrderDetailView(
     String delivery,
     QuoteInfo quote,
     ShipmentView shipment,
+    PaymentInfo payment,
     HandoffContext handoff,
     List<TransitionTrigger> actions) {
 
@@ -80,14 +80,26 @@ public record OrderDetailView(
   public record ShipmentView(String carrier, String trackingReference) {}
 
   /**
-   * How to reach the customer an order belongs to (BRD FR-5.3: staff get the customer's contact
-   * details with the handoff).
+   * The payment of an order: how it is paid and where it stands. A {@code PENDING} payment by
+   * {@code INVOICE} is one staff can record as received.
    *
+   * @param method the payment method, by name
+   * @param methodGroup how the method is processed, by name
+   * @param status where the payment stands, by name
+   * @param reference the provider's reference, or the invoice number
+   */
+  public record PaymentInfo(String method, String methodGroup, String status, String reference) {}
+
+  /**
+   * The customer an order belongs to and how to reach them (BRD FR-5.3: staff get the customer's
+   * contact details with the handoff).
+   *
+   * @param name the customer's name
    * @param email the email address
    * @param phone the phone number, absent if none was given
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public record ContactView(String email, String phone) {}
+  public record ContactView(String name, String email, String phone) {}
 
   /**
    * What a manager needs to price an order that went past the self-service ceilings (BRD FR-5.3),

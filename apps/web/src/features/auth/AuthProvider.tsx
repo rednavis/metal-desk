@@ -4,6 +4,7 @@ import { TokenStoreContext } from "../../api/tokenContext";
 import { customerViewSchema, signInResponseSchema } from "../../api/types";
 import { useApi } from "../../api/useApi";
 import { useSignedIn } from "../../api/useSignedIn";
+import { useSessionKeepAlive } from "./useSessionKeepAlive";
 import { ME_KEY } from "./meKey";
 import { AuthContext, type AuthState, type KnownAccount } from "./AuthContext";
 
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const tokenStore = useContext(TokenStoreContext);
   const signedIn = useSignedIn();
+  useSessionKeepAlive(client, tokenStore, signedIn);
   const [known, setKnown] = useState<KnownAccount[]>([]);
   const [currentId, setCurrentId] = useState<string | undefined>();
 

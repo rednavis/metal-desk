@@ -77,6 +77,24 @@ public class AuthenticationService {
     return outcome;
   }
 
+  /**
+   * Issues a fresh token to a user who is already signed in, which is what keeps a session alive
+   * while it is in use: each token lives for the idle timeout, so a session ends after that long
+   * without a refresh. The user is read again, so the new token carries their current role and one
+   * who was removed or disabled is not given another.
+   *
+   * @param staff the user the presented token is for
+   * @return the new response
+   * @throws UnauthorizedException if the user no longer exists or is disabled
+   */
+  public SignInResponse refresh(StaffPrincipal staff) {
+    return users
+        .findById(staff.id())
+        .filter(UserDocument::enabled)
+        .map(this::respond)
+        .orElseThrow(UnauthorizedException::new);
+  }
+
   private Optional<UserDocument> authenticate(String login, SignInRequest request) {
     final Optional<UserDocument> candidate =
         login.isEmpty() ? Optional.empty() : users.findByLogin(login);

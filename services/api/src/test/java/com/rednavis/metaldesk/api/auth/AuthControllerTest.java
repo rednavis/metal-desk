@@ -26,8 +26,11 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @AutoConfigureWebTestClient
 class AuthControllerTest extends MongoTestSupport {
 
+  private static final String ME = "/api/auth/me";
+  private static final String REFRESH = "/api/auth/refresh";
   private static final String SIGN_IN = "/api/auth/sign-in";
   private static final String PASSWORD = "correct-password";
+  private static final String CUSTOMER_ID = "auth-1";
   private static final String EMAIL = "auth-ann@example.com";
   private static final String PHONE = "+491701234599";
   private static final String CORRELATION = "X-Correlation-Id";
@@ -44,11 +47,12 @@ class AuthControllerTest extends MongoTestSupport {
   @BeforeEach
   void seed() {
     customers
-        .save(customerMapper.toDocument(AccountFixtures.customer("auth-1", EMAIL, PHONE)))
+        .save(customerMapper.toDocument(AccountFixtures.customer(CUSTOMER_ID, EMAIL, PHONE)))
         .block();
     credentials
         .save(
-            new CredentialDocument("auth-1", encoder.encode(PASSWORD), AuthCredential.State.ACTIVE))
+            new CredentialDocument(
+                CUSTOMER_ID, encoder.encode(PASSWORD), AuthCredential.State.ACTIVE))
         .block();
     throttle.recordSuccess(ClientAddressResolver.UNKNOWN);
   }
@@ -88,6 +92,56 @@ class AuthControllerTest extends MongoTestSupport {
   }
 
   @Test
+  void refreshSwapsTokenForNewOneThatWorks() {
+    final String old = token();
+
+    final Map<?, ?> refreshed =
+        client
+            .post()
+            .uri(REFRESH)
+            .header("Authorization", "Bearer " + old)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody(Map.class)
+            .returnResult()
+            .getResponseBody();
+
+    final String fresh = (String) Objects.requireNonNull(refreshed).get("accessToken");
+    assertEquals(1800, ((Number) refreshed.get("expiresInSeconds")).intValue());
+    client
+        .get()
+        .uri(ME)
+        .header("Authorization", "Bearer " + fresh)
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
+  @Test
+  void refreshNeedsToken() {
+    client.post().uri(REFRESH).exchange().expectStatus().isUnauthorized();
+  }
+
+  @Test
+  void refreshIsRefusedOnceCredentialIsDisabled() {
+    final String old = token();
+    credentials
+        .save(
+            new CredentialDocument(
+                CUSTOMER_ID, encoder.encode(PASSWORD), AuthCredential.State.DISABLED))
+        .block();
+
+    client
+        .post()
+        .uri(REFRESH)
+        .header("Authorization", "Bearer " + old)
+        .exchange()
+        .expectStatus()
+        .isUnauthorized();
+  }
+
+  @Test
   void signsInWithEmailAndWithPhone() {
     for (final String identifier : new String[] {EMAIL, PHONE}) {
       throttle.recordSuccess(ClientAddressResolver.UNKNOWN);
@@ -102,7 +156,7 @@ class AuthControllerTest extends MongoTestSupport {
           .jsonPath("$.tokenType")
           .isEqualTo("Bearer")
           .jsonPath("$.expiresInSeconds")
-          .isEqualTo(900)
+          .isEqualTo(1800)
           .jsonPath("$.accessToken")
           .isNotEmpty();
     }
@@ -130,14 +184,14 @@ class AuthControllerTest extends MongoTestSupport {
   void tokenOpensProtectedRoute() {
     client
         .get()
-        .uri("/api/auth/me")
+        .uri(ME)
         .headers(headers -> headers.setBearerAuth(token()))
         .exchange()
         .expectStatus()
         .isOk()
         .expectBody()
         .jsonPath("$.customerId")
-        .isEqualTo("auth-1")
+        .isEqualTo(CUSTOMER_ID)
         .jsonPath("$.verification")
         .isEqualTo("VERIFIED");
   }
@@ -165,7 +219,7 @@ class AuthControllerTest extends MongoTestSupport {
   void everyOtherRouteIs401WithTheEnvelope() {
     client
         .get()
-        .uri("/api/auth/me")
+        .uri(ME)
         .exchange()
         .expectStatus()
         .isUnauthorized()
@@ -184,7 +238,7 @@ class AuthControllerTest extends MongoTestSupport {
   void badTokenIs401() {
     client
         .get()
-        .uri("/api/auth/me")
+        .uri(ME)
         .headers(headers -> headers.setBearerAuth("not.a.token"))
         .exchange()
         .expectStatus()

@@ -28,8 +28,13 @@ export interface ShopOptions {
 
 const money = (amount: string) => ({ amount, currency: "EUR" });
 
+/** As on the server: a product whose stock status is on request is sold by inquiry, so it has no price. */
+function isPriced(product: ShopProduct | undefined): boolean {
+  return product?.price !== undefined && product.stock !== "ON_REQUEST";
+}
+
 function summary(product: ShopProduct) {
-  const priced = product.price !== undefined;
+  const priced = isPriced(product);
   return {
     id: product.id,
     name: product.name,
@@ -144,8 +149,11 @@ export function createShop(options: ShopOptions) {
       const id = (body as { productId: string }).productId;
       const product = find(id);
       if (!product) return error(404, "product.not-found", "No such product");
-      if (product.price === undefined) {
+      if (!isPriced(product)) {
         return error(400, "cart.product-unpriced", "This product is sold on request");
+      }
+      if (product.stock === "OUT_OF_STOCK") {
+        return error(400, "cart.product-out-of-stock", "That product is out of stock");
       }
       if (!quantities.has(id)) quantities.set(id, 1);
       return reply(cart());
@@ -167,7 +175,7 @@ export function createShop(options: ShopOptions) {
     }
     if (path === "/cart/buy-now") {
       const product = find((body as { productId: string }).productId);
-      if (product?.price === undefined) {
+      if (!isPriced(product)) {
         return error(400, "cart.product-unpriced", "This product is sold on request");
       }
       return reply({ ...cart(), empty: false, itemCount: 1 });

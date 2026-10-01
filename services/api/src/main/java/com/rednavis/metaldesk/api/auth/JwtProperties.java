@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record JwtProperties(
     @DefaultValue("metal-desk-api") String issuer,
     @DefaultValue("metal-desk-storefront") String audience,
-    @DefaultValue("15m") Duration ttl,
+    @DefaultValue("30m") Duration ttl,
     @DefaultValue("") String signingKey) {
 
   /** Redacts the key, so logged properties do not leak it. */

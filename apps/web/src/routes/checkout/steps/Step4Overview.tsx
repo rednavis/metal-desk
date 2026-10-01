@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { usePreferences } from "../../../preferences/usePreferences";
-import { Button, ErrorState, Spinner } from "../../../ui";
+import { AmountSummary, Button, ErrorState, Spinner } from "../../../ui";
 import type { PaymentOutcome } from "../outcome";
 import { PaymentFlowRouter } from "../PaymentFlowRouter";
 import { useOverview, type CheckoutApi } from "../useCheckoutSession";
@@ -53,111 +53,114 @@ export function Step4Overview({
     (offered) => offered.method === paymentMethod && offered.group === "INVOICE",
   );
   return (
-    <section aria-labelledby="step4-title">
-      <h2 id="step4-title">{t("checkout.step4.title")}</h2>
+    <div className="md-split">
+      <section aria-labelledby="step4-title">
+        <h2 id="step4-title">{t("checkout.step4.title")}</h2>
 
-      <h3>{t("checkout.overview.details")}</h3>
-      <p data-testid="overview-details">
-        {`${details.name}, ${details.email}, ${details.phone}`}
-        <br />
-        {`${details.street}, ${details.postalCode} ${details.city}, ${details.country}`}
-      </p>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          goTo(1);
-        }}
-      >
-        {`${t("checkout.edit")}: ${t("checkout.step.1")}`}
-      </Button>
-
-      <h3>{t("checkout.overview.items")}</h3>
-      <table className="md-table">
-        <thead>
-          <tr>
-            <th scope="col">{t("cart.col.product")}</th>
-            <th scope="col">{t("cart.col.quantity")}</th>
-            <th scope="col">{t("cart.col.unitPrice")}</th>
-            <th scope="col">{t("cart.col.lineNet")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line) => (
-            <tr key={line.productId} data-testid="overview-line">
-              <th scope="row">{line.name}</th>
-              <td>{line.quantity}</td>
-              <td>{line.unitPrice ? format.money(line.unitPrice) : null}</td>
-              <td>{line.lineNet ? format.money(line.lineNet) : null}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <Link to="/cart">{t("checkout.editCart")}</Link>
-
-      <h3>{t("checkout.overview.delivery")}</h3>
-      <p data-testid="overview-delivery">{format.money(delivery.cost)}</p>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          goTo(2);
-        }}
-      >
-        {`${t("checkout.edit")}: ${t("checkout.step.2")}`}
-      </Button>
-
-      {paymentMethod ? (
-        <>
-          <h3>{t("checkout.overview.method")}</h3>
-          <p data-testid="overview-method">{t(`checkout.method.${paymentMethod}`)}</p>
+        <div className="md-panel">
+          <h3>{t("checkout.overview.details")}</h3>
+          <p data-testid="overview-details">
+            {`${details.name}, ${details.email}, ${details.phone}`}
+            <br />
+            {`${details.street}, ${details.postalCode} ${details.city}, ${details.country}`}
+          </p>
           <Button
             variant="secondary"
             onClick={() => {
-              goTo(3);
+              goTo(1);
             }}
           >
-            {`${t("checkout.edit")}: ${t("checkout.step.3")}`}
+            {`${t("checkout.edit")}: ${t("checkout.step.1")}`}
           </Button>
-        </>
-      ) : null}
+        </div>
 
-      <h3>{t("checkout.overview.totals")}</h3>
-      <dl>
-        <dt>{t("totals.net")}</dt>
-        <dd data-testid="net">{format.money(totals.net)}</dd>
-        <dt>{t("totals.tax")}</dt>
-        <dd data-testid="tax">{format.money(totals.tax)}</dd>
-        <dt>{t("totals.delivery")}</dt>
-        <dd data-testid="delivery">{format.money(totals.delivery)}</dd>
-        <dt>{t("totals.grandTotal")}</dt>
-        <dd data-testid="grand-total">{format.money(totals.grandTotal)}</dd>
-      </dl>
+        <div className="md-panel">
+          <h3>{t("checkout.overview.items")}</h3>
+          <table className="md-table">
+            <thead>
+              <tr>
+                <th scope="col">{t("cart.col.product")}</th>
+                <th scope="col">{t("cart.col.quantity")}</th>
+                <th scope="col">{t("cart.col.unitPrice")}</th>
+                <th scope="col">{t("cart.col.lineNet")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line) => (
+                <tr key={line.productId} data-testid="overview-line">
+                  <th scope="row">{line.name}</th>
+                  <td>{line.quantity}</td>
+                  <td>{line.unitPrice ? format.money(line.unitPrice) : null}</td>
+                  <td>{line.lineNet ? format.money(line.lineNet) : null}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Link to="/cart">{t("checkout.editCart")}</Link>
+        </div>
 
-      {execute.isError ? (
-        <ErrorState
-          error={execute.error}
-          action={
+        <div className="md-panel">
+          <h3>{t("checkout.overview.delivery")}</h3>
+          <p data-testid="overview-delivery">{format.money(delivery.cost)}</p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              goTo(2);
+            }}
+          >
+            {`${t("checkout.edit")}: ${t("checkout.step.2")}`}
+          </Button>
+        </div>
+
+        {paymentMethod ? (
+          <div className="md-panel">
+            <h3>{t("checkout.overview.method")}</h3>
+            <p data-testid="overview-method">{t(`checkout.method.${paymentMethod}`)}</p>
             <Button
               variant="secondary"
               onClick={() => {
-                void overview.refetch();
-                execute.reset();
+                goTo(3);
               }}
             >
-              {t("checkout.error.retry")}
+              {`${t("checkout.edit")}: ${t("checkout.step.3")}`}
             </Button>
-          }
-        />
-      ) : null}
-      <Button
-        disabled={execute.isPending}
-        onClick={() => {
-          execute.mutate(totals.grandTotal.amount, { onSuccess: setAttempt });
-        }}
-      >
-        {invoice
-          ? t("checkout.placeOrder")
-          : t("checkout.pay", { amount: format.money(totals.grandTotal) })}
-      </Button>
-    </section>
+          </div>
+        ) : null}
+      </section>
+
+      <aside className="md-summary" aria-labelledby="step4-totals-title">
+        <h2 id="step4-totals-title">{t("checkout.overview.totals")}</h2>
+        <AmountSummary totals={totals} />
+
+        <div className="md-summary__block">
+          {execute.isError ? (
+            <ErrorState
+              error={execute.error}
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void overview.refetch();
+                    execute.reset();
+                  }}
+                >
+                  {t("checkout.error.retry")}
+                </Button>
+              }
+            />
+          ) : null}
+          <Button
+            disabled={execute.isPending}
+            onClick={() => {
+              execute.mutate(totals.grandTotal.amount, { onSuccess: setAttempt });
+            }}
+          >
+            {invoice
+              ? t("checkout.placeOrder")
+              : t("checkout.pay", { amount: format.money(totals.grandTotal) })}
+          </Button>
+        </div>
+      </aside>
+    </div>
   );
 }

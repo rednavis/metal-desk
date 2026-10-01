@@ -5,6 +5,7 @@ import com.rednavis.metaldesk.persistence.document.PriceDocument.ScopeKind;
 import com.rednavis.metaldesk.persistence.document.PriceRuleDocument;
 import com.rednavis.metaldesk.persistence.mapper.PriceRuleMapper;
 import com.rednavis.metaldesk.share.domain.catalog.Product;
+import com.rednavis.metaldesk.share.domain.catalog.StockStatus;
 import com.rednavis.metaldesk.share.domain.pricing.PriceDerivation;
 import com.rednavis.metaldesk.share.domain.pricing.SellablePrice;
 import java.util.Map;
@@ -20,7 +21,9 @@ import org.springframework.stereotype.Component;
  * {@code ON_REQUEST} — the price-inquiry path of FR-9.1, not an error:
  *
  * <ol>
- *   <li>the catalog holds a price for it (a product without one is sold on request, FR-1.2);
+ *   <li>the catalog holds a price for it (a product without one is sold on request, FR-1.2), and
+ *       its stock status is not {@code ON_REQUEST} (such a product is sold by inquiry, so no price
+ *       is shown);
  *   <li>a margin rule applies — the product's own rule if it has one, else its category's (the more
  *       specific rule wins; the BRD is silent, and T-013 left it to the rule store);
  *   <li>a reference price for its metal has been observed. Until the first poll returns, products
@@ -42,7 +45,7 @@ public class SellablePricing {
    * @return the sellable price, or empty if the product is on request
    */
   public Optional<SellablePrice> sellable(Product product, Map<String, PriceRuleDocument> rules) {
-    return product.price().isEmpty()
+    return product.price().isEmpty() || product.stock() == StockStatus.ON_REQUEST
         ? Optional.empty()
         : ruleFor(product, rules)
             .flatMap(

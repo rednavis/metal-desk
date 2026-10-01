@@ -12,6 +12,7 @@ import com.rednavis.metaldesk.share.domain.order.OrderLine;
 import com.rednavis.metaldesk.share.domain.order.OrderStateMachine;
 import com.rednavis.metaldesk.share.domain.order.OrderTotals;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
+import com.rednavis.metaldesk.share.domain.payment.PaymentRecord;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,10 +58,9 @@ public final class OrderViews {
     actions.sort(null);
     return new OrderDetailView(
         summary(order),
-        customer == null ? null : customer.name(),
         customer == null
             ? null
-            : new OrderDetailView.ContactView(customer.email(), customer.phone()),
+            : new OrderDetailView.ContactView(customer.name(), customer.email(), customer.phone()),
         destination(order.deliveryAddress()),
         order.lines().stream().map(OrderViews::line).toList(),
         totals.net().amount().toPlainString(),
@@ -70,8 +70,17 @@ public final class OrderViews {
         shipment == null
             ? null
             : new OrderDetailView.ShipmentView(shipment.carrier(), shipment.trackingReference()),
+        order.payment().map(OrderViews::payment).orElse(null),
         handoff,
         actions);
+  }
+
+  private static OrderDetailView.PaymentInfo payment(PaymentRecord payment) {
+    return new OrderDetailView.PaymentInfo(
+        payment.method().name(),
+        payment.method().group().name(),
+        payment.status().name(),
+        payment.reference().value());
   }
 
   private static OrderDetailView.LineView line(OrderLine line) {

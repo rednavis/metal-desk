@@ -19,7 +19,13 @@ export function OrderDetailRoute() {
   if (order.isPending) return <Spinner />;
   if (order.isError) return <ErrorState error={order.error} />;
   const { data } = order;
-  const failure = actions.startFulfillment.error ?? actions.markDelivered.error;
+  const failure =
+    actions.startFulfillment.error ??
+    actions.markDelivered.error ??
+    actions.markPaymentReceived.error;
+  // Only an invoice that is waiting to be paid can be marked as paid; the server refuses anything else.
+  const invoicePending =
+    data.payment?.methodGroup === "INVOICE" && data.payment.status === "PENDING";
 
   return (
     <>
@@ -35,6 +41,19 @@ export function OrderDetailRoute() {
         {STAFF_OPERATIONS.map((operation) => {
           const available = isAvailable(data.actions, operation.trigger);
           if (operation.kind === "shipment") return null;
+          if (operation.kind === "payment") {
+            return available && invoicePending ? (
+              <Button
+                key={operation.trigger}
+                disabled={actions.markPaymentReceived.isPending}
+                onClick={() => {
+                  actions.markPaymentReceived.mutate();
+                }}
+              >
+                {operation.label}
+              </Button>
+            ) : null;
+          }
           if (operation.kind === "quote") {
             return available ? (
               <Link key={operation.trigger} to={`/quotes/${encodeURIComponent(orderId)}`}>

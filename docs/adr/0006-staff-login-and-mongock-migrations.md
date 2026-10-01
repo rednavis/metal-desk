@@ -33,12 +33,13 @@ never share a credential, a sign-in route or a token:
   the other kind is refused even if the two services were configured with the same secret. Both
   directions are tested.
 
-The staff token is HS256, 30 minutes, with no refresh and no revocation (the same trade-off as the
-customer token): its claims are the user id, login and role. `/api/admin/me` reads the user from the
+The staff token is HS256, 30 minutes (the idle timeout; `POST /api/admin/auth/refresh` swaps it for a new one while the
+user is active) and cannot be revoked (the same trade-off as the customer token): its claims are the user id, login and role. `/api/admin/me` reads the user from the
 database, so a user removed or disabled since signing in is told so on the next screen. Sign-in has
 one failure response whatever went wrong, checks a password hash even for an unknown login so timing
 does not reveal which logins exist, and locks a login-and-address pair out after repeated failures.
-`admin-web` keeps the token in memory only, so a reload signs out.
+`admin-web` keeps the token in `localStorage` (amended: it was memory only), so a session survives a reload and a
+closed tab for as long as the user was active in the last 30 minutes.
 
 **Role enforcement is not built yet.** Both roles can call every staff endpoint; the role is in the
 token and the principal so that restricting an endpoint is one rule, added when there is a reason.

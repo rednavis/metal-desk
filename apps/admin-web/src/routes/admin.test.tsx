@@ -341,6 +341,56 @@ describe("order management", () => {
     expect(screen.queryByRole("form", { name: "Shipment" })).not.toBeInTheDocument();
   });
 
+  it("offers 'payment received' only for an invoice that is waiting to be paid, and it makes the order paid", async () => {
+    const invoice = {
+      method: "INVOICE",
+      methodGroup: "INVOICE",
+      status: "PENDING",
+      reference: "INV-1",
+    };
+    await open("/orders/o1", {
+      orders: [
+        order({
+          id: "o1",
+          status: "AWAITING_PAYMENT",
+          actions: ["PAYMENT_CAPTURED"],
+          payment: invoice,
+        }),
+      ],
+    });
+    await screen.findByRole("heading", { name: /Order/ });
+    expect(screen.getByTestId("payment")).toHaveTextContent("INVOICE, pending, INV-1");
+
+    await userEvent.click(button("Invoice paid: payment received"));
+
+    expect(await screen.findByText("Paid")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Invoice paid: payment received" })).toBeNull();
+    expect(button("Start fulfilment")).toBeEnabled();
+  });
+
+  it("does not offer 'payment received' for a card payment", async () => {
+    await open("/orders/o1", {
+      orders: [
+        order({
+          id: "o1",
+          status: "AWAITING_PAYMENT",
+          actions: ["PAYMENT_CAPTURED"],
+          payment: {
+            method: "CARD",
+            methodGroup: "GATEWAY",
+            status: "PENDING",
+            reference: "pay_1",
+          },
+        }),
+      ],
+    });
+    await screen.findByRole("heading", { name: /Order/ });
+
+    expect(
+      screen.queryByRole("button", { name: "Invoice paid: payment received" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("follows the server's list, not the status: a status with other triggers gets those", async () => {
     await open("/orders/o1", {
       orders: [order({ id: "o1", status: "PAID", actions: ["DELIVERED"] })],

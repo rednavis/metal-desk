@@ -11,3 +11,9 @@ atlas_service_attachments = {
 }
 atlas_dns_name = "<atlas-private-domain>." # from the Atlas private connection string; keep the trailing dot
 # atlas_hostnames = { "0" = "<hostname>." }
+
+# REQUIRED before a real plan: images built and pushed by T-073, pinned by digest or by a commit-SHA tag. A mutable tag
+# such as :latest is rejected. Replace the placeholders.
+api_image            = "<region>-docker.pkg.dev/<project>/<repo>/api:<commit-sha>"
+pricing_bridge_image = "<region>-docker.pkg.dev/<project>/<repo>/pricing-bridge:<commit-sha>"
+admin_image          = "<region>-docker.pkg.dev/<project>/<repo>/admin:<commit-sha>"

@@ -100,6 +100,30 @@ them later stays possible. Only the first two subnets are carved out so far; the
 - **Manual prerequisite:** the Atlas service attachments belong to Atlas and have no default; a real `plan` needs
   them. See the module README. `dev` fails its plan with a pointer to it until they are supplied.
 
+## Service postures and what they cost
+
+The three JVM services are three calls of [`modules/cloud-run-service`](terraform/modules/cloud-run-service/README.md)
+in `envs/dev/services.tf`. Each runs as **its own service account with no project-level role**; access is granted on
+the one resource that needs it.
+
+| Service | Exposure | Ingress / invoker | Min / max instances | CPU | Port | Why |
+|---|---|---|---|---|---|---|
+| `api` | `public` | all / `allUsers` (explicit opt-in) | **1** / 10 | on requests | 8082 | The storefront's backend. The checkout path must not pay a JVM cold start (Architecture §7) |
+| `pricing-bridge` | `private` | internal / only `api`'s account | **1** / 1 | **always allocated** | 8083 | No public consumer. It holds a persistent market-data subscription (`T-039`); scaled to zero it holds none, and with CPU throttled between requests it cannot read its feed, so the storefront would show a frozen price |
+| `admin` | `internal-load-balancer` | internal and load balancers / nobody public | 0 / 3 | on requests | 8081 | An internal tool: it may cold-start. Fronted by a load balancer and IAP in `T-076` |
+
+> **Standing cost.** `api` with a minimum of 1 and `pricing-bridge` with a minimum of 1 **and CPU always allocated** are
+> billed continuously, with or without traffic. `api`'s minimum is the single largest idle cost in the deployment and a
+> deliberate latency decision, not an oversight; `pricing-bridge`'s always-on CPU is the more expensive of the two per
+> instance. `admin` costs nothing at idle. None of this is spent until something is applied (`T-078`).
+
+- **Images** are pinned by digest or a commit-SHA tag; a mutable tag fails validation. `T-073` builds them.
+- **Secrets are references**, `{ secret, version }`, never values; the module has no variable that takes one. `T-075`
+  creates `<prefix>-mongodb-uri`, `<prefix>-jwt-signing-key` and `<prefix>-admin-jwt-signing-key` (the names
+  `services.tf` uses) and grants each service's account access to its own.
+- **Not covered:** `pricing-bridge` as a Cloud Run Job. A poll-based feed would want that shape; this module models the
+  always-on service `T-039` built.
+
 ## Running it
 
 ```bash

@@ -24,3 +24,18 @@ variable "atlas_hostnames" {
   type        = map(string)
   default     = {}
 }
+
+variable "api_image" {
+  description = "The api image, pinned by digest or commit-SHA tag. Required, no default: T-073 builds and pushes it."
+  type        = string
+}
+
+variable "pricing_bridge_image" {
+  description = "The pricing-bridge image, pinned by digest or commit-SHA tag. Required, no default."
+  type        = string
+}
+
+variable "admin_image" {
+  description = "The admin image, pinned by digest or commit-SHA tag. Required, no default."
+  type        = string
+}

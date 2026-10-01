@@ -1,4 +1,4 @@
-// Run from the repository root: node --test ".github/scripts/*.test.mjs"
+// Run from the repository root: node --test .github/scripts/
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";

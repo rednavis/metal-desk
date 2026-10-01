@@ -68,6 +68,15 @@ repositories.
 - `build-logic` is an *included build*, not a subproject, so the root `build.gradle.kts` explicitly
   wires `clean` to reach it. Don't remove that wiring.
 
+## Frontend styling conventions
+
+Both apps style through CSS custom properties: `apps/web/src/theme/tokens.css` and `apps/admin-web/src/ui/tokens.css`
+(palette, shadows, base type), then `ui/ui.css` for the kit and a feature `*.css` per feature. Use a token, never a
+literal colour, so dark mode keeps working. `web` switches theme on `<html data-theme>`; `admin-web` follows
+`prefers-color-scheme` and has no switch. Class names are `md-*`. Status and direction are never colour alone (label
+or glyph too). The brand mark and tokens are deliberately duplicated between the apps (T-079): a shared package would
+need `.github/scripts/affected.mjs` changed first.
+
 ## Quality gates are strict — what actually fails the build
 
 - Checkstyle: `maxWarnings = 0` and `severity` defaults to `warning`, so **every** violation fails.

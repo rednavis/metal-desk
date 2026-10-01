@@ -64,6 +64,14 @@ this reference build.
 | **admin** | Staff-facing back office API: fulfillment-tier configuration, quote handling, order management. Deliberately a separate deployable from `api` — different auth model (staff SSO vs. customer JWT), different availability requirements (internal tool, not customer-facing uptime target). API-only — see [ADR-0005](adr/0005-consolidated-react-frontend.md) for why it has no server-rendered UI of its own. | `libs/*`, MongoDB |
 | **admin-web** | Staff-facing SPA for everything `admin` exposes. Same frontend stack as `web`, not a second UI paradigm — see [ADR-0005](adr/0005-consolidated-react-frontend.md). | `admin` over HTTPS/JSON |
 
+**Frontend look and feel.** Both SPAs share one visual language, defined as CSS custom properties in
+`apps/web/src/theme/tokens.css` and `apps/admin-web/src/ui/tokens.css`: an indigo accent on slate neutrals, a
+"metal" gradient reserved for brand moments (header rule, home hero, admin login), card surfaces, and status shown as
+a labelled pill rather than colour alone. `web` offers light, dark and follow-the-device (`<html data-theme>`);
+`admin-web` follows the device. Components read tokens and never name a theme. The brand mark and tokens are copies in
+the two apps, not a shared package, because CI derives affected apps from `pnpm-workspace.yaml` (see §8). Introduced
+by [T-079](https://github.com/rednavis/metal-desk/blob/master/tasks/T-079-frontend-redesign.md).
+
 ## 3. Domain model
 
 The domain model lives in one library (`libs/share`), and every service depends on it — the thing

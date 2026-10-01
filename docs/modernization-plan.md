@@ -69,6 +69,10 @@ domain types.
 - `apps/admin-web` — the staff-facing SPA consuming `apps/admin`
   ([ADR-0005](adr/0005-consolidated-react-frontend.md)).
 - `apps/web` — the customer-facing SPA.
+- Frontend redesign ([T-079](https://github.com/rednavis/metal-desk/blob/master/tasks/T-079-frontend-redesign.md),
+  [PR #107](https://github.com/rednavis/metal-desk/pull/107)) — one 2026 visual language across `apps/web` and
+  `apps/admin-web`, modelled on metals-api.com: indigo/slate tokens, light and dark themes, card tables, a branded
+  header and login. Presentation only; behaviour and routes are unchanged.
 
 Each service's external dependencies (payment providers, mail, market data) are WireMock/fake-backed
 from the first commit — see [ADR-0002](adr/0002-mocked-external-dependencies.md) — so the system is

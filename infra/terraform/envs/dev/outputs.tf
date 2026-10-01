@@ -45,3 +45,21 @@ output "registries" {
     admin          = module.registry_admin.repository_url
   }
 }
+
+output "sites" {
+  description = "Each SPA's address, load balancer IP (point the domain's A record at it), bucket and access."
+  value = {
+    web = {
+      url         = module.web.url
+      ip_address  = module.web.ip_address
+      bucket_name = module.web.bucket_name
+      access      = module.web.access
+    }
+    admin_web = {
+      url         = module.admin_web.url
+      ip_address  = module.admin_web.ip_address
+      bucket_name = module.admin_web.bucket_name
+      access      = module.admin_web.access
+    }
+  }
+}

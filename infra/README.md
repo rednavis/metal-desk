@@ -140,6 +140,35 @@ built by [`deploy/images/Dockerfile`](../deploy/README.md).
   **Push is granted to nobody here**: CI pushes through Workload Identity Federation (`T-077`), never a key.
 - Storing images is not free; the retention policy is part of the cost control, not an optimisation.
 
+## The two single-page sites
+
+`web` and `admin-web` are two calls of [`modules/static-site`](terraform/modules/static-site/README.md) in
+`envs/dev/sites.tf`: a **private** bucket, read only by the load balancer's service agent, behind a global external HTTPS
+load balancer with Cloud CDN. Details, decisions and what is unverified are in the module README; the short version:
+
+- **Identity-Aware Proxy cannot front a backend bucket** (Google: "Backend buckets aren't supported with IAP", and IAP isn't
+  compatible with Cloud CDN). The task's "admin-web behind IAP" therefore cannot be built, and the current Architecture §7 and
+  ADR-0006 no longer ask for it (the staff SPA signs its users in itself). `admin-web` is instead **restricted to
+  `admin_web_allowed_ip_ranges` at the edge** (Cloud Armor edge policy) and is not publicly reachable; `web` is public by an
+  explicit `access = "public"`. If per-user IAP is wanted, the alternative is an IAP-protected backend service (a server), a
+  decision for `T-076`.
+- **Deep links** (`/orders/123`) are rewritten to `index.html` by the URL map. `/assets/*` and other file paths are served as they
+  are, so a missing chunk is a real 404, not the HTML shell. A client-side route must not end in a file extension. **Not yet
+  proven on a real load balancer.**
+- **Two cache policies**, set as `Cache-Control` at upload: hashed `/assets/*` are `public, max-age=31536000, immutable`;
+  `index.html` is `no-cache`; other files an hour. No cache invalidation is ever needed. The deploy uploads assets first and
+  `index.html` last.
+- **DNS prerequisite:** each site needs `web_domain` / `admin_web_domain` (required, no default) that you control, with an A
+  record pointing at the `sites` output's `ip_address`; until it exists the managed certificate stays `PROVISIONING`.
+- **Standing cost.** A global external load balancer bills **per forwarding rule, per hour, whether or not anyone visits**,
+  plus egress. Each site has an `:443` rule and, by default, a `:80` redirect rule: **four rules for two sites** (two with
+  `http_redirect = false`). `admin-web`'s Cloud Armor edge policy adds a small fixed charge. After `api`'s minimum instance this
+  is the largest idle cost of the deployment. Check current prices before the first apply (`T-078`).
+- **API base URL.** The apps default to `/api`, the same-origin path of a deployment behind one load balancer; this stack routes
+  only the bundle, **not `/api`**, and the backends have no CORS configuration, so a cross-origin API URL would not work today.
+  Serving `/api` from the same load balancer (a backend service for the API) is open work for `T-078`. Deployment sets
+  `VITE_API_BASE_URL` per environment at build time and nothing is compiled in by default.
+
 ## Running it
 
 ```bash

@@ -4,13 +4,12 @@ import com.rednavis.metaldesk.admin.order.dto.OrderDetailView;
 import com.rednavis.metaldesk.admin.order.dto.OrderSummaryView;
 import com.rednavis.metaldesk.admin.order.dto.PageView;
 import com.rednavis.metaldesk.admin.quote.dto.QuoteOutcome;
-import com.rednavis.metaldesk.admin.security.StaffAuthenticationInterceptor;
 import com.rednavis.metaldesk.admin.security.StaffPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -60,7 +59,7 @@ public class QuoteController {
   public QuoteOutcome applyTerms(
       @PathVariable String orderId,
       @RequestBody ManagerQuoteRequest request,
-      @RequestAttribute(StaffAuthenticationInterceptor.PRINCIPAL) StaffPrincipal staff) {
+      @AuthenticationPrincipal StaffPrincipal staff) {
     return service.applyTerms(orderId, request, staff);
   }
 
@@ -77,7 +76,7 @@ public class QuoteController {
   public QuoteOutcome decline(
       @PathVariable String orderId,
       @RequestBody(required = false) DeclineRequest request,
-      @RequestAttribute(StaffAuthenticationInterceptor.PRINCIPAL) StaffPrincipal staff) {
+      @AuthenticationPrincipal StaffPrincipal staff) {
     return service.decline(orderId, request == null ? null : request.reason(), staff);
   }
 }

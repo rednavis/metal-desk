@@ -26,6 +26,7 @@ jobs:
       libs-payments: ${{ steps.affected.outputs.libs-payments }}
       libs-mail: ${{ steps.affected.outputs.libs-mail }}
       libs-persistence: ${{ steps.affected.outputs.libs-persistence }}
+      libs-migrations: ${{ steps.affected.outputs.libs-migrations }}
       services-api: ${{ steps.affected.outputs.services-api }}
       services-pricing-bridge: ${{ steps.affected.outputs.services-pricing-bridge }}
       apps-admin: ${{ steps.affected.outputs.apps-admin }}

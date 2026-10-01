@@ -162,8 +162,25 @@ export const quoteOutcomeSchema = z.object({
 });
 export type QuoteOutcome = z.infer<typeof quoteOutcomeSchema>;
 
-export const staffViewSchema = z.object({ email: z.string() });
+/** What a user may do: `UserRole` on the server. A new role is added there first. */
+export const userRoleSchema = z.enum(["ADMIN", "MANAGER"]);
+export type UserRole = z.infer<typeof userRoleSchema>;
+
+export const staffViewSchema = z.object({
+  login: z.string(),
+  email: z.string(),
+  role: userRoleSchema,
+});
 export type StaffView = z.infer<typeof staffViewSchema>;
+
+export const signInResponseSchema = z.object({
+  accessToken: z.string(),
+  tokenType: z.string(),
+  expiresInSeconds: z.number().int(),
+  login: z.string(),
+  role: userRoleSchema,
+});
+export type SignInResponse = z.infer<typeof signInResponseSchema>;
 
 /** A tier as sent (`TierRequest`). Amounts are decimal text, never numbers. */
 export interface TierRequest {
@@ -314,5 +331,17 @@ export const contract: (RecordContract | EnumContract)[] = [
     java: ADMIN + "security/StaffView.java",
     record: "StaffView",
     schema: staffViewSchema,
+  },
+  {
+    kind: "record",
+    java: ADMIN + "security/SignInResponse.java",
+    record: "SignInResponse",
+    schema: signInResponseSchema,
+  },
+  {
+    kind: "enum",
+    java: SHARE + "user/UserRole.java",
+    enumName: "UserRole",
+    schema: userRoleSchema,
   },
 ];

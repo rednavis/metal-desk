@@ -6,6 +6,8 @@ import com.rednavis.metaldesk.admin.persistence.OrderRepository;
 import com.rednavis.metaldesk.admin.persistence.ProductRepository;
 import com.rednavis.metaldesk.admin.persistence.ShipmentRepository;
 import com.rednavis.metaldesk.admin.persistence.TierRepository;
+import com.rednavis.metaldesk.admin.security.StaffPrincipal;
+import com.rednavis.metaldesk.admin.security.TokenIssuer;
 import com.rednavis.metaldesk.persistence.fixtures.AccountFixtures;
 import com.rednavis.metaldesk.persistence.fixtures.OrderFixtures;
 import com.rednavis.metaldesk.persistence.mapper.CustomerMapper;
@@ -14,12 +16,14 @@ import com.rednavis.metaldesk.persistence.testing.SharedMongo;
 import com.rednavis.metaldesk.share.domain.order.Order;
 import com.rednavis.metaldesk.share.domain.order.OrderTransitions;
 import com.rednavis.metaldesk.share.domain.order.TransitionTrigger;
+import com.rednavis.metaldesk.share.domain.user.UserRole;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -34,18 +38,16 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 @AutoConfigureMockMvc
 public class AdminTestSupport {
 
-  /** The identity header the Identity-Aware Proxy would set. */
-  protected static final String IAP_HEADER = "X-Goog-Authenticated-User-Email";
-
-  /** A valid proxy header value. */
-  protected static final String STAFF = "accounts.google.com:staff@example.com";
+  /** The login the helpers act as. */
+  protected static final String STAFF_LOGIN = "staff";
 
   /** The instant the fixtures treat as now. */
   protected static final Instant NOW = OrderFixtures.NOW;
 
   @Autowired private MockMvc mvc;
+  @Autowired private TokenIssuer tokenIssuer;
 
-  /** A client that calls the application through MockMvc, as the proxy's staff member. */
+  /** A client that calls the application through MockMvc, as a signed-in staff member. */
   protected RestTestClient client;
 
   @Autowired protected TierRepository tiers;
@@ -86,13 +88,29 @@ public class AdminTestSupport {
   }
 
   /**
+   * A bearer header value for a valid token of a user with the given role. The user need not exist
+   * in the database: a token is checked by its signature, not by a lookup.
+   *
+   * @param role the role the token carries
+   * @return the {@code Authorization} header value
+   */
+  protected String bearer(UserRole role) {
+    return "Bearer "
+        + tokenIssuer.issue(new StaffPrincipal("user-" + role, STAFF_LOGIN, role)).value();
+  }
+
+  /**
    * GETs as staff.
    *
    * @param uri the path and query
    * @return the response
    */
   protected RestTestClient.ResponseSpec get(String uri) {
-    return client.get().uri(uri).header(IAP_HEADER, STAFF).exchange();
+    return client
+        .get()
+        .uri(uri)
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.MANAGER))
+        .exchange();
   }
 
   /**
@@ -106,7 +124,7 @@ public class AdminTestSupport {
     return client
         .post()
         .uri(uri)
-        .header(IAP_HEADER, STAFF)
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.MANAGER))
         .contentType(MediaType.APPLICATION_JSON)
         .body(json)
         .exchange();
@@ -119,7 +137,11 @@ public class AdminTestSupport {
    * @return the response
    */
   protected RestTestClient.ResponseSpec post(String uri) {
-    return client.post().uri(uri).header(IAP_HEADER, STAFF).exchange();
+    return client
+        .post()
+        .uri(uri)
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.MANAGER))
+        .exchange();
   }
 
   /**
@@ -133,7 +155,7 @@ public class AdminTestSupport {
     return client
         .put()
         .uri(uri)
-        .header(IAP_HEADER, STAFF)
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.MANAGER))
         .contentType(MediaType.APPLICATION_JSON)
         .body(json)
         .exchange();
@@ -146,7 +168,11 @@ public class AdminTestSupport {
    * @return the response
    */
   protected RestTestClient.ResponseSpec delete(String uri) {
-    return client.delete().uri(uri).header(IAP_HEADER, STAFF).exchange();
+    return client
+        .delete()
+        .uri(uri)
+        .header(HttpHeaders.AUTHORIZATION, bearer(UserRole.MANAGER))
+        .exchange();
   }
 
   /**

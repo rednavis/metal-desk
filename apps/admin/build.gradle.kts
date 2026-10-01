@@ -14,9 +14,12 @@ dependencies {
     implementation(project(":libs:share"))
     implementation(project(":libs:persistence"))
     implementation(project(":libs:mail"))
+    implementation(project(":libs:migrations"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.mongodb)
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.boot.starter.oauth2.resource.server)
 
     testImplementation(testFixtures(project(":libs:persistence")))
     testImplementation(libs.spring.boot.starter.webmvc.test)

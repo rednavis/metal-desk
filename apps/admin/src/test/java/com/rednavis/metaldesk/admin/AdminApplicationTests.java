@@ -1,10 +1,9 @@
 package com.rednavis.metaldesk.admin;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class AdminApplicationTests {
+/** The application context starts, against the suite's shared MongoDB container. */
+class AdminApplicationTests extends AdminTestSupport {
 
   @Test
   void contextLoads() {}

@@ -1,0 +1,21 @@
+# Version-bump pull requests for the actions pinned in .github/workflows/ci.yml:
+#   actions/checkout, actions/jekyll-build-pages, trufflesecurity/trufflehog.
+#
+# Deliberately left out, with what unblocks each:
+# gradle  — added by T-060..T-065, once a JVM build runs in CI.
+#           gradle/libs.versions.toml is the single version source (ADR/Plan Phase 1),
+#           so a gradle entry must raise the catalog, never a module build file.
+# npm     — added by T-060..T-065. pnpm workspace; Dependabot reads pnpm-lock.yaml.
+version: 2
+updates:
+  # For this ecosystem Dependabot always scans .github/workflows/; "/" is the only value that works.
+  #
+  # trufflesecurity/trufflehog@main is a branch ref, which Dependabot cannot bump (it only updates
+  # tags, semver ranges and commit SHAs). Repinning it to a tag or SHA is a decision for T-064.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"

@@ -27,3 +27,12 @@ output "network" {
     atlas_dns_name   = module.network.atlas_dns_name
   }
 }
+
+output "services" {
+  description = "Each Cloud Run service's URL and service account."
+  value = {
+    api            = { uri = module.api.uri, service_account_email = module.api.service_account_email }
+    pricing_bridge = { uri = module.pricing_bridge.uri, service_account_email = module.pricing_bridge.service_account_email }
+    admin          = { uri = module.admin.uri, service_account_email = module.admin.service_account_email }
+  }
+}

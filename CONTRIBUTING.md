@@ -21,6 +21,12 @@ contributions are as likely to be to the docs as to code — both are equally we
   [ADR-0002](docs/adr/0002-mocked-external-dependencies.md). If a change seems to need a real
   credential to work, that's a signal the mocking boundary is in the wrong place, not a reason to
   add a secret. CI runs a secret scan on every PR.
+  It scans every commit of the PR, so deleting a leaked secret in a later commit does not clear it:
+  **rotate the credential**, then rewrite the branch history to remove it.
+- **CI rejects known-vulnerable dependencies.** The `dependency-scan` job fails a PR whose JVM or npm
+  dependencies carry an advisory of CVSS 7.0 or higher; lower ones are reported only. Respond by upgrading
+  (in `gradle/libs.versions.toml`, or the pnpm workspace). If no fix exists, add an entry to
+  `osv-scanner.toml` with a reason and an expiry date at most 90 days out — an entry without both fails the job.
 - **No production-scale or real-company data.** Fixtures and seed data are synthetic and small.
 - **A dependency version is declared once** — `gradle/libs.versions.toml` for the JVM modules, the
   `pnpm` workspace root for the frontend apps — once the build graph exists (Modernization Plan,

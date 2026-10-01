@@ -201,13 +201,70 @@ jobs:
           source: docs
           destination: docs/_site
 
+  # Never path-filtered: a secret can be committed in any file. TruffleHog stays the scanner (gitleaks
+  # needs a paid licence on organisation repositories, commit 5923005). The action runs a `git` scan
+  # of base..head and exits non-zero on a finding (`--fail`), so full history is fetched — a shallow
+  # checkout would scan nothing useful and miss a secret added in one commit and removed in the next.
+  # `version` pins the TruffleHog image too; the action's default is a floating `latest`.
   secrets-scan:
     name: Scan for committed secrets
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
-      - name: TruffleHog OSS filesystem scan
-        uses: trufflesecurity/trufflehog@main
+        with:
+          fetch-depth: 0
+      - name: TruffleHog OSS scan of the pushed or pull-request commit range
+        uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85 # v3.97.9
         with:
           path: ./
+          version: 3.97.9
           extra_args: --results=verified,unknown
+
+  # Fails a change that brings in a known-vulnerable dependency, for both ecosystems. Not path-filtered:
+  # a dependency can change in the version catalog, a lockfile or a build file. Gradle has no lockfile,
+  # so the resolved graph of all seven modules is exported as a CycloneDX SBOM and scanned together
+  # with pnpm-lock.yaml by OSV-Scanner (no account, no token). The severity policy, the suppression
+  # rules and what is NOT covered are in workflows/README.md; the policy itself is osv-gate.mjs.
+  dependency-scan:
+    name: Scan dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - name: Self-test the gate
+        run: node --test .github/scripts/
+      - name: Read the Java version from the catalog
+        id: java
+        run: |
+          version=$(sed -n 's/^java = "\([0-9][0-9]*\)"$/\1/p' gradle/libs.versions.toml)
+          test -n "$version" || { echo "no java version in gradle/libs.versions.toml" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+      - name: Export the resolved JVM dependencies as an SBOM
+        run: ./gradlew --console=plain cyclonedxBom
+      # OSV-Scanner exits 1 when it finds anything and 0 when clean; any other code is a scanner error.
+      # Whether a finding blocks is decided by osv-gate.mjs, not by this exit code.
+      - name: Scan the SBOM and pnpm-lock.yaml
+        run: |
+          set +e
+          docker run --rm -v "$PWD":/src -w /src ghcr.io/google/osv-scanner:v2.6.0 scan source \
+            --config=osv-scanner.toml --format=json --output-file=osv-report.json \
+            -L build/reports/cyclonedx/bom.json -L pnpm-lock.yaml
+          code=$?
+          [ "$code" -eq 0 ] || [ "$code" -eq 1 ] || { echo "osv-scanner failed with exit code $code" >&2; exit "$code"; }
+      - name: Apply the severity policy
+        run: node .github/scripts/osv-gate.mjs osv-report.json osv-scanner.toml

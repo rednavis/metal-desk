@@ -15,7 +15,7 @@
 # --- build: compile the module's executable jar from source ------------------------------------------------------
 # Self-contained on purpose: one `docker build` from a clean checkout yields the image, with no step that has to run
 # first and no jar that can be stale. The price is a slower build, softened by BuildKit's Gradle cache mount.
-FROM eclipse-temurin:25.0.4.1_1-jdk-noble AS build
+FROM eclipse-temurin:26.0.2_10-jdk-noble AS build
 
 ARG MODULE
 WORKDIR /src
@@ -38,7 +38,7 @@ FROM scratch AS build-context
 COPY . /
 
 # --- runtime: a JRE, a non-root user, and java as PID 1 --------------------------------------------------------------
-FROM eclipse-temurin:25.0.4.1_1-jre-noble AS runtime
+FROM eclipse-temurin:26.0.2_10-jre-noble AS runtime
 
 RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app

@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Documentation-first as of 2026-09: `docs/` (business-requirements, architecture, ADRs, modernization-plan)
-is written before most code. Implementation proceeds one PR per `docs/modernization-plan.md` phase.
-All implementation code is authored by Claude Code from human direction, not hand-written — see
+`docs/` (business-requirements, architecture, ADRs, modernization-plan) is the source of truth and is kept in step
+with the code. Work lands one PR per task spec (`tasks/T-xxx-*.md`), titled `T-0xx — <title>`, referencing its
+`docs/modernization-plan.md` phase. All implementation code is authored by Claude Code from human direction, not hand-written — see
 `docs/meetings/2026-09-17-kickoff.md` and `CONTRIBUTING.md`.
 
 ## Module structure — Gradle vs pnpm boundary is deliberate
@@ -23,6 +23,9 @@ JVM modules, all under group `com.rednavis.metaldesk`, listed in `settings.gradl
   (audience `metal-desk-staff`, key `ADMIN_JWT_SIGNING_KEY`); `services:api` signs in customers only. The two
   tokens must never be interchangeable — keep issuer/audience/key separate and the cross-rejection tests passing.
   The first migration creates the development users `admin/admin` and `manager/manager`.
+  **No IAP is deployed** (T-076 decided against it; `tasks/T-076-*` still describes the old design — `docs/` wins).
+  `apps/admin` must ignore IAP headers (`IapHeadersIgnoredTest`); staff access is network-restricted (`infra/README.md`).
+  Staff and customer tokens expire after 30 min idle and are renewed via each service's `/auth/refresh`.
 - `services:api` (port 8082), `services:pricing-bridge` (port 8083), `apps:admin` (port 8081)
 
 `apps/web` and `apps/admin-web` (React 19/TS/Vite, pnpm workspace) are **intentionally excluded**
@@ -61,6 +64,8 @@ repositories.
 - `.github/scripts/*.mjs` (CI's affected-module filter and OSV gate; Node standard library only) are tested with
   `node --test .github/scripts/` from the repo root, and **Prettier covers them** — `format:check` fails CI if
   they are not formatted, so run `pnpm run format` after editing them.
+- Local MongoDB: `docker compose up -d` (`compose.yaml`, throwaway `admin/admin`). The apps default `MONGODB_URI` to it,
+  so `bootRun` needs it running; `docker compose down -v` wipes the data.
 - Run a service: `./gradlew :apps:admin:bootRun` / `:services:api:bootRun` / `:services:pricing-bridge:bootRun`.
   **Don't pass multiple `bootRun` targets to one Gradle invocation** — `bootRun` is long-running and
   blocks, so the second task never starts. Launch each as a separate background process instead.
@@ -105,13 +110,9 @@ need `.github/scripts/affected.mjs` changed first.
   the reactive Mongo driver on its classpath (`AdminClasspathTest`); its `RestTestClient`, not `WebTestClient`. On OrbStack, if Testcontainers can't find Docker, export
   `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock` and
   `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`.
-- **CI builds the code, path-filtered.** `.github/workflows/ci.yml` runs `:<module>:build` for each affected JVM
-  module, the frontend build/typecheck/lint/format/test, a Jekyll docs build, a TruffleHog secret scan and a
-  dependency scan (OSV-Scanner, fails on CVSS ≥ 7.0). Skipped conditional jobs are covered by the aggregating
-  `JVM build` and `Frontend build result` checks (see `.github/workflows/README.md`). The required checks on
-  `master` are `JVM build`, `Frontend build result`, `Scan for committed secrets` and `Scan dependencies` —
-  never the per-module `JVM build :<module>` matrix names. Still run `./gradlew build` / `pnpm -r run build`
-  locally before pushing.
+- **CI is path-filtered** (`.github/workflows/ci.yml`, details in `.github/workflows/README.md`). Required checks on
+  `master` are `JVM build`, `Frontend build result`, `Scan for committed secrets` and `Scan dependencies` (OSV, fails
+  on CVSS ≥ 7.0) — never the per-module `JVM build :<module>` matrix names. Still build locally before pushing.
 - An unfixable advisory is suppressed in `osv-scanner.toml` only with both `reason` and `ignoreUntil` (at most
   90 days out); otherwise `osv-gate.mjs` fails the job. Never suppress just to get a green build.
 
@@ -140,6 +141,20 @@ the repo root). Its build-context filter must be named **`Dockerfile.dockerignor
 there is silently ignored and sends the whole repo (and any `.env`) to the builder. The Temurin base-image tags live
 only in the Dockerfile (not the version catalog). Never pass a credential as a build argument. See `deploy/README.md`.
 
+## Infrastructure (`infra/terraform`)
+
+Runbook is `infra/README.md`. CI (`infra.yml`, not a required check) runs `terraform fmt -check -recursive`,
+`infra/scripts/check-env-parity.sh`, `init -backend=false && validate` per root, and `tflint --recursive` — run the same locally.
+- **Never `terraform apply`** — it costs real money; only the T-078 flow applies (budget first), and CI never does.
+- Env roots (`envs/dev|staging|prod`) stay in parity: same modules, differing only in `values.tf`, backend and tfvars
+  example. Logic goes in `modules/`. Names are `metaldesk-<env>-<resource>` via `local.name_prefix`.
+- The Terraform version lives in both `envs/*/versions.tf` and `infra.yml` — edit both. Lock files cover 4 platforms
+  (`terraform providers lock -platform=...`).
+- Secrets by reference only (`{secret, version}`); images by commit SHA or digest, never a mutable tag.
+- App ports are hard-coded (`server.port`, not `PORT`), so Cloud Run `container_port` must match.
+- `image.yml` / `deploy.yml` / `frontend-deploy.yml` authenticate via Workload Identity Federation (no SA keys) and
+  deploy from `master` only.
+
 ## Checkstyle: a real Gradle bug, not a config mistake
 
 If Checkstyle fails with "Unable to create Root Module", the suppression-path wiring in
@@ -152,10 +167,7 @@ Checkstyle's formatting rules are kept in sync with Spotless's `googleJavaFormat
 ## Repo etiquette (from CONTRIBUTING.md)
 
 - No real external credentials or sandbox keys, ever — every external dependency is mocked
-  (WireMock or an in-process fake, ADR-0002). CI runs a secret scan (TruffleHog) on every PR.
-- No production-scale or real-company data — fixtures are synthetic and small.
-- Fix forward, not backward, when unifying a dependency version (see `docs/lessons-learned.md`).
-- One PR per Modernization Plan phase; reference the phase or ADR a change implements.
+  (WireMock or an in-process fake, ADR-0002).
 - Keep `docs/architecture.md` in sync in the same PR as the code change it describes.
 - Task specs are `tasks/T-xxx-*.md`; update that task's row in the `tasks/README.md` ledger in the same PR.
   If a spec and `docs/` disagree, `docs/` wins.
@@ -163,9 +175,11 @@ Checkstyle's formatting rules are kept in sync with Spotless's `googleJavaFormat
   data or configuration (the IP belongs to a former client; see `CONTRIBUTING.md`).
 - `docs/` is a Jekyll site (`remote_theme: just-the-docs`) — new pages need front matter (`title`,
   `nav_order`, `parent` if nested under ADRs).
+- Project skills: `/verify` (full build + cleanup), `/feature-issue <n>` — the GitHub issue number is not the task id;
+  the `T-xxx` comes from the issue title.
 
 ## Subdirectory CLAUDE.md
 
-None exist yet. As real per-module code lands (e.g. `libs/share`'s domain rules, or `apps/web`'s
-component conventions), consider adding a scoped `CLAUDE.md` in that directory rather than growing
-this file — ask if you want one created.
+None exist yet. `infra/` is the first candidate (the Infrastructure section above could move there), then
+`libs/share`'s domain rules or `apps/web`'s component conventions — prefer a scoped `CLAUDE.md` over growing
+this file; ask if you want one created.

@@ -24,6 +24,8 @@ export interface CheckoutOptions {
   /** Start from a session that is already this far along, to test a reload. */
   initial?: { details?: boolean; delivery?: boolean; method?: string; placed?: "PAID" | "INVOICE" };
   profile?: Record<string, string>;
+  /** The overview carries an order number, as it does once an order exists (payment started or approved). */
+  orderExists?: boolean;
   /** An empty basket makes starting a checkout fail, as it does on the server. */
   emptyBasket?: boolean;
 }
@@ -232,6 +234,7 @@ export function createCheckoutServer(options: CheckoutOptions = {}) {
         checkoutId: "cs1",
         details,
         ...(selected ? { paymentMethod: selected } : {}),
+        ...(options.orderExists ? { orderReference: "100000000001" } : {}),
         lines: [LINE],
         delivery: (delivery as { quote: unknown }).quote,
         // Not the sum of its parts on purpose: the screen must show what the server says.

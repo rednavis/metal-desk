@@ -227,6 +227,7 @@ export const en = {
 
   "checkout.step4.title": "Review your order",
   "checkout.overview.details": "Your details",
+  "checkout.overview.address": "Delivery address",
   "checkout.overview.method": "Payment method",
   "checkout.overview.items": "Items",
   "checkout.overview.delivery": "Delivery",

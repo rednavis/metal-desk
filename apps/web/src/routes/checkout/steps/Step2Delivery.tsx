@@ -70,11 +70,19 @@ export function Step2Delivery({
       <section aria-labelledby="step2-title">
         <h2 id="step2-title">{t("checkout.step2.title")}</h2>
         {notice}
-        <dl>
-          <dt>{t("checkout.delivery.cost")}</dt>
-          <dd data-testid="delivery-cost">{format.money(cost)}</dd>
-          <dt>{t("checkout.delivery.transit")}</dt>
-          <dd>{t("checkout.delivery.days", { min: minDays, max: maxDays })}</dd>
+        <dl className="md-facts">
+          <div className="md-facts__item">
+            <dt>{t("checkout.delivery.cost")}</dt>
+            <dd className="md-facts__value" data-testid="delivery-cost">
+              {format.money(cost)}
+            </dd>
+          </div>
+          <div className="md-facts__item">
+            <dt>{t("checkout.delivery.transit")}</dt>
+            <dd className="md-facts__value">
+              {t("checkout.delivery.days", { min: minDays, max: maxDays })}
+            </dd>
+          </div>
         </dl>
         <div className="md-actions">
           <Button variant="secondary" onClick={onEditDetails}>

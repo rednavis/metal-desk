@@ -1,3 +1,4 @@
+// T-065 demonstration: a change touching only apps/web/src (not merged).
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";

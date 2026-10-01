@@ -1,14 +1,8 @@
 # The three JVM services, each a call of the one cloud-run-service module. Nothing here declares a Cloud Run resource
 # itself. Postures and their costs are tabulated in infra/README.md.
 
-# Secret ids follow <name_prefix>-<purpose>; T-075 creates them under exactly these names. The version is a number
-# and is bumped here deliberately when a secret is rotated.
-locals {
-  secret_mongodb_uri = {
-    secret  = "${local.name_prefix}-mongodb-uri"
-    version = "1"
-  }
-}
+# Secrets are referenced, never valued: each entry names a secret declared in secrets.tf and a pinned version NUMBER (a
+# moving alias is rejected by the module). The version is bumped here, deliberately, when a secret is rotated.
 
 module "api" {
   source = "../../modules/cloud-run-service"
@@ -30,8 +24,8 @@ module "api" {
   vpc_egress = module.network.cloud_run_egress
 
   secret_env = {
-    MONGODB_URI     = local.secret_mongodb_uri
-    JWT_SIGNING_KEY = { secret = "${local.name_prefix}-jwt-signing-key", version = "1" }
+    MONGODB_URI     = { secret = module.secret_mongodb_uri_api.secret_id, version = "1" }
+    JWT_SIGNING_KEY = { secret = module.secret_jwt_signing_key.secret_id, version = "1" }
   }
 
   deletion_protection = false # dev is rebuilt freely
@@ -81,8 +75,8 @@ module "admin" {
   vpc_egress = module.network.cloud_run_egress
 
   secret_env = {
-    MONGODB_URI           = local.secret_mongodb_uri
-    ADMIN_JWT_SIGNING_KEY = { secret = "${local.name_prefix}-admin-jwt-signing-key", version = "1" }
+    MONGODB_URI           = { secret = module.secret_mongodb_uri_admin.secret_id, version = "1" }
+    ADMIN_JWT_SIGNING_KEY = { secret = module.secret_admin_jwt_signing_key.secret_id, version = "1" }
   }
 
   deletion_protection = false

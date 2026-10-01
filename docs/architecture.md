@@ -320,7 +320,7 @@ services cannot share a classpath, and called over HTTP.
 | `web` | Cloud Storage + external HTTPS Load Balancer + Cloud CDN | Static SPA; no application server needed for the frontend. |
 | Document store | MongoDB Atlas on GCP, via Private Service Connect | No first-party GCP document database with this data model's fit; Atlas keeps MongoDB without self-hosting it. |
 | Images | Artifact Registry | Per-service repositories, immutable tags (commit SHA, never `latest`). |
-| Secrets | Secret Manager | Injected as Cloud Run environment variables at deploy time — never baked into an image or committed to source. |
+| Secrets | Secret Manager | Injected as Cloud Run environment variables at deploy time — never baked into an image or committed to source. Terraform creates only the empty containers and per-secret read grants and never a value; the inventory and how to populate and rotate: [`infra/README.md`](https://github.com/rednavis/metal-desk/blob/master/infra/README.md#secrets). |
 | CI → CD auth | Workload Identity Federation from GitHub Actions | No long-lived service-account JSON keys in CI. |
 | Observability | Cloud Logging + Cloud Trace, Spring Actuator on `/actuator` | |
 | IaC | Terraform, GCS backend, versioned state bucket per environment | Layout, naming and the state-bucket bootstrap: [`infra/README.md`](https://github.com/rednavis/metal-desk/blob/master/infra/README.md). `dev`, `staging` and `prod` are thin roots under `infra/terraform/envs/`; logic lives in `infra/terraform/modules/`. |

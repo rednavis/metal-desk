@@ -74,3 +74,192 @@
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
 }
+
+/* Step 3: the payment methods as one list of selectable cards. The native radio stays in the
+   tab order and is read by screen readers; the check mark and the border carry the selection
+   as well, so it is never colour alone. */
+.md-methods {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.md-methods legend {
+  padding: 0 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.md-method {
+  position: relative;
+  display: flex;
+  gap: 0.875rem;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition:
+    border-color 0.15s var(--ease),
+    background-color 0.15s var(--ease);
+}
+
+.md-method:hover {
+  border-color: var(--color-border-strong);
+}
+
+.md-method:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.md-method:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* The radio is visually replaced by the card, not removed. */
+.md-method input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.md-method__glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  font-size: 1.25rem;
+}
+
+.md-method:has(input:checked) .md-method__glyph {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+
+.md-method__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.md-method__name {
+  font-weight: 600;
+}
+
+.md-method__note {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.md-method__check {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.md-method:has(input:checked) .md-method__check {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+
+/* Step 4: each block of the overview is a titled panel with its edit action in the header row. */
+.md-panel__head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.md-panel__head h3 {
+  margin: 0;
+}
+
+.md-button--sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.md-panel .md-panel__rows address {
+  font-style: normal;
+  line-height: 1.5;
+}
+
+/* A table inside a panel sits flat: the panel is already the card. */
+.md-panel--table .md-table {
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.md-panel__foot {
+  margin: 0.75rem 0 0;
+}
+
+/* Step 2: the quoted delivery as two labelled facts, the cost and the transit time. */
+.md-facts {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+@media (min-width: 40rem) {
+  .md-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.md-facts__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.md-facts__item dt {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.md-facts__value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}

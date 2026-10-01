@@ -229,6 +229,7 @@ export const de = {
 
   "checkout.step4.title": "Bestellung prüfen",
   "checkout.overview.details": "Ihre Daten",
+  "checkout.overview.address": "Lieferadresse",
   "checkout.overview.method": "Zahlungsart",
   "checkout.overview.items": "Artikel",
   "checkout.overview.delivery": "Lieferung",

@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useLocation } from "react-router";
 import type { PaymentMethod } from "../../../api/types";
 import { usePreferences } from "../../../preferences/usePreferences";
 import { Button, EmptyState, ErrorState, Spinner } from "../../../ui";
 import { CheckoutSummary } from "../CheckoutSummary";
 import type { CheckoutApi } from "../useCheckoutSession";
+
+/** A decorative glyph per method; the name beside it is what identifies the method. */
+const CHECK_GLYPH = "✓";
+
+const METHOD_GLYPH: Record<PaymentMethod, string> = {
+  CARD: "▭",
+  BANK_DEBIT: "⇄",
+  BANK_REDIRECT: "↗",
+  BANK_TRANSFER: "⇄",
+  SAVED_WALLET: "◈",
+  WALLET_ACCOUNT: "◈",
+  INVOICE: "☰",
+};
 
 /**
  * Step 3 (BRD FR-6.1, FR-6.2, FR-6.3): choose how to pay, from exactly the list the server offers.
@@ -26,6 +39,7 @@ export function Step3PaymentMethod({
   onChosen: () => void;
 }) {
   const { t } = usePreferences();
+  const idPrefix = useId();
   const location = useLocation();
   const decline = (location.state as { decline?: string } | null)?.decline;
   const { methods, selectMethod } = checkout;
@@ -61,24 +75,40 @@ export function Step3PaymentMethod({
               selectMethod.mutate(current, { onSuccess: onChosen });
             }}
           >
-            <fieldset>
+            <fieldset className="md-methods">
               <legend>{t("checkout.method.legend")}</legend>
               {offer.methods.map(({ method, group }) => (
-                <div key={method} className="md-radio">
-                  <label>
-                    <input
-                      type="radio"
-                      name="payment-method"
-                      value={method}
-                      checked={current === method}
-                      onChange={() => {
-                        setChoice(method);
-                      }}
-                    />
-                    <span>{t(`checkout.method.${method}`)}</span>
-                  </label>
-                  {group === "INVOICE" ? <p>{t("checkout.method.INVOICE.note")}</p> : null}
-                </div>
+                <label key={method} className="md-method">
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value={method}
+                    aria-labelledby={`${idPrefix}-${method}-name`}
+                    aria-describedby={
+                      group === "INVOICE" ? `${idPrefix}-${method}-note` : undefined
+                    }
+                    checked={current === method}
+                    onChange={() => {
+                      setChoice(method);
+                    }}
+                  />
+                  <span className="md-method__glyph" aria-hidden="true">
+                    {METHOD_GLYPH[method]}
+                  </span>
+                  <span className="md-method__text">
+                    <span className="md-method__name" id={`${idPrefix}-${method}-name`}>
+                      {t(`checkout.method.${method}`)}
+                    </span>
+                    {group === "INVOICE" ? (
+                      <span className="md-method__note" id={`${idPrefix}-${method}-note`}>
+                        {t("checkout.method.INVOICE.note")}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="md-method__check" aria-hidden="true">
+                    {CHECK_GLYPH}
+                  </span>
+                </label>
               ))}
             </fieldset>
             {selectMethod.isError ? <ErrorState error={selectMethod.error} /> : null}

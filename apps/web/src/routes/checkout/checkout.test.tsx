@@ -309,6 +309,22 @@ describe("step 4: the overview", () => {
     });
   });
 
+  it("offers the way back to the cart while no order exists", async () => {
+    open(atOverview);
+
+    expect(
+      await screen.findByRole("link", { name: "Change the items in your cart" }),
+    ).toBeVisible();
+  });
+
+  it("does not offer to change the items once an order exists", async () => {
+    open({ ...atOverview, orderExists: true });
+    await screen.findByTestId("grand-total");
+
+    expect(screen.queryByRole("link", { name: "Change the items in your cart" })).toBeNull();
+    expect(screen.getAllByTestId("overview-line")).toHaveLength(1);
+  });
+
   it("shows no separate line for cover against loss in transit anywhere in the flow", async () => {
     open(atOverview);
     await screen.findByTestId("grand-total");

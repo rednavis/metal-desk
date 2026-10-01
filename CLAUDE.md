@@ -121,6 +121,10 @@ need `.github/scripts/affected.mjs` changed first.
   module's `build.gradle.kts`. The one deliberate exception is the `foojay-resolver-convention`
   plugin version in `settings.gradle.kts` (a settings-level plugin can't reference a catalog it helps
   resolve).
+- `jacksonFloor` / `tomcatFloor` in the catalog raise jackson and Tomcat above what Spring Boot 4.1.1's BOM manages, to
+  clear high-severity advisories the dependency scan blocks on (applied in `metaldesk.spring-boot-conventions` and in
+  `libs:payments`, which imports the BOM itself). Remove them once Boot manages versions at or above the floor. Check a
+  change locally by running `cyclonedxBom`, then the same `osv-scanner` + `osv-gate.mjs` pair CI runs.
 - Shared build behavior lives in `build-logic/src/main/kotlin/metaldesk.*.gradle.kts` (java-conventions,
   spring-boot-conventions, quality-conventions), applied by every module — don't duplicate that
   config in a module's own `build.gradle.kts`.

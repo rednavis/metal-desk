@@ -64,7 +64,7 @@ Independent of every phase. **Authorable today**, on a clean checkout, with no b
 
 | Task | Issue | Title | Parent | Blocked by | Status | Notes |
 |---|---|---|---|---|---|---|
-| [T-001](T-001-editorconfig.md) | [#9](https://github.com/rednavis/metal-desk/issues/9) | EditorConfig for the whole tree | [#6](https://github.com/rednavis/metal-desk/issues/6) | — | Not started | `good first issue`. Must agree with Spotless and Prettier rather than add a third opinion |
+| [T-001](T-001-editorconfig.md) | [#9](https://github.com/rednavis/metal-desk/issues/9) | EditorConfig for the whole tree | [#6](https://github.com/rednavis/metal-desk/issues/6) | — | Done | `good first issue`. Verified: all Kotlin/`.kts` files are 4-space, so the `[*.{kt,kts}]` override stands. Must agree with Spotless and Prettier rather than add a third opinion |
 | [T-002](T-002-dependabot-actions.md) | [#10](https://github.com/rednavis/metal-desk/issues/10) | Dependabot for GitHub Actions | [#7](https://github.com/rednavis/metal-desk/issues/7) | — | Not started | `good first issue`. **Issue #7 is stale**: it names `gitleaks-action`, removed in `5923005` and replaced by TruffleHog |
 
 ### M1 — Domain model and libs · Phase 2

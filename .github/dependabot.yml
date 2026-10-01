@@ -34,6 +34,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "build"
+    # jacksonFloor (gradle/libs.versions.toml) is a security floor over Spring Boot's managed Jackson, so it must stay on
+    # Boot's minor line: a 3.2 bump changes deserialization behaviour and broke apps/admin's tests. Patch bumps only.
+    ignore:
+      - dependency-name: "tools.jackson:jackson-bom"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
     groups:
       gradle-minor-patch:
         update-types: ["minor", "patch"]

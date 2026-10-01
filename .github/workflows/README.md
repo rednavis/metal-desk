@@ -10,7 +10,8 @@
 | `frontend-build` | every PR/push that affects a pnpm app | `pnpm install --frozen-lockfile`, a build of each affected app, then the root-scoped typecheck, lint, format check and test. **Skipped** when no app is affected. |
 | `Frontend build result` (`frontend-build-result`) | always | The check name to require in branch protection (`T-065`) for the frontend; passes when `frontend-build` succeeded **or was skipped**. |
 | `docs` | every pull request and push | Builds the Jekyll site in `docs/` to catch config and front-matter errors. **Deliberately not path-filtered** — see below. |
-| `secrets-scan` | every pull request and push | TruffleHog filesystem scan. **Never path-filtered**: a secret can be committed in any file. |
+| `secrets-scan` | every pull request and push | TruffleHog git scan of the pull-request (or pushed) commit range; fails on a finding. **Never path-filtered**: a secret can be committed in any file. |
+| `dependency-scan` | every pull request and push | Exports the resolved JVM dependencies as a CycloneDX SBOM, scans it and `pnpm-lock.yaml` with OSV-Scanner, and fails on CVSS ≥ 7.0. **Never path-filtered.** See [Scanning](#scanning). |
 
 ## How the `changes` job decides
 
@@ -160,3 +161,51 @@ configuration cache. `settings.gradle.kts` enables the **local** build cache onl
   tests from a `doFirst` lambda that captured the script object. It now uses a `CommandLineArgumentProvider` over a
   file collection. No suppression flags are used.
 - **Bypass locally:** `./gradlew build --no-build-cache` (and `--no-configuration-cache`).
+
+## Scanning
+
+### Secrets — `secrets-scan`
+
+TruffleHog stays the scanner (gitleaks needs a paid licence on organisation repositories, commit `5923005`).
+The job fetches full history (`fetch-depth: 0`) and scans `base..head` of the pull request — **every commit in the
+range**, so a secret added in one commit and deleted in the next is still found. The TruffleHog action passes
+`--fail`, so a finding fails the job. `--results=verified,unknown` is kept: verified-live and could-not-verify
+findings block, results known to be dead credentials do not. The action is pinned to the commit SHA of
+`v3.97.9` and `version: 3.97.9` pins the scanner image (the action's default would be a floating `latest`).
+
+### Dependencies — `dependency-scan`
+
+| | |
+|---|---|
+| Scanner | [OSV-Scanner](https://google.github.io/osv-scanner/) `v2.6.0` (container image). No account, no token. |
+| JVM | Gradle has no lockfile here, so `./gradlew cyclonedxBom` exports the resolved graph of all seven modules (CycloneDX plugin, version in the catalog) to `build/reports/cyclonedx/bom.json`. |
+| npm | `pnpm-lock.yaml` directly. |
+| Permissions | `contents: read` only; the default `GITHUB_TOKEN`. |
+
+**Failure policy.** An advisory with **CVSS ≥ 7.0 (high, critical) fails** the job. Medium, low and *unscored*
+advisories are listed in the log and the job summary but never block — a gate that blocks on every advisory in a
+transitive test dependency is bypassed within a week. The threshold is `BLOCKING_SCORE` in
+[`scripts/osv-gate.mjs`](scripts/osv-gate.mjs), unit-tested by `osv-gate.test.mjs`. OSV-Scanner's own exit code is
+not the gate: it exits 1 on *any* advisory.
+
+**Suppressing an unfixable advisory.** Add an `[[IgnoredVulns]]` entry to [`osv-scanner.toml`](../../osv-scanner.toml)
+with an `id`, a `reason` and an `ignoreUntil` expiry date at most 90 days ahead. **An entry without a reason or
+without an expiry is not acceptable** — `osv-gate.mjs` fails the job on it — and OSV-Scanner stops honouring an
+entry after its date, so the advisory blocks again. Only for a real advisory with no available fix.
+
+**Not covered.** A *new* advisory against an unchanged dependency is found only on the next pull request or push to
+`master` — there is no scheduled scan. Dependabot (`.github/dependabot.yml`: `github-actions`, `gradle`, `npm`)
+*proposes upgrades*; it does not gate. The `build-logic` plugin classpath is not in the SBOM. Container images are
+out of scope until `T-073`.
+
+**GitHub dependency review** (`actions/dependency-review-action`) is free for a public repository but needs the
+repository's *Dependency graph* enabled, and for Gradle it would need a separate dependency-submission step
+with `contents: write`, which a fork pull request cannot have. The graph appeared disabled on this repository when
+this was written (the SBOM API returned 404), so it was **not** added rather than half-configured. Enabling the
+graph in repository settings is a prerequisite if it is wanted later.
+
+### Dependabot
+
+Minor and patch updates are grouped into one pull request per ecosystem; a major update gets its own. The `gradle`
+entry reads `gradle/libs.versions.toml`, so a bump raises the catalog, never a module build file. Docker image tags
+inside workflow steps (OSV-Scanner, TruffleHog) are not visible to Dependabot and are bumped by hand.

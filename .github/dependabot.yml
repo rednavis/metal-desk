@@ -1,17 +1,17 @@
-# Version-bump pull requests for the actions pinned in .github/workflows/ci.yml:
-#   actions/checkout, actions/jekyll-build-pages, actions/setup-node, trufflesecurity/trufflehog.
+# Version-bump pull requests for every ecosystem the repository builds with.
 #
-# Deliberately left out, with what unblocks each:
-# gradle  — added by T-060..T-065, once a JVM build runs in CI.
-#           gradle/libs.versions.toml is the single version source (ADR/Plan Phase 1),
-#           so a gradle entry must raise the catalog, never a module build file.
-# npm     — added by T-060..T-065. pnpm workspace; Dependabot reads pnpm-lock.yaml.
+# Grouping: minor and patch updates arrive as ONE pull request per ecosystem; a major update is never
+# grouped, so it gets its own pull request and its own review. Without grouping, the volume gets the
+# automation switched off.
+#
+# Not watched: the container image tags run by docker in .github/workflows/ci.yml
+# (ghcr.io/google/osv-scanner, and the TruffleHog image pinned by `version:`). Dependabot's `docker`
+# ecosystem reads Dockerfiles and compose files, not workflow steps — bump those by hand with the action.
 version: 2
 updates:
   # For this ecosystem Dependabot always scans .github/workflows/; "/" is the only value that works.
-  #
-  # trufflesecurity/trufflehog@main is a branch ref, which Dependabot cannot bump (it only updates
-  # tags, semver ranges and commit SHAs). Repinning it to a tag or SHA is a decision for T-064.
+  # Every action is pinned to a tag or a commit SHA (trufflesecurity/trufflehog: SHA with the version in
+  # a comment), which is what lets Dependabot bump it; a branch ref such as `@main` it cannot.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -19,3 +19,32 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "ci"
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # gradle/libs.versions.toml is the single version source (CLAUDE.md), so this entry must raise the
+  # catalog, never a module build file. Dependabot updates a version catalog at the default location.
+  # The Gradle wrapper (gradle-wrapper.properties) is covered by this ecosystem too.
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+    groups:
+      gradle-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # pnpm workspace at the repository root (apps/web, apps/admin-web); Dependabot reads pnpm-lock.yaml.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "build"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]

@@ -31,7 +31,7 @@ dependencies {
 // MongoDB driver, this service is WebFlux with the reactive one. Only its runtime classpath is
 // resolved here, and it is handed to the test as a system property, so nothing of admin reaches
 // this module's own classpath.
-val adminRuntime by configurations.creating {
+val adminRuntime = configurations.create("adminRuntime") {
     isCanBeConsumed = false
     isCanBeResolved = true
 }

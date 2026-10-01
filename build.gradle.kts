@@ -1,5 +1,6 @@
 plugins {
     base
+    alias(libs.plugins.versions)
 }
 
 // build-logic is an included build (settings.gradle.kts), not a subproject, so its `clean`

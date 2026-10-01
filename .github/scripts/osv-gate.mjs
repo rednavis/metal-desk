@@ -62,7 +62,9 @@ export function suppressionProblems(toml, today = new Date()) {
     const days = (Date.parse(until) - today.getTime()) / 86_400_000;
     if (Number.isNaN(days)) problems.push(`${label}: ignoreUntil ${until} is not a date`);
     else if (days > MAX_SUPPRESSION_DAYS)
-      problems.push(`${label}: ignoreUntil ${until} is more than ${MAX_SUPPRESSION_DAYS} days away`);
+      problems.push(
+        `${label}: ignoreUntil ${until} is more than ${MAX_SUPPRESSION_DAYS} days away`,
+      );
   }
   return problems;
 }
@@ -90,4 +92,5 @@ function main([reportPath, configPath = "osv-scanner.toml"]) {
   return blocking.length === 0 && problems.length === 0 ? 0 : 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) process.exitCode = main(process.argv.slice(2));
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  process.exitCode = main(process.argv.slice(2));

@@ -209,3 +209,23 @@ graph in repository settings is a prerequisite if it is wanted later.
 Minor and patch updates are grouped into one pull request per ecosystem; a major update gets its own. The `gradle`
 entry reads `gradle/libs.versions.toml`, so a bump raises the catalog, never a module build file. Docker image tags
 inside workflow steps (OSV-Scanner, TruffleHog) are not visible to Dependabot and are bumped by hand.
+
+## Required checks and the skipped-job caveat
+
+A required check that never reports blocks a pull request forever, and `jvm-build` / `frontend-build` are skipped
+on a change that does not affect them. The two **aggregating jobs** (`JVM build`, `Frontend build result`) always
+run (`if: always()`) and pass when their conditional job succeeded *or was skipped*, so the skip semantics live in
+the workflow, not in branch-protection settings. Never require the per-module `JVM build :<module>` matrix names.
+
+Branch protection on `master` must require exactly these checks (**a maintainer with admin rights configures it;
+a workflow cannot**):
+
+| Required check | Job |
+|---|---|
+| `JVM build` | `jvm-build-result` |
+| `Frontend build result` | `frontend-build-result` |
+| `Scan for committed secrets` | `secrets-scan` |
+| `Scan dependencies` | `dependency-scan` |
+
+`Build docs site` is deliberately not required in this list; add it if a broken Jekyll build should block merges.
+`Detect affected modules` is covered through both aggregating jobs (they fail if it does).

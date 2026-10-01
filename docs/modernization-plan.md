@@ -92,6 +92,10 @@ covering both outcomes.
 **Exit criteria:** a PR touching only `apps/web` does not trigger a JVM build; a PR touching
 `libs/share` triggers every downstream module's build.
 
+**Status: met** (T-060…T-065) — demonstrated on real pull requests, linked in [`tasks/README.md`](../tasks/README.md).
+Branch protection on `master` is a repository-settings action; see `.github/workflows/README.md` for the
+required checks and whether it has been applied.
+
 ### Phase 5 — GCP infrastructure
 
 - Terraform modules per [Architecture §7](architecture.md#7-reference-deployment-gcp): Cloud Run

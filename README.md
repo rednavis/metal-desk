@@ -61,7 +61,7 @@ The same pages are published as a browsable site at
 | Data | MongoDB (Atlas on GCP in the reference deployment) |
 | External integrations | WireMock-mocked at the boundary — see [ADR-0002](docs/adr/0002-mocked-external-dependencies.md) |
 | Infrastructure | Terraform, GCP (Cloud Run, Cloud Storage + CDN, Artifact Registry, Secret Manager) — see [ADR-0003](docs/adr/0003-gcp-target-architecture.md) |
-| CI/CD | GitHub Actions, path-filtered affected-target builds, Workload Identity Federation to GCP |
+| CI/CD | GitHub Actions, path-filtered affected-module builds (JVM per module, frontend per app) with a dependency and secret scan, Workload Identity Federation to GCP |
 
 Full rationale for each of these in [Architecture](docs/architecture.md) and the ADRs.
 

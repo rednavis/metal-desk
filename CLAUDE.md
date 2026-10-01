@@ -80,8 +80,11 @@ repositories.
   the reactive Mongo driver on its classpath (`AdminClasspathTest`); its `RestTestClient`, not `WebTestClient`. On OrbStack, if Testcontainers can't find Docker, export
   `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock` and
   `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`.
-- **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a
-  TruffleHog secret scan. A local `./gradlew build` / `pnpm -r run build` is the only real gate.
+- **CI builds the code, path-filtered.** `.github/workflows/ci.yml` runs `:<module>:build` for each affected JVM
+  module, the frontend build/typecheck/lint/format/test, a Jekyll docs build, a TruffleHog secret scan and a
+  dependency scan (OSV-Scanner, fails on CVSS ≥ 7.0). Skipped conditional jobs are covered by the aggregating
+  `JVM build` and `Frontend build result` checks (see `.github/workflows/README.md`). CI is the gate for a
+  PR, but still run `./gradlew build` / `pnpm -r run build` locally before pushing — it is faster than a round trip.
 
 ## Versions and conventions
 

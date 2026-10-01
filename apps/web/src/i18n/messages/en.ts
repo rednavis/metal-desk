@@ -130,7 +130,6 @@ export const en = {
   "cart.col.actions": "Actions",
   "cart.onRequest": "Price on request",
   "cart.quantity.label": "Quantity of {name}",
-  "cart.quantity.update": "Update",
   "cart.quantity.invalid": "Enter a whole number from 1 to {max}.",
   "cart.quantity.max": "At most {max} of a product per order.",
   "cart.remove": "Remove {name}",
@@ -186,6 +185,10 @@ export const en = {
   "checkout.delivery.cost": "Delivery cost",
   "checkout.delivery.transit": "Estimated transit",
   "checkout.delivery.days": "{min} to {max} days",
+  "checkout.delivery.tier.title": "Applied delivery tier",
+  "checkout.delivery.tier.id": "Tier",
+  "checkout.delivery.tier.region": "Region",
+  "checkout.delivery.tier.quotedAt": "Quoted at",
   "checkout.delivery.continue": "Continue to the payment method",
   "checkout.handoff.title": "Your order needs a manager",
   "checkout.handoff.reason.VALUE_CEILING_EXCEEDED":

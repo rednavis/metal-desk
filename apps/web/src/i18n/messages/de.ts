@@ -129,7 +129,6 @@ export const de = {
   "cart.col.actions": "Aktionen",
   "cart.onRequest": "Preis auf Anfrage",
   "cart.quantity.label": "Menge von {name}",
-  "cart.quantity.update": "Aktualisieren",
   "cart.quantity.invalid": "Geben Sie eine ganze Zahl von 1 bis {max} ein.",
   "cart.quantity.max": "Höchstens {max} je Produkt und Bestellung.",
   "cart.remove": "{name} entfernen",
@@ -186,6 +185,10 @@ export const de = {
   "checkout.delivery.cost": "Lieferkosten",
   "checkout.delivery.transit": "Voraussichtliche Lieferzeit",
   "checkout.delivery.days": "{min} bis {max} Tage",
+  "checkout.delivery.tier.title": "Angewendeter Liefertarif",
+  "checkout.delivery.tier.id": "Tarif",
+  "checkout.delivery.tier.region": "Region",
+  "checkout.delivery.tier.quotedAt": "Angeboten am",
   "checkout.delivery.continue": "Weiter zur Zahlungsart",
   "checkout.handoff.title": "Ihre Bestellung braucht einen Betreuer",
   "checkout.handoff.reason.VALUE_CEILING_EXCEEDED":

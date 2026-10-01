@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import type { TierView, TierWarning } from "../../api/types";
 import { useTierMutations, useTiers } from "../../features/tiers/useTiers";
-import { Button, ConfirmDialog, EmptyState, ErrorState, Spinner } from "../../ui";
+import { Button, ConfirmDialog, EmptyState, ErrorState, Spinner, TrashIcon } from "../../ui";
 import { TierCoverageView } from "./TierCoverageView";
 import { WarningList } from "./WarningList";
 
@@ -69,15 +69,23 @@ export function TierListRoute() {
                     <td>{`${tier.deliveryPrice} ${tier.currency}`}</td>
                     <td>{`${String(tier.minDays)} to ${String(tier.maxDays)} days`}</td>
                     <td className="md-actions">
-                      <Link to={`/tiers/${encodeURIComponent(tier.id)}`}>{`Edit ${tier.id}`}</Link>
+                      <Link
+                        to={`/tiers/${encodeURIComponent(tier.id)}`}
+                        className="md-button md-button--secondary md-button--sm"
+                        aria-label={`Edit ${tier.id}`}
+                      >
+                        Edit
+                      </Link>
                       <Button
                         variant="secondary"
+                        className="md-button--icon"
                         aria-label={`Delete ${tier.id}`}
+                        title={`Delete ${tier.id}`}
                         onClick={() => {
                           setRemoving(tier);
                         }}
                       >
-                        Delete
+                        <TrashIcon />
                       </Button>
                     </td>
                   </tr>

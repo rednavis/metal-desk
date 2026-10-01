@@ -21,30 +21,12 @@
     <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
     <!-- Configured separately below to allow ArchUnit's JavaClasses. -->
     <exclude name="LooseCoupling"/>
-    <!-- Configured separately below: suppressed in test classes only. -->
-    <exclude name="AvoidUsingHardCodedIP"/>
-  </rule>
-  <rule ref="category/java/bestpractices.xml/LooseCoupling">
-    <properties>
-      <!-- ArchUnit's ArchRule.check(...) takes a JavaClasses, which is itself a collection, so the
-           architecture tests cannot declare it as an interface. The MongoDB driver's
-           org.bson.Document is a Map that its own API (MongoCollection<Document>, insertMany,
-           find) requires by name; a migration cannot avoid it. Every other implementation type
-           is still flagged. -->
-      <property name="allowedTypes" value="java.util.Properties,com.tngtech.archunit.core.domain.JavaClasses,org.bson.Document"/>
-    </properties>
   </rule>
   <rule ref="category/java/codestyle.xml">
     <!-- Lombok's @RequiredArgsConstructor generates the constructor, which PMD can't see. -->
     <exclude name="AtLeastOneConstructor"/>
     <!-- googleJavaFormat() never adds `final` to parameters; the repo doesn't use that style. -->
     <exclude name="MethodArgumentCouldBeFinal"/>
-    <!-- Configured separately below with a lower minimum for the `of(...)` factory idiom. -->
-    <exclude name="ShortMethodName"/>
-    <!-- Configured separately below with a lower minimum for the aggregate `id` idiom. -->
-    <exclude name="ShortVariable"/>
-    <!-- Configured separately below with a higher limit for the fixed Architecture §6 state names. -->
-    <exclude name="LongVariable"/>
   </rule>
   <rule ref="category/java/design.xml">
     <!-- Configured separately below: suppressed in test classes only. -->
@@ -56,33 +38,10 @@
          already owns the module boundaries). -->
     <exclude name="LoosePackageCoupling"/>
   </rule>
-  <rule ref="category/java/design.xml/TooManyMethods">
-    <properties>
-      <!-- Test classes and test-support bases only: one class per unit under test, one method per
-           behaviour, and a base that drives the flow under test is a list of small helpers. -->
-      <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or ends-with(@SimpleName, 'TestSupport')]"/>
-    </properties>
-  </rule>
-  <rule ref="category/java/design.xml/LawOfDemeter">
-    <properties>
-      <!-- Test classes and test-support bases, plus two framework adapters. A WebTestClient or StepVerifier assertion is one fluent chain by
-           design, and the rule counts every link as a violation; main code stays subject to it, except for the two classes that
-           must read a servlet-style request or exchange handed to them by the framework
-           (an authentication entry point, and the client-address resolver), where the chain of
-           getters is the only way in. -->
-      <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or ends-with(@SimpleName, 'TestSupport') or @SimpleName = ('ApiAuthenticationEntryPoint', 'ClientAddressResolver')]"/>
-    </properties>
-  </rule>
   <rule ref="category/java/documentation.xml">
     <!-- Checkstyle's MissingJavadocType/MissingJavadocMethod already own "what needs Javadoc",
          with a deliberately chosen scope (config/checkstyle/checkstyle.xml). -->
     <exclude name="CommentRequired"/>
-    <!-- Default limit is 80 cols; the repo's Google Java Format wraps Javadoc at 100. -->
-    <exclude name="CommentSize"/>
-    <!-- Context-load smoke tests (@SpringBootTest) have an intentionally empty body. -->
-    <exclude name="UncommentedEmptyMethodBody"/>
   </rule>
   <rule ref="category/java/documentation.xml/CommentSize">
     <properties>
@@ -132,14 +91,6 @@
   </rule>
   <rule ref="category/java/multithreading.xml">
     <exclude name="DoNotUseThreads"/>
-  </rule>
-  <rule ref="category/java/multithreading.xml/DoNotUseThreads">
-    <properties>
-      <!-- Test classes and test-support bases: a test must be able to ask which thread a piece of code ran on, and
-           the end-to-end harness (T-041) must set the context class loader under which it starts apps/admin. -->
-      <property name="violationSuppressXPath"
-                value="./ancestor-or-self::ClassDeclaration[ends-with(@SimpleName, 'Test') or ends-with(@SimpleName, 'TestSupport')]"/>
-    </properties>
   </rule>
   <rule ref="category/java/performance.xml"/>
   <rule ref="category/java/security.xml"/>

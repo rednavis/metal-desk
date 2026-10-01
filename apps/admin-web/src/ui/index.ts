@@ -12,4 +12,4 @@ export { Layout } from "./Layout";
 export { Pagination } from "./Pagination";
 export { Spinner } from "./Spinner";
 export { ThemeSwitcher } from "./ThemeSwitcher";
-export { BoxIcon, OverviewIcon, QuoteIcon, TruckIcon } from "./icons";
+export { BoxIcon, OverviewIcon, QuoteIcon, TrashIcon, TruckIcon } from "./icons";

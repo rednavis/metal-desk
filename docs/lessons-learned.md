@@ -91,3 +91,5 @@ not a substitute for writing it.
 
 See also: [Architecture](architecture.md) · [Modernization Plan](modernization-plan.md) ·
 [Business Requirements](business-requirements.md) · [ADRs](adr/)
+
+<!-- T-065 demonstration: a change touching only docs/ (not merged). -->

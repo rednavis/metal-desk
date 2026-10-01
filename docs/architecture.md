@@ -323,7 +323,7 @@ services cannot share a classpath, and called over HTTP.
 | Secrets | Secret Manager | Injected as Cloud Run environment variables at deploy time — never baked into an image or committed to source. |
 | CI → CD auth | Workload Identity Federation from GitHub Actions | No long-lived service-account JSON keys in CI. |
 | Observability | Cloud Logging + Cloud Trace, Spring Actuator on `/actuator` | |
-| IaC | Terraform, GCS backend, versioned state bucket per environment | |
+| IaC | Terraform, GCS backend, versioned state bucket per environment | Layout, naming and the state-bucket bootstrap: [`infra/README.md`](https://github.com/rednavis/metal-desk/blob/master/infra/README.md). `dev`, `staging` and `prod` are thin roots under `infra/terraform/envs/`; logic lives in `infra/terraform/modules/`. |
 
 **Who signs in where.** `web` is for customers only and `admin-web` for staff only. `services/api` signs in
 customers (`customers` + `credentials`) and issues a token for audience `metal-desk-storefront`; `apps/admin` signs in

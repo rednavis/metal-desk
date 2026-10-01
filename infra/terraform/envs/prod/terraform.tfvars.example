@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Nothing here is secret: a project id is an identifier, not a
+# credential. Authenticate with your own gcloud credentials (gcloud auth application-default login), never a key file.
+project_id = "metaldesk-prod-000000" # replace with the real project id
+region     = "europe-west3"

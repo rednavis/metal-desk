@@ -80,7 +80,7 @@ metal-desk/
 │   ├── admin/                # staff back office API (Spring Boot, no server-rendered UI)
 │   ├── admin-web/            # staff-facing SPA (pnpm workspace) — see ADR-0005
 │   └── web/                  # customer-facing SPA (pnpm workspace)
-├── infra/gcp/                # Terraform
+├── infra/terraform/          # Terraform for GCP: envs/{dev,staging,prod}, modules/, bootstrap/ — see infra/README.md
 ├── docs/                     # this documentation site
 └── build-logic/              # Gradle convention plugins
 ```

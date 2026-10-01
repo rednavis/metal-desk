@@ -27,8 +27,14 @@ test("high and critical block; medium, low and unscored are only reported", () =
       ),
     ),
   );
-  assert.deepEqual(blocking.map((r) => r.name), ["critical", "high"]);
-  assert.deepEqual(reported.map((r) => r.name), ["medium", "low", "unscored"]);
+  assert.deepEqual(
+    blocking.map((r) => r.name),
+    ["critical", "high"],
+  );
+  assert.deepEqual(
+    reported.map((r) => r.name),
+    ["medium", "low", "unscored"],
+  );
 });
 
 test("an empty report passes", () => {
@@ -44,7 +50,10 @@ test("a suppression with a reason and a near expiry is valid", () => {
 });
 
 test("a suppression without a reason or without an expiry is rejected", () => {
-  assert.match(suppressionProblems(entry('id = "GHSA-1"\nignoreUntil = 2026-11-01'), today)[0], /reason/);
+  assert.match(
+    suppressionProblems(entry('id = "GHSA-1"\nignoreUntil = 2026-11-01'), today)[0],
+    /reason/,
+  );
   assert.match(suppressionProblems(entry('id = "GHSA-1"\nreason = "x"'), today)[0], /ignoreUntil/);
 });
 

@@ -32,19 +32,27 @@ repositories.
 ## Build commands
 
 - Backend: `./gradlew build` (or `./gradlew clean build` for a full verification pass) — runs
-  Spotless, Checkstyle, SpotBugs, tests, and Jacoco for all 7 JVM modules via the `metaldesk.quality-conventions`
+  Spotless, Checkstyle, SpotBugs, PMD, tests, and Jacoco for all 7 JVM modules via the `metaldesk.quality-conventions`
   convention plugin.
   `./gradlew projects` lists **10** projects, not 7 — `:apps`, `:libs`, `:services` are empty
   container projects with no build file. That is not a misconfiguration.
+- `gradle.properties` turns on the build cache, parallel execution and the **configuration cache**. A task
+  action must not capture the script object (e.g. a `doFirst { }` reading a configuration) — pass values
+  through a provider or a `CommandLineArgumentProvider` (see `services/api/build.gradle.kts`). Bypass with
+  `--no-build-cache` / `--no-configuration-cache`. Root plugins add `dependencyUpdates` (ben-manes) and
+  `cyclonedxBom` (the SBOM CI's dependency scan reads).
 - Fix formatting: `./gradlew spotlessApply` for Java, `pnpm run format` for TS/React. There is no
   single command — a full pass is both. Prettier deliberately skips `*.md` and `docs/`
   (`.prettierignore`), so `pnpm run format` will not touch documentation.
 - Frontend: `pnpm install` then `pnpm -r run build` (root scripts: `build`, `typecheck`, `lint`,
-  `lint:fix`, `format`, `format:check`, `test`; `pnpm run test` runs each app's Vitest suite, which includes a
+  `lint:fix`, `format`, `format:check`, `test`; `pnpm run test` runs each app's Vitest suite once (`vitest run`; `pnpm --filter <app> test` is watch mode), which includes a
   contract test that reads the Java DTOs — run it from the repo root, as it reads paths relative to it). ESLint config is a single root `eslint.config.mjs` covering
   both `apps/web/src` and `apps/admin-web/src` (it also bans literal strings in rendered positions in `apps/web`'s
-  `.tsx`, `react/jsx-no-literals`: user-facing text is an i18n key) — don't add a per-app config, and don't run `eslint`
+  `.tsx`, `react/jsx-no-literals`: user-facing text is an i18n key; `*.test.tsx` is exempt) — don't add a per-app config, and don't run `eslint`
   from inside an app directory (flat config resolution is root-scoped here; always run from repo root).
+- `.github/scripts/*.mjs` (CI's affected-module filter and OSV gate; Node standard library only) are tested with
+  `node --test .github/scripts/` from the repo root, and **Prettier covers them** — `format:check` fails CI if
+  they are not formatted, so run `pnpm run format` after editing them.
 - Run a service: `./gradlew :apps:admin:bootRun` / `:services:api:bootRun` / `:services:pricing-bridge:bootRun`.
   **Don't pass multiple `bootRun` targets to one Gradle invocation** — `bootRun` is long-running and
   blocks, so the second task never starts. Launch each as a separate background process instead.
@@ -66,7 +74,7 @@ repositories.
 - PMD runs every Java category ruleset (`config/pmd/pmd-ruleset.xml`) with `ignoreFailures = false`;
   the few rules that contradict Checkstyle/Google Java Format/Lombok are `<exclude>`d there with a
   reason. Relax rules there, not with `@SuppressWarnings("PMD.*")` annotations in Java files.
-- **Architecture rule (ArchUnit).** `DomainBoundaryTest` fails the build if a class is declared in
+- **Architecture rule (ArchUnit).** `DomainBoundaryTest` (rules and the reserved-name list in `DomainBoundaryRules`) fails the build if a class is declared in
   `com.rednavis.metaldesk.share.domain..` outside `libs/share`, if the domain depends on Spring or another
   module, or if a class named `Order`, `Customer`, `Product`, `OrderLine`, `PaymentRecord`,
   `FulfillmentTier` or `DeliveryQuote` exists outside `libs/share`. It lives once in `libs/share`'s tests and
@@ -80,8 +88,15 @@ repositories.
   the reactive Mongo driver on its classpath (`AdminClasspathTest`); its `RestTestClient`, not `WebTestClient`. On OrbStack, if Testcontainers can't find Docker, export
   `DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock` and
   `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock`.
-- **CI does not build the code.** `.github/workflows/ci.yml` runs only a Jekyll docs build and a
-  TruffleHog secret scan. A local `./gradlew build` / `pnpm -r run build` is the only real gate.
+- **CI builds the code, path-filtered.** `.github/workflows/ci.yml` runs `:<module>:build` for each affected JVM
+  module, the frontend build/typecheck/lint/format/test, a Jekyll docs build, a TruffleHog secret scan and a
+  dependency scan (OSV-Scanner, fails on CVSS ≥ 7.0). Skipped conditional jobs are covered by the aggregating
+  `JVM build` and `Frontend build result` checks (see `.github/workflows/README.md`). The required checks on
+  `master` are `JVM build`, `Frontend build result`, `Scan for committed secrets` and `Scan dependencies` —
+  never the per-module `JVM build :<module>` matrix names. Still run `./gradlew build` / `pnpm -r run build`
+  locally before pushing.
+- An unfixable advisory is suppressed in `osv-scanner.toml` only with both `reason` and `ignoreUntil` (at most
+  90 days out); otherwise `osv-gate.mjs` fails the job. Never suppress just to get a green build.
 
 ## Versions and conventions
 
@@ -114,6 +129,10 @@ Checkstyle's formatting rules are kept in sync with Spotless's `googleJavaFormat
 - Fix forward, not backward, when unifying a dependency version (see `docs/lessons-learned.md`).
 - One PR per Modernization Plan phase; reference the phase or ADR a change implements.
 - Keep `docs/architecture.md` in sync in the same PR as the code change it describes.
+- Task specs are `tasks/T-xxx-*.md`; update that task's row in the `tasks/README.md` ledger in the same PR.
+  If a spec and `docs/` disagree, `docs/` wins.
+- Legacy repos added with `--add-dir` (e.g. dealboard) are behavioural reference only — never copy their code,
+  data or configuration (the IP belongs to a former client; see `CONTRIBUTING.md`).
 - `docs/` is a Jekyll site (`remote_theme: just-the-docs`) — new pages need front matter (`title`,
   `nav_order`, `parent` if nested under ADRs).
 

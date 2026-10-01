@@ -69,6 +69,13 @@ for the JVM modules, `pnpm run lint` / `pnpm run format:check` cover the fronten
   no class components. One frontend stack for both `apps/web` and `apps/admin-web` — see
   [ADR-0005](docs/adr/0005-consolidated-react-frontend.md).
 
+## What "CI green" means
+
+The required checks on `master` are `JVM build`, `Frontend build result`, `Scan for committed secrets` and
+`Scan dependencies`. A check reported as *skipped* inside them is fine — it means the change did not touch that
+part of the repository (see [`.github/workflows/README.md`](.github/workflows/README.md)). Run `./gradlew build`
+and `pnpm -r run build` locally first; CI runs the same gates.
+
 ## Commit and PR conventions
 
 - One logical change per commit; write the commit message for someone reading `git log`, not for

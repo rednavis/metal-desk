@@ -32,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Self-test the filter
-        run: node --test .github/scripts/
+        run: node --test ".github/scripts/*.test.mjs"
       - name: Compute affected modules
         id: affected
         env:

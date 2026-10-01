@@ -19,7 +19,7 @@ step), driven by [`path-filters.yml`](../path-filters.yml). The same script runs
 ```
 node .github/scripts/affected.mjs <base-sha> HEAD     # what would a PR against <base-sha> affect?
 node .github/scripts/affected.mjs --all               # what a push to master does
-node --test .github/scripts/                          # the assertions; the job runs these first
+node --test ".github/scripts/*.test.mjs"                         # the assertions; the job runs these first
 ```
 
 ### Outputs

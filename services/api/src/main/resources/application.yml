@@ -5,9 +5,9 @@ spring:
   application:
     name: metal-api
   mongodb:
-    # A local instance by default; a deployment supplies its own through MONGODB_URI. No credential
+    # The local docker compose database (compose.yaml, throwaway admin/admin); a deployment supplies its own through MONGODB_URI. No real credential
     # belongs in this file (ADR-0002).
-    uri: ${MONGODB_URI:mongodb://localhost:27017/metaldesk}
+    uri: ${MONGODB_URI:mongodb://admin:admin@localhost:27017/metaldesk?authSource=admin}
   data:
     mongodb:
       # Indexes are declared on the documents; this is what makes the driver create them. An Atlas

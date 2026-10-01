@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: "26"
       - name: Self-test the filter
-        run: node --test ".github/scripts/*.test.mjs"
+        run: node --test .github/scripts/
       - name: Compute affected modules
         id: affected
         env:

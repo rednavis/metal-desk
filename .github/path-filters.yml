@@ -1,0 +1,49 @@
+# Path filters for the `changes` job in workflows/ci.yml, read by scripts/affected.mjs.
+#
+# Only two glob forms are understood: an exact path, or a directory prefix ending in `/**`.
+# The script rejects anything else, so a typo fails loudly instead of silently matching nothing.
+#
+# Per-module filters are NOT listed here. A JVM module's own directory (`libs/share/**`, ...) and
+# its reverse-dependency closure are derived from settings.gradle.kts and each module's
+# build.gradle.kts — see workflows/README.md.
+
+# Files that change every JVM module's build behaviour. Any hit marks all JVM modules affected.
+jvm-shared:
+  - "gradle/**"
+  - "settings.gradle.kts"
+  - "build.gradle.kts"
+  - "gradle.properties"
+  - "gradlew"
+  - "gradlew.bat"
+  - "build-logic/**"
+  - "config/checkstyle/**"
+  - "config/spotbugs/**"
+  - "config/pmd/**"
+  - ".github/workflows/**"
+  - ".github/path-filters.yml"
+  - ".github/scripts/**"
+
+# Frontend sources and the root files that configure both apps. None of these affect a JVM module.
+frontend:
+  - "apps/web/**"
+  - "apps/admin-web/**"
+  - "package.json"
+  - "pnpm-lock.yaml"
+  - "pnpm-workspace.yaml"
+  - "eslint.config.mjs"
+  - ".prettierrc.json"
+  - ".prettierignore"
+  - ".github/workflows/**"
+  - ".github/path-filters.yml"
+  - ".github/scripts/**"
+
+# The frontend contract tests (apps/*/src/api/contract.test.ts) read these Java sources to prove the
+# TypeScript DTO mirrors match them, so a change here can break the frontend test run.
+frontend-contract:
+  - "libs/share/src/main/java/**"
+  - "services/api/src/main/java/**"
+  - "apps/admin/src/main/java/**"
+
+# Documentation. The `docs` job itself is not gated on this; it is reported for completeness.
+docs:
+  - "docs/**"

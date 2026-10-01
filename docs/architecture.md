@@ -345,6 +345,14 @@ apps/admin-web         ← pnpm workspace — see ADR-0005
 apps/web               ← pnpm workspace, kept separate from the JVM build graph
 ```
 
+**How CI derives affected modules.** The `changes` job in `.github/workflows/ci.yml` diffs a pull request
+against its base and marks a JVM module affected when its directory changed or anything it depends on did. The
+module graph is read from `settings.gradle.kts` and each module's `project(":…")` references, never maintained
+by hand; `libs/share` therefore affects every module. Changes to the version catalog, `build-logic/`, the
+Checkstyle/SpotBugs/PMD config or the workflows affect all JVM modules; frontend-only files affect the
+frontend and no JVM module. A push to `master` builds everything. Details:
+[`.github/workflows/README.md`](https://github.com/rednavis/metal-desk/blob/master/.github/workflows/README.md).
+
 An architectural rule enforces the domain-model boundary in the build, not just in a code review comment:
 no type outside `libs/share` may declare a class in the shared domain package — see
 [Lessons Learned](lessons-learned.md) for why that rule exists at all.

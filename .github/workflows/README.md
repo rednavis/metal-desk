@@ -1,10 +1,12 @@
 # CI workflows
 
-`ci.yml` is the only workflow. Three jobs:
+`ci.yml` is the only workflow. Jobs:
 
 | Job | Runs | What it does |
 |---|---|---|
 | `changes` | every push to `master` and every pull request | Decides which parts of the repository the change affects and exposes that as job outputs. Build jobs added by `T-061` (JVM) and `T-062` (frontend) read these with `needs: changes`; none of them re-implements path matching. |
+| `jvm-build` | every PR/push that affects a JVM module | One matrix entry per affected module, running `./gradlew :<module>:build` (Spotless, Checkstyle, SpotBugs, PMD, tests with Testcontainers, Jacoco). **Skipped** when no JVM module is affected. |
+| `JVM build` (`jvm-build-result`) | always | The one check name to require in branch protection (`T-065`). Passes when `jvm-build` succeeded **or was skipped**; fails if `changes` or any module failed. |
 | `docs` | every pull request and push | Builds the Jekyll site in `docs/` to catch config and front-matter errors. **Deliberately not path-filtered** — see below. |
 | `secrets-scan` | every pull request and push | TruffleHog filesystem scan. **Never path-filtered**: a secret can be committed in any file. |
 
@@ -19,7 +21,7 @@ step; the job pins Node 26 with `actions/setup-node`, matching local development
 ```
 node .github/scripts/affected.mjs <base-sha> HEAD     # what would a PR against <base-sha> affect?
 node .github/scripts/affected.mjs --all               # what a push to master does
-node --test .github/scripts/                          # the assertions; the job runs these first
+node --test .github/scripts/                         # the assertions; the job runs these first
 ```
 
 ### Outputs
@@ -80,3 +82,28 @@ To update after adding a module: add it to `settings.gradle.kts` and the `output
 run on every PR. The workflow is the authority, so `CONTRIBUTING.md` was corrected rather than the job
 filtered: a Jekyll build is cheap, and gating it would change the `docs` job's behaviour, which this task
 leaves alone.
+
+## The `jvm-build` job
+
+- **Empty matrix = skipped, not failed.** On a frontend-only or docs-only change `jvm-build` does not
+  run, and GitHub reports it as skipped. Matrix jobs are named per module and that set changes with
+  every PR, so branch protection should require the aggregate **`JVM build`** job instead: it always
+  runs, and it is the check that is green for "built OK" and for "nothing to build", red otherwise.
+- **`:<module>:build`, never the root `build`.** The root build would rebuild every module and make
+  the matrix decorative.
+- **Dependencies are built too, and that is correct.** `:services:api:build` compiles `libs:share`,
+  `libs:payments`, ... because Gradle must build a module's upstreams. The filter spares
+  *unaffected* modules, not dependencies — seeing `libs:share` in the `services:api` log does not
+  mean the filter is broken.
+- **Java version** is read from `java = "..."` in `gradle/libs.versions.toml`, the same row
+  `metaldesk.java-conventions` uses for the toolchain (ADR-0004). There is no second copy to keep in
+  step.
+- **Wrapper** is validated by `gradle/actions/wrapper-validation`. `gradle-wrapper.properties` carries
+  no `distributionSha256Sum`; adding one is a separate change.
+- **Docker** is provided by the `ubuntu-latest` runner, which Testcontainers (`SharedMongo`) uses; no
+  `DOCKER_HOST` override is needed there.
+- **Reports** (`**/build/reports/`, `**/build/test-results/`) are uploaded as `reports-<n>` artifacts
+  on failure only.
+- **Permissions** are `contents: read`; there are no secrets or credentials in the workflow.
+- **Concurrency:** a superseded run of the same pull request is cancelled; a `master` run never is.
+- No build cache yet — runs are slow until `T-063`.

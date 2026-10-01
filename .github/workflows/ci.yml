@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# A superseded run of the same pull request is cancelled; a master run never is, because it is the
+# only signal that master is broken.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Decides which parts of the repository a change affects. Build jobs (T-061, T-062) consume its
   # outputs with `needs: changes`; none of them re-implements path matching. See workflows/README.md.
@@ -28,7 +34,7 @@ jobs:
       frontend: ${{ steps.affected.outputs.frontend }}
       docs: ${{ steps.affected.outputs.docs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
@@ -47,6 +53,71 @@ jobs:
           else
             node .github/scripts/affected.mjs --all
           fi
+
+  # One job per affected JVM module, driven by the `changes` job. Runs `:<module>:build` — Spotless,
+  # Checkstyle, SpotBugs, PMD, tests (Testcontainers, so Docker on the runner) and Jacoco. Building a
+  # module also builds the modules it depends on; that is expected, the filter only spares modules
+  # that are *unaffected*. When no JVM module is affected the job is skipped, not failed.
+  jvm-build:
+    name: JVM build ${{ matrix.module }}
+    needs: changes
+    if: needs.changes.outputs.jvm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.changes.outputs.jvm-modules) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate the Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      # The Java version is read from the version catalog, which metaldesk.java-conventions uses for
+      # the toolchain (ADR-0004), so a Java upgrade edits one file and CI follows.
+      - name: Read the Java version from the catalog
+        id: java
+        run: |
+          version=$(sed -n 's/^java = "\([0-9][0-9]*\)"$/\1/p' gradle/libs.versions.toml)
+          test -n "$version" || { echo "no java version in gradle/libs.versions.toml" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+      - name: Build ${{ matrix.module }}
+        env:
+          MODULE: ${{ matrix.module }}
+        run: ./gradlew --console=plain "$MODULE:build"
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ strategy.job-index }}
+          path: |
+            **/build/reports/
+            **/build/test-results/
+          retention-days: 7
+
+  # The single, stable check name for branch protection (T-065). A matrix job is named per module and
+  # is skipped entirely on a frontend-only change, so requiring it directly would either track a
+  # changing set of names or block those pull requests. This job always runs and passes when the
+  # build succeeded or was legitimately skipped, and fails if `changes` or any module failed.
+  jvm-build-result:
+    name: JVM build
+    needs: [changes, jvm-build]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check the JVM build outcome
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          BUILD: ${{ needs.jvm-build.result }}
+        run: |
+          echo "changes=$CHANGES jvm-build=$BUILD"
+          [ "$CHANGES" = success ] && { [ "$BUILD" = success ] || [ "$BUILD" = skipped ]; }
 
   docs:
     name: Build docs site

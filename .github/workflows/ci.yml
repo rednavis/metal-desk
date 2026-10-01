@@ -13,7 +13,7 @@ jobs:
     name: Build docs site
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build Jekyll site
         uses: actions/jekyll-build-pages@v1
         with:
@@ -24,7 +24,7 @@ jobs:
     name: Scan for committed secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: TruffleHog OSS filesystem scan
         uses: trufflesecurity/trufflehog@main
         with:

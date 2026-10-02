@@ -10,3 +10,6 @@ pnpm-lock.yaml
 # CONTRIBUTING.md scopes Prettier to TypeScript/React only — leave Markdown/docs untouched.
 *.md
 docs
+
+# Generated slide decks (self-contained HTML with embedded images) and their PDF exports.
+presentation

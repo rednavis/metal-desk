@@ -189,7 +189,7 @@ A product without a derivable price, or whose stock status is `ON_REQUEST`, has 
 price field. Only an `IN_STOCK` priced product can be put in a cart or bought now: an `OUT_OF_STOCK` one shows its price but
 is refused with `cart.product-out-of-stock`, a stock-`ON_REQUEST` one with `cart.product-unpriced`. A cart belongs to a
 customer through `CartDocument.ownerId` (one per customer; an anonymous cart is adopted or merged at sign-in; an anonymous request never opens a customer's cart,
-and a manager handoff deletes the cart the order was made from). An order awaiting payment is paid from the order itself:
+and a manager handoff, and a payment that is captured, pending or invoiced, delete the cart the order was made from; a declined or failed one keeps it). An order awaiting payment is paid from the order itself:
 `POST /api/orders/{number}/payment-session` starts a checkout session around that order (its lines, address and quote, a
 payment state bound to it), so the ordinary payment path charges the same order at the total it carries; a customer without
 a phone number is asked to add one (`order.payment-details-missing`). An invoice payment stays `PENDING` and the order

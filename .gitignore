@@ -42,3 +42,4 @@ CLAUDE.local.md
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+coverage/

@@ -3,7 +3,10 @@ package com.rednavis.metaldesk.api.checkout.payment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.rednavis.metaldesk.api.cart.CartStore;
+import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
 import com.rednavis.metaldesk.api.checkout.payment.dto.PaymentResultView;
 import com.rednavis.metaldesk.payments.provider.DeclineReason;
 import com.rednavis.metaldesk.payments.provider.PaymentOutcome;
@@ -30,6 +33,8 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
 
   @Autowired private PaymentOutcomeHandler handler;
   @Autowired private PaymentOrders orders;
+  @Autowired private CartStore carts;
+  @Autowired private CheckoutSessionStore sessions;
 
   private String checkout;
   private Order order;
@@ -54,6 +59,15 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
     return orders.find(order.id()).block();
   }
 
+  private boolean cartExists() {
+    return Boolean.TRUE.equals(
+        sessions
+            .find(checkout)
+            .flatMap(session -> carts.find(session.cart().orElseThrow().value()))
+            .hasElement()
+            .block());
+  }
+
   private static ProviderReference reference() {
     return new ProviderReference("ref-1");
   }
@@ -65,6 +79,7 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
     assertEquals("CAPTURED", view.result());
     assertEquals(OrderStatus.PAID, stored().status());
     assertEquals(PaymentStatus.CAPTURED, stored().payment().orElseThrow().status());
+    assertFalse(cartExists());
   }
 
   @Test
@@ -75,6 +90,7 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
 
     assertEquals("REDIRECT", view.result());
     assertEquals("https://pay.example/x", view.redirectUrl());
+    assertFalse(cartExists());
     assertEquals(OrderStatus.AWAITING_PAYMENT, stored().status());
     assertEquals(PaymentStatus.PENDING, stored().payment().orElseThrow().status());
   }
@@ -97,6 +113,7 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
 
     assertEquals("DOCUMENT_ISSUED", view.result());
     assertEquals("ref-1", view.invoiceReference());
+    assertFalse(cartExists());
     assertEquals(OrderStatus.AWAITING_PAYMENT, stored().status());
     assertEquals(PaymentStatus.PENDING, stored().payment().orElseThrow().status());
   }
@@ -109,6 +126,7 @@ class PaymentOutcomeHandlerTest extends PaymentTestSupport {
     assertEquals("DECLINED", view.result());
     assertEquals("RISK_BLOCKED", view.declineReason());
     assertNotNull(view.message());
+    assertTrue(cartExists());
     assertEquals(OrderStatus.AWAITING_PAYMENT, stored().status());
   }
 

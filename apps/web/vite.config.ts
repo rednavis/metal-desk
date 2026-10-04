@@ -14,6 +14,14 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // Coverage floor: `test:run` fails below 80%. Raise tests, never lower these numbers.
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/**/*.d.ts"],
+      reporter: ["text-summary", "html"],
+      thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },
+    },
     // Above the 5 s asyncUtilTimeout in src/test/setup.ts, so a slow wait reports its own error, not a timeout.
     testTimeout: 15_000,
   },

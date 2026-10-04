@@ -102,8 +102,14 @@ need `.github/scripts/affected.mjs` changed first.
   `FulfillmentTier` or `DeliveryQuote` exists outside `libs/share`. It lives once in `libs/share`'s tests and
   `metaldesk.quality-conventions` compiles it into every module's tests — don't add a per-module copy, and a
   new module gets it for free. The domain model belongs in `libs/share`; reuse it, never copy it.
-- Jacoco produces reports but **no** coverage threshold is wired (`jacocoTestCoverageVerification`
-  is never invoked). Coverage can be 0% and `build` still passes.
+- **Coverage floor is 80%, always.** `jacocoTestCoverageVerification` is wired into `check` in
+  `metaldesk.quality-conventions`: every JVM module must cover at least 80% of lines **and** branches or `build` fails.
+  Frontend: `test:run` runs `vitest run --coverage` with 80% thresholds (lines, statements, functions, branches) in each
+  app's `vite.config.ts`. Never lower a threshold or exclude code to pass; add tests. New code ships with its tests.
+  Branches are the usual gap (record compact-constructor validation, `null`/blank checks): test each refusal.
+  Test-code lint is as strict as main: method names may not start with a one-letter word (`aKey…`, `anId…`) or hold two
+  adjacent capitals (`…AByte…`), no `throws Exception`, no `var`, no `= null` assignments, no objects created in loops,
+  no repeated string literals (use constants), at most 4 static imports.
 - `services:api` and `apps:admin` tests run against a real MongoDB through Testcontainers, so `./gradlew build`
   needs a running Docker daemon. Every Mongo test goes through `SharedMongo` (`libs:persistence` test fixtures),
   which shares one container per JVM — don't start a container per class. `apps:admin` must never have WebFlux or

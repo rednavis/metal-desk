@@ -174,3 +174,124 @@
     transform: none;
   }
 }
+
+/* Product page: spec beside a sticky buy box on wide screens; buy box first, full width, on phones. */
+.md-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.md-breadcrumb a {
+  color: inherit;
+}
+
+.md-product-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+  grid-template-areas:
+    "head buy"
+    "spec buy";
+  gap: 0.5rem 2rem;
+  align-items: start;
+}
+
+.md-product-page__head {
+  grid-area: head;
+}
+
+.md-product-page__head h1 {
+  margin: 0.25rem 0 0;
+}
+
+.md-product-page__metal {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.md-product-page__spec {
+  grid-area: spec;
+}
+
+.md-buybox {
+  position: sticky;
+  top: 1rem;
+  grid-area: buy;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 8%));
+}
+
+.md-buybox p {
+  margin: 0;
+}
+
+.md-buybox__price {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-buybox__tax {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.md-buybox .md-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.md-buybox .md-actions .md-button {
+  width: 100%;
+  min-height: 3rem;
+}
+
+.md-buybox__ask {
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+@media (max-width: 52rem) {
+  .md-product-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "buy"
+      "spec";
+    gap: 1rem;
+  }
+
+  .md-buybox {
+    position: static;
+    padding: 1.25rem;
+  }
+
+  .md-buybox__price {
+    font-size: 1.75rem;
+  }
+
+  .md-spec {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+
+  .md-spec dd {
+    margin-bottom: 0.625rem;
+  }
+}

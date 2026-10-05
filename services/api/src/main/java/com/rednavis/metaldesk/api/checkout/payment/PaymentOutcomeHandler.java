@@ -1,5 +1,6 @@
 package com.rednavis.metaldesk.api.checkout.payment;
 
+import com.rednavis.metaldesk.api.cart.CartStore;
 import com.rednavis.metaldesk.api.checkout.CheckoutSession;
 import com.rednavis.metaldesk.api.checkout.CheckoutSessionStore;
 import com.rednavis.metaldesk.api.checkout.payment.dto.PaymentResultView;
@@ -50,6 +51,7 @@ public class PaymentOutcomeHandler {
   private final PaymentOrders orders;
   private final CheckoutSessionStore store;
   private final OrderSettlement settlement;
+  private final CartStore carts;
   private final Clock clock;
 
   /**
@@ -166,7 +168,9 @@ public class PaymentOutcomeHandler {
             .flatMap(
                 paid ->
                     phase(checkoutId, PaymentPhase.PAID, Optional.empty())
-                        .flatMap(session -> settlement.paid(paid, localeOf(session)))
+                        .flatMap(
+                            session ->
+                                removeCart(session).then(settlement.paid(paid, localeOf(session))))
                         .thenReturn(PaymentResults.of(paid, "CAPTURED", null, null, null)));
   }
 
@@ -183,7 +187,7 @@ public class PaymentOutcomeHandler {
                 PaymentResults.record(order, providerId, method, PaymentStatus.PENDING, reference),
                 clock.instant()))
         .then(phase(checkoutId, PaymentPhase.PENDING_CONFIRMATION, Optional.of(reference)))
-        .then();
+        .flatMap(this::removeCart);
   }
 
   private Mono<PaymentResultView> invoiced(
@@ -201,7 +205,10 @@ public class PaymentOutcomeHandler {
         .flatMap(
             saved ->
                 phase(checkoutId, PaymentPhase.INVOICE_ISSUED, Optional.of(reference))
-                    .flatMap(session -> settlement.invoiceIssued(saved, localeOf(session)))
+                    .flatMap(
+                        session ->
+                            removeCart(session)
+                                .then(settlement.invoiceIssued(saved, localeOf(session))))
                     .thenReturn(
                         PaymentResults.of(
                             saved, "DOCUMENT_ISSUED", null, null, reference.value())));
@@ -222,6 +229,21 @@ public class PaymentOutcomeHandler {
         .failed(order)
         .then(phase(checkoutId, PaymentPhase.ORDER_CREATED, Optional.empty()))
         .then();
+  }
+
+  /**
+   * Removes the cart the order was made from, once the payment has gone through or is under way:
+   * the order owns those lines now, and the customer's next add starts a fresh cart. A declined or
+   * failed payment keeps the cart. A cart that cannot be removed is logged and left, since the
+   * payment already happened and must not fail for it.
+   */
+  private Mono<Void> removeCart(CheckoutSession session) {
+    return session
+        .cart()
+        .map(cart -> carts.delete(cart.value()))
+        .orElseGet(Mono::empty)
+        .doOnError(failure -> log.warn("Could not remove the cart after a payment", failure))
+        .onErrorResume(failure -> Mono.empty());
   }
 
   private Mono<CheckoutSession> phase(

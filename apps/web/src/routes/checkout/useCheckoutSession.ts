@@ -101,6 +101,8 @@ export function useCheckoutSession(checkoutId: string) {
       });
       return { outcome: toOutcome(view), correlationId };
     },
+    // A payment that went through or is under way consumed the cart on the server; the badge must follow.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cart"] }),
     onError: () => queryClient.invalidateQueries({ queryKey: [...prefix(checkoutId), "overview"] }),
   });
 

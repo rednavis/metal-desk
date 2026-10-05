@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run --coverage"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",

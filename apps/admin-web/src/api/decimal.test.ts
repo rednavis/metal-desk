@@ -28,3 +28,25 @@ describe("exact decimals", () => {
     expect(isPositiveDecimal("-1")).toBe(false);
   });
 });
+
+describe("decimal edge cases", () => {
+  it("rejects text that is not a decimal and throws when asked to compute with it", () => {
+    expect(isDecimal("1e3")).toBe(false);
+    expect(isDecimal("")).toBe(false);
+    expect(isPositiveDecimal("abc")).toBe(false);
+    expect(isPositiveDecimal("0.00")).toBe(false);
+    expect(() => compareDecimals("x", "1")).toThrow("Not a decimal: x");
+    expect(() => compareDecimals("1", "y")).toThrow("Not a decimal: y");
+    expect(() => addDecimals("1", "nope")).toThrow("Not a decimal: nope");
+  });
+
+  it("compares across scales and sums negatives and whole numbers exactly", () => {
+    expect(compareDecimals("1.5", "1.50")).toBe(0);
+    expect(compareDecimals("-1", "0.1")).toBe(-1);
+    expect(compareDecimals("2", "1.999")).toBe(1);
+    expect(addDecimals("1", "2")).toBe("3");
+    expect(addDecimals("-1.25", "0.25")).toBe("-1.00");
+    expect(addDecimals("0.05", "0.01")).toBe("0.06");
+    expect(addDecimals()).toBe("0");
+  });
+});

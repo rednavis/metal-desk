@@ -7,6 +7,7 @@ import com.rednavis.metaldesk.migrations.changes.C001CreateUsers;
 import com.rednavis.metaldesk.migrations.changes.C002SeedCategories;
 import com.rednavis.metaldesk.migrations.changes.C003SeedProducts;
 import com.rednavis.metaldesk.migrations.changes.C004SeedPriceRules;
+import com.rednavis.metaldesk.migrations.changes.C005SeedMoreProducts;
 import io.mongock.driver.mongodb.sync.v4.driver.MongoSync4Driver;
 import io.mongock.runner.standalone.MongockStandalone;
 import io.mongock.runner.standalone.RunnerStandaloneBuilder;
@@ -30,7 +31,8 @@ public final class MongoMigrations {
           C001CreateUsers.class,
           C002SeedCategories.class,
           C003SeedProducts.class,
-          C004SeedPriceRules.class);
+          C004SeedPriceRules.class,
+          C005SeedMoreProducts.class);
 
   private MongoMigrations() {}
 

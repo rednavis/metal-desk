@@ -127,6 +127,22 @@ describe("the product page", () => {
     expect(screen.getByText(/Investment-grade metal, tax rate/)).toBeInTheDocument();
   });
 
+  it("puts the price, tax and purchase actions together in the buy box, under a breadcrumb", async () => {
+    const shop = createShop({ products: [BAR] });
+    renderApp({ path: "/catalog/products/p1", fetchImpl: shop.fetchImpl });
+
+    await screen.findByRole("heading", { name: "Gold Bar 100 g" });
+    const box = within(screen.getByRole("complementary", { name: "Buy this product" }));
+
+    expect(box.getByTestId("price")).toHaveTextContent("6,300.00");
+    expect(box.getByText(/Investment-grade metal, tax rate/)).toBeInTheDocument();
+    expect(box.getByText("In stock")).toBeInTheDocument();
+    expect(box.getByRole("button", { name: /Add to cart/ })).toBeInTheDocument();
+    expect(box.getByRole("link", { name: "Ask us about this product" })).toBeInTheDocument();
+    const crumbs = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+    expect(crumbs.getByRole("link", { name: "Catalog" })).toHaveAttribute("href", "/catalog");
+  });
+
   it("never shows more related products than the cap", async () => {
     const related = Array.from({ length: RELATED_CAP + 5 }, (_, i) => ({
       id: `r${String(i)}`,

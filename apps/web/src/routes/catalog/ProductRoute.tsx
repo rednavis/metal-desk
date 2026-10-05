@@ -20,62 +20,69 @@ export function ProductRoute() {
   const detail = product.data;
   return (
     <>
-      <p>
+      <nav aria-label={t("product.breadcrumb")} className="md-breadcrumb">
+        <Link to="/catalog">{t("product.breadcrumb.catalog")}</Link>
+        <span aria-hidden="true">{"/"}</span>
         <Link to={`/catalog/categories/${encodeURIComponent(detail.categoryId)}`}>
           {detail.categoryName}
         </Link>
-      </p>
-      <h1>{detail.name}</h1>
-      <section aria-labelledby="spec-heading">
-        <h2 id="spec-heading">{t("product.spec.title")}</h2>
-        <dl className="md-spec">
-          <dt>{t("product.spec.metal")}</dt>
-          <dd>{t(`metal.${detail.metal}`)}</dd>
-          <dt>{t("product.spec.purity")}</dt>
-          <dd>{detail.purity}</dd>
-          <dt>{t("product.spec.weight")}</dt>
-          <dd>
-            {t(`product.weight.${detail.weight.unit}`, {
-              amount: format.number(Number(detail.weight.amount)),
-            })}
-          </dd>
-          {detail.dimensions ? (
-            <>
-              <dt>{t("product.spec.dimensions")}</dt>
-              <dd>{detail.dimensions}</dd>
-            </>
-          ) : null}
-          <dt>{t("product.spec.stock")}</dt>
-          <dd>
-            <StockLabel stock={detail.stock} />
-          </dd>
-          <dt>{t("product.spec.price")}</dt>
-          <dd>
+      </nav>
+      <div className="md-product-page">
+        <header className="md-product-page__head">
+          <span className="md-product-page__metal">{t(`metal.${detail.metal}`)}</span>
+          <h1>{detail.name}</h1>
+        </header>
+        <aside className="md-buybox" aria-label={t("product.buybox")}>
+          <p className="md-buybox__price">
             <PriceOrRequest
               productId={detail.id}
               pricingMode={detail.pricingMode}
               price={detail.price}
             />
-          </dd>
-          <dt>{t("product.spec.tax")}</dt>
-          <dd>
+          </p>
+          <p className="md-buybox__tax">
             {t(`product.tax.${detail.tax.category}`, {
               rate: format.percent(detail.tax.ratePercent),
             })}
-          </dd>
-        </dl>
-      </section>
-      <PurchaseActions
-        productId={detail.id}
-        name={detail.name}
-        pricingMode={detail.pricingMode}
-        stock={detail.stock}
-      />
-      <p>
-        <Link to={{ pathname: "/inquiry", search: `?productId=${encodeURIComponent(detail.id)}` }}>
-          {t("product.ask")}
-        </Link>
-      </p>
+          </p>
+          <p className="md-buybox__stock">
+            <StockLabel stock={detail.stock} />
+          </p>
+          <PurchaseActions
+            productId={detail.id}
+            name={detail.name}
+            pricingMode={detail.pricingMode}
+            stock={detail.stock}
+          />
+          <Link
+            className="md-buybox__ask"
+            to={{ pathname: "/inquiry", search: `?productId=${encodeURIComponent(detail.id)}` }}
+          >
+            {t("product.ask")}
+          </Link>
+        </aside>
+        <section className="md-product-page__spec" aria-labelledby="spec-heading">
+          <h2 id="spec-heading">{t("product.spec.title")}</h2>
+          <dl className="md-spec">
+            <dt>{t("product.spec.metal")}</dt>
+            <dd>{t(`metal.${detail.metal}`)}</dd>
+            <dt>{t("product.spec.purity")}</dt>
+            <dd>{detail.purity}</dd>
+            <dt>{t("product.spec.weight")}</dt>
+            <dd>
+              {t(`product.weight.${detail.weight.unit}`, {
+                amount: format.number(Number(detail.weight.amount)),
+              })}
+            </dd>
+            {detail.dimensions ? (
+              <>
+                <dt>{t("product.spec.dimensions")}</dt>
+                <dd>{detail.dimensions}</dd>
+              </>
+            ) : null}
+          </dl>
+        </section>
+      </div>
       <RelatedProducts productId={detail.id} />
     </>
   );

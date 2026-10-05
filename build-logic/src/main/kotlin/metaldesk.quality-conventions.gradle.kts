@@ -137,7 +137,26 @@ tasks.named<JacocoReport>("jacocoTestReport") {
     }
 }
 
+// Coverage floor: `build` fails when a module's tests cover less than 80% of its lines or branches.
+// Keep it at 80 or above; raise tests, never lower this number.
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("test"))
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = "0.80".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+    }
+}
+
 tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestCoverageVerification"))
     dependsOn(tasks.named("spotlessCheck"))
     dependsOn(tasks.named("checkstyleMain"))
     dependsOn(tasks.named("spotbugsMain"))

@@ -1,0 +1,92 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: metal-api
+  mongodb:
+    # The local docker compose database (compose.yaml, throwaway admin/admin); a deployment supplies its own through MONGODB_URI. No real credential
+    # belongs in this file (ADR-0002).
+    uri: ${MONGODB_URI:mongodb://admin:admin@localhost:27017/metaldesk?authSource=admin}
+  data:
+    mongodb:
+      # Indexes are declared on the documents; this is what makes the driver create them. An Atlas
+      # deployment that manages indexes itself should switch this off.
+      auto-index-creation: true
+
+# Cloud Run's probes use the liveness group, which answers "is the process healthy" and has no external dependency, so a
+# database outage does not restart instances. Readiness answers "can it serve traffic" and so includes MongoDB: it reports
+# not-ready while the database is unreachable. The MongoDB health indicator stays on, in the aggregate and in readiness.
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,mongo
+
+metaldesk:
+  jwt:
+    issuer: metal-desk-api
+    audience: metal-desk-storefront
+    # The idle timeout: a token lives this long and the clients swap it for a new one while the user is
+    # active (POST /api/auth/refresh), so a session ends after this long without activity.
+    ttl: 30m
+    # Base64 of at least 32 random bytes, supplied by the deployment (Secret Manager). Left empty, a
+    # random key is generated at startup: fine for development, never for a deployment.
+    signing-key: ${JWT_SIGNING_KEY:}
+  auth:
+    throttle:
+      # FR-2.2's illustrative policy: lock a source after 3 consecutive failures.
+      max-failures: 3
+      cool-down: 15m
+      # Reverse proxies allowed to vouch for X-Forwarded-For (addresses or CIDR blocks). Empty
+      # means the peer address is used and the header is ignored.
+      trusted-proxies: []
+  account:
+    verification:
+      # A typed verification code, and a password-reset link, live this long. Short on purpose.
+      ttl: 15m
+      reset-ttl: 30m
+      # A challenge is dead after this many confirmation attempts, right code or not.
+      max-attempts: 5
+      # The page a reset link points at; the reference and code are appended as query parameters.
+      link-base: http://localhost:5173/reset-password
+  cart:
+    # The cart reference cookie. A deployment behind TLS sets cookie-secure to true.
+    cookie-max-age: 30d
+    cookie-secure: false
+  checkout:
+    # The privacy policy version a customer must accept at step 1; an acceptance of another
+    # version is refused.
+    policy-version: "2026-10"
+    # An untouched checkout session is deleted after this long: it holds personal data.
+    session-ttl: 24h
+    # Where a manager handoff (an order over a delivery-tier ceiling) is announced, and in what
+    # language.
+    staff-email: staff@metal-desk.example.test
+    staff-locale: en
+    # Payment providers send the customer back to <client-base-url>/<checkout id>/return or /cancel.
+    client-base-url: http://localhost:5173/checkout
+  payments:
+    # Development and CI point these at WireMock stubs (ADR-0002); a deployment points them at real
+    # providers. No credential belongs here.
+    gateway:
+      base-url: http://localhost:9091
+      timeout: 10s
+      retry-budget: 1
+      # true: no request is made; every payment answers "captured" (development and demonstration).
+      stub: true
+    wallet:
+      base-url: http://localhost:9092
+      timeout: 10s
+      retry-budget: 1
+      stub: true
+  fx:
+    # Display-currency conversion (FR-1.8) for the catalog and the cart. Orders are always priced and
+    # charged in the settlement currency. THESE RATES ARE FAKE (ADR-0002: no rate source exists in
+    # this build), deliberately not market-like, and reported to clients as `FAKE`. A real provider
+    # replaces FakeExchangeRates behind the ExchangeRates interface.
+    settlement: EUR
+    source: FAKE
+    rates:
+      USD: "2.00"

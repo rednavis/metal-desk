@@ -1,0 +1,7 @@
+Subject: Your invoice {{invoiceNumber}}
+
+Hello {{name}},
+
+Your invoice {{invoiceNumber}} for order {{orderNumber}} is attached. If your order contains items with different tax treatment, you will find more than one document attached.
+
+Metal Desk

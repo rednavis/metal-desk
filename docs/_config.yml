@@ -1,0 +1,33 @@
+title: MetalDesk
+description: >-
+  A reference precious-metals trading platform: business requirements, target architecture,
+  and a from-scratch modernization plan (monorepo, mocked external dependencies, GCP-native).
+baseurl: "/metal-desk"
+url: "https://rednavis.github.io"
+
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+
+color_scheme: light
+
+nav_enabled: true
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  "GitHub repository":
+    - "https://github.com/rednavis/metal-desk"
+
+footer_content: "MIT licensed. See the repository README for provenance."
+
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

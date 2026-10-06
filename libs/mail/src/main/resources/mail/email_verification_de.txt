@@ -1,0 +1,9 @@
+Subject: Ihr Metal-Desk-Bestätigungscode
+
+Guten Tag {{name}},
+
+Ihr Bestätigungscode lautet {{code}}.
+
+Geben Sie ihn ein, um Ihre E-Mail-Adresse zu bestätigen und den Checkout freizuschalten. Falls Sie kein Konto angelegt haben, können Sie diese Nachricht ignorieren.
+
+Metal Desk

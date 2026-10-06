@@ -1,0 +1,19 @@
+{
+  "name": "malformed",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-malformed')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "body": "this is not json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

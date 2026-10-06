@@ -1,0 +1,7 @@
+Subject: Wir haben Ihre Nachricht zu {{topic}} erhalten
+
+Guten Tag {{name}},
+
+vielen Dank für Ihre Nachricht zu {{topic}}. Unser Team hat sie erhalten und antwortet Ihnen per E-Mail. Ihre Referenz lautet {{reference}}; bitte geben Sie sie bei weiteren Nachrichten an.
+
+Metal Desk

@@ -1,0 +1,11 @@
+# Suppressions for the dependency-scan job (.github/workflows/ci.yml, policy in .github/scripts/osv-gate.mjs).
+#
+# Add an entry ONLY for a real advisory that has no available fix. Every entry needs BOTH:
+#   reason       — why it cannot be fixed and why the risk is acceptable
+#   ignoreUntil  — an expiry date, at most 90 days ahead; after it the advisory blocks again
+# An entry without either, or with a later expiry, fails the job. Never suppress to get a green build.
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# ignoreUntil = 2026-12-31
+# reason = "No patched release exists; the vulnerable code path is not reachable (we do not use X)."

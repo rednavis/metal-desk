@@ -1,0 +1,35 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Nothing here is secret: a project id is an identifier, not a
+# credential. Authenticate with your own gcloud credentials (gcloud auth application-default login), never a key file.
+project_id = "metaldesk-dev-000000" # replace with the real project id
+region     = "europe-west3"
+
+# REQUIRED before a real plan, and deliberately empty here: these come from the Atlas console after you create a
+# Private Endpoint for this environment's region. An empty map is rejected with a pointer to the instructions.
+# See infra/terraform/modules/network/README.md.
+atlas_service_attachments = {
+  # "0" = "projects/<atlas-project>/regions/<region>/serviceAttachments/<name>"
+}
+atlas_dns_name = "<atlas-private-domain>." # from the Atlas private connection string; keep the trailing dot
+# atlas_hostnames = { "0" = "<hostname>." }
+
+# REQUIRED before a real plan: images built by deploy/images/Dockerfile and pushed to the repositories registry.tf creates, pinned by digest or by a commit-SHA tag. A mutable tag
+# such as :latest is rejected. Replace the placeholders.
+api_image            = "<region>-docker.pkg.dev/<project>/metaldesk-dev-api/api:<commit-sha>"
+pricing_bridge_image = "<region>-docker.pkg.dev/<project>/metaldesk-dev-pricing-bridge/pricing-bridge:<commit-sha>"
+admin_image          = "<region>-docker.pkg.dev/<project>/metaldesk-dev-admin/admin:<commit-sha>"
+
+# REQUIRED before a real plan. The project's NUMBER (gcloud projects describe <id> --format='value(projectNumber)').
+project_number = "<project-number>"
+
+# REQUIRED, and nothing here can be invented: domains you control. After the first apply, point each domain's DNS A
+# record at the matching ip_address in the `sites` output, or the managed certificate never becomes active.
+web_domain       = "<storefront-domain>"
+admin_web_domain = "<staff-domain>"
+
+# REQUIRED: who may fetch the staff SPA, as CIDR ranges (office / VPN egress). An empty list is rejected.
+admin_web_allowed_ip_ranges = []
+
+# REQUIRED before a real plan, and applied first: the billing account the project is billed to (three groups of six hex
+# characters) and who is emailed at the budget thresholds. These addresses are personal: keep them only in terraform.tfvars.
+billing_account_id  = "<billing-account-id>"
+budget_alert_emails = []

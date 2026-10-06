@@ -1,0 +1,19 @@
+{
+  "name": "declined-insufficient-balance",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/wallet/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-insufficient_balance')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "insufficient_balance"
+    }
+  }
+}

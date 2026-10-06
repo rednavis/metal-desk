@@ -1,0 +1,16 @@
+{
+  "name": "confirm-retry-second",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments/gw_test_0004/confirm"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "captured",
+      "reference": "gw_test_0004"
+    }
+  },
+  "scenarioName": "confirm-retry",
+  "requiredScenarioState": "recovered"
+}

@@ -1,0 +1,9 @@
+Subject: We received your order request {{reference}}
+
+Hello {{name}},
+
+Your order is above the limit we can price automatically, so a member of our team will set the final price and terms and contact you. No payment has been taken.
+
+Your reference number is {{reference}}. Please quote it if you contact us.
+
+Metal Desk

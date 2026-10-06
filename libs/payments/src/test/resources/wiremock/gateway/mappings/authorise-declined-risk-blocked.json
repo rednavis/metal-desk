@@ -1,0 +1,19 @@
+{
+  "name": "declined-risk-blocked",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-declined-risk_blocked')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "declined",
+      "declineCode": "risk_blocked"
+    }
+  }
+}

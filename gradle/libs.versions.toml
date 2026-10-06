@@ -1,0 +1,69 @@
+[versions]
+java = "25"
+springBoot = "4.1.1"
+# Security floors over what Spring Boot 4.1.1's BOM manages (it ships jackson 3.1.5 and Tomcat 11.0.24, which
+# carry high-severity advisories); no later Boot patch exists yet. Delete these, and the constraints in
+# metaldesk.spring-boot-conventions, once Boot manages versions at or above them.
+# jacksonFloor stays on Boot's 3.1 line: Jackson 3.2 changes deserialization behaviour (a body with a missing field now
+# reaches the tier validator instead of failing as request.invalid), and Boot 4.1 is not built against it. Dependabot is told
+# not to move it across a minor (.github/dependabot.yml); patch bumps are what it is for.
+jacksonFloor = "3.1.7"
+tomcatFloor = "11.0.26"
+spotless = "8.10.3"
+checkstyle = "14.3.0"
+pmd = "7.28.0"
+spotbugs = "4.10.4"
+spotbugsGradlePlugin = "6.5.12"
+versionsPlugin = "0.64.0"
+cyclonedx = "3.4.1"
+jacoco = "0.8.15"
+junit = "6.1.3"
+lombok = "1.18.48"
+wiremock = "3.13.2"
+mongodbReactive = "5.13.0"
+archunit = "1.5.1"
+testcontainers = "2.0.5"
+mongock = "5.5.1"
+
+[libraries]
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server" }
+spring-boot-starter-webflux-test = { module = "org.springframework.boot:spring-boot-starter-webflux-test" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb" }
+spring-boot-starter-data-mongodb-reactive = { module = "org.springframework.boot:spring-boot-starter-data-mongodb-reactive" }
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+jackson-bom-floor = { module = "tools.jackson:jackson-bom", version.ref = "jacksonFloor" }
+tomcat-embed-core-floor = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcatFloor" }
+tomcat-embed-el-floor = { module = "org.apache.tomcat.embed:tomcat-embed-el", version.ref = "tomcatFloor" }
+tomcat-embed-websocket-floor = { module = "org.apache.tomcat.embed:tomcat-embed-websocket", version.ref = "tomcatFloor" }
+spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }
+spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+spotbugs-gradle-plugin = { module = "com.github.spotbugs:com.github.spotbugs.gradle.plugin", version.ref = "spotbugsGradlePlugin" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+spring-boot-persistence = { module = "org.springframework.boot:spring-boot-persistence" }
+spring-data-mongodb = { module = "org.springframework.data:spring-data-mongodb" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodbReactive" }
+reactor-core = { module = "io.projectreactor:reactor-core" }
+reactor-test = { module = "io.projectreactor:reactor-test" }
+jackson-databind = { module = "tools.jackson.core:jackson-databind" }
+slf4j-api = { module = "org.slf4j:slf4j-api" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
+mongock-standalone = { module = "io.mongock:mongock-standalone", version.ref = "mongock" }
+mongock-driver-sync = { module = "io.mongock:mongodb-sync-v4-driver", version.ref = "mongock" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versionsPlugin" }
+cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }

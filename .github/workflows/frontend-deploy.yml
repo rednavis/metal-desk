@@ -1,0 +1,143 @@
+name: Frontend deploy
+
+# Builds both single-page apps, checks that no secret or hard-coded host is in either bundle, and on master uploads them to
+# the dev buckets, authenticating with Workload Identity Federation (T-077): a short-lived token for one repository, one
+# branch and one GitHub environment, and no stored credential. See infra/README.md.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/web/**"
+      - "apps/admin-web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/frontend-deploy.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "apps/admin-web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/frontend-deploy.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, admin-web]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The API base URL is set per environment at build time, never compiled in by default. Left unset the app uses
+      # `/api`, the same-origin path of a deployment behind one load balancer. It must be exported only when it HAS a
+      # value: an empty VITE_API_BASE_URL is not "unset" to the app and would break every call. A full URL is for an API on
+      # another origin, which the backends do not yet allow (no CORS configuration); see infra/README.md.
+      - name: Build
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          if [ -n "$API_BASE_URL" ]; then export VITE_API_BASE_URL="$API_BASE_URL"; fi
+          pnpm --filter ${{ matrix.app }} run build
+
+      # A bundle is public by definition: anything in it is published.
+      - name: No secret and no hard-coded backend host in the bundle
+        run: |
+          if grep -rniE 'localhost:80[0-9]{2}|127\.0\.0\.1|api[_-]?key|secret|BEGIN [A-Z ]*PRIVATE KEY' apps/${{ matrix.app }}/dist; then
+            echo "the bundle contains a secret-looking string or a hard-coded local host" >&2
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bundle-${{ matrix.app }}
+          path: apps/${{ matrix.app }}/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  # Uploads the bundle to dev. Only a run on master can get a token (the federation provider rejects any other ref, repository
+  # or job that does not declare the dev environment), and this job runs only on a push to master, so a pull request never
+  # reaches it. The job's variables are the GitHub environment `dev`'s, set from `terraform output`: WIF_PROVIDER,
+  # WIF_SERVICE_ACCOUNT, WEB_BUCKET and ADMIN_WEB_BUCKET. Until they exist the job does nothing and says so; there is no
+  # separate on/off switch.
+  deploy:
+    name: Deploy ${{ matrix.app }}
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write # exchanged for a short-lived Google token through Workload Identity Federation
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            bucket: WEB_BUCKET
+          - app: admin-web
+            bucket: ADMIN_WEB_BUCKET
+    env:
+      BUCKET: ${{ vars[matrix.bucket] }}
+    steps:
+      - name: Is federation configured for this environment?
+        id: cfg
+        env:
+          WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}
+          WIF_SERVICE_ACCOUNT: ${{ vars.WIF_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$WIF_SERVICE_ACCOUNT" ] && [ -n "$BUCKET" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workload Identity Federation or the bucket is not configured for the dev environment yet; nothing is uploaded."
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          name: bundle-${{ matrix.app }}
+          path: dist
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        if: steps.cfg.outputs.configured == 'true'
+
+      # Order matters. Hashed assets go first, then the other files, and index.html LAST: nobody can load a page that
+      # names assets which are not there yet. Cache headers are set at upload time and match the policy in
+      # modules/static-site/cdn.tf: a year and immutable for hashed files, no-cache for index.html (so a deploy takes
+      # effect at once and no cache invalidation is needed).
+      - name: Upload
+        if: steps.cfg.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+
+          gcloud storage cp --recursive dist/assets "gs://${BUCKET}/" \
+            --cache-control="public, max-age=31536000, immutable"
+
+          find dist -maxdepth 1 -type f ! -name index.html -print0 |
+            xargs -0 -r -I{} gcloud storage cp {} "gs://${BUCKET}/" --cache-control="public, max-age=3600"
+
+          gcloud storage cp dist/index.html "gs://${BUCKET}/index.html" --cache-control="no-cache"

@@ -1,0 +1,42 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: metal-admin
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    # The local docker compose database (compose.yaml, throwaway admin/admin); a deployment supplies its own through MONGODB_URI. No real credential
+    # belongs in this file (ADR-0002).
+    uri: ${MONGODB_URI:mongodb://admin:admin@localhost:27017/metaldesk?authSource=admin}
+
+# Cloud Run's probes use the liveness group, which has no external dependency, so a database outage does not restart
+# instances. Readiness includes MongoDB and reports not-ready while it is unreachable. The MongoDB health indicator stays on.
+management:
+  endpoint:
+    health:
+      group:
+        readiness:
+          include: readinessState,mongo
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+metaldesk:
+  admin:
+    jwt:
+      # The staff token (ADR-0006). Issuer and audience differ from services/api's on purpose, so a
+      # customer token is refused here and a staff token there. The key is never committed: a
+      # deployment supplies it as Base64 of at least 32 random bytes; empty generates a random one
+      # at startup (local development, tokens do not survive a restart).
+      issuer: metal-desk-admin
+      audience: metal-desk-staff
+      ttl: 30m
+      signing-key: ${ADMIN_JWT_SIGNING_KEY:}
+    auth:
+      throttle:
+        max-failures: 5
+        cool-down: 15m

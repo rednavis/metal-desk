@@ -1,0 +1,209 @@
+name: Image
+
+# Builds the container image of each deployable service (deploy/images/Dockerfile) and checks it. On master it also pushes
+# the images to Artifact Registry and deploys them to dev, authenticating to Google with Workload Identity Federation: a
+# short-lived token for one repository, one branch and one GitHub environment, and no stored credential (T-077). See
+# deploy/README.md and infra/README.md.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "deploy/**"
+      - "libs/**"
+      - "services/**"
+      - "apps/admin/**"
+      - "build-logic/**"
+      - "gradle/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/image.yml"
+  pull_request:
+    paths:
+      - "deploy/**"
+      - "libs/**"
+      - "services/**"
+      - "apps/admin/**"
+      - "build-logic/**"
+      - "gradle/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - ".github/workflows/image.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Image ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            module: services/api
+          - service: pricing-bridge
+            module: services/pricing-bridge
+          - service: admin
+            module: apps/admin
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/images/Dockerfile
+          build-args: MODULE=${{ matrix.module }}
+          tags: metaldesk-${{ matrix.service }}:ci
+          load: true
+          provenance: false # an image loaded into the local daemon cannot carry attestations; the push job adds them
+          cache-from: type=gha,scope=image-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=image-${{ matrix.service }}
+
+      - name: Runs as a non-root user, with java as PID 1
+        run: |
+          image=metaldesk-${{ matrix.service }}:ci
+          uid=$(docker run --rm --entrypoint id "$image" -u)
+          [ "$uid" != 0 ] || { echo "image runs as root" >&2; exit 1; }
+          cid=$(docker create "$image")
+          cmd=$(docker inspect "$cid" -f '{{json .Config.Entrypoint}}')
+          docker rm "$cid" >/dev/null
+          echo "uid=$uid entrypoint=$cmd"
+          case "$cmd" in '["java",'*) ;; *) echo "entrypoint is not java in exec form" >&2; exit 1 ;; esac
+
+      - name: Carries no credential
+        run: |
+          image=metaldesk-${{ matrix.service }}:ci
+          if docker history --no-trunc "$image" | grep -iE 'secret|password|signing|credential|MONGODB_URI'; then
+            echo "a credential-looking string is in the image history" >&2; exit 1
+          fi
+          # `find` exits 1 when it cannot read some directory, which says nothing about what it found; only its output counts.
+          leftovers=$(docker run --rm --entrypoint sh "$image" -c 'find / -xdev \( -name ".env*" -o -name "application-local*" \) 2>/dev/null || true')
+          [ -z "$leftovers" ] || { echo "local configuration in the image: $leftovers" >&2; exit 1; }
+
+      # pricing-bridge is the one service that needs no database, so it can start here. api and admin need MongoDB at
+      # startup (Mongock), which the JVM build's Testcontainers tests already exercise.
+      - name: Starts, answers /actuator/health, and shuts down gracefully on SIGTERM
+        if: matrix.service == 'pricing-bridge'
+        run: |
+          docker run -d --name smoke -p 8083:8083 metaldesk-pricing-bridge:ci
+          for _ in $(seq 1 45); do
+            curl -fsS http://localhost:8083/actuator/health && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8083/actuator/health | grep -q '"status":"UP"'
+          docker kill --signal=TERM smoke
+          sleep 8
+          docker logs smoke 2>&1 | grep -q 'Graceful shutdown complete'
+
+  # Pushes <sha>-tagged images to the dev project's registries. Only a run on master can get a token (the federation provider
+  # rejects any other ref, any other repository, and any job that does not declare the dev environment), and this job runs only
+  # on a push to master, so a pull request, a fork's pull request included, never reaches it.
+  #
+  # The job's variables are the GitHub environment `dev`'s, set from `terraform output github_actions` after the first apply:
+  #   WIF_PROVIDER, WIF_SERVICE_ACCOUNT   the federation provider and the deployer account
+  #   GCP_PROJECT_ID, GCP_REGION          where the repositories live
+  # Until they exist the job does nothing and says so; there is no separate on/off switch.
+  push:
+    name: Push ${{ matrix.service }}
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write # exchanged for a short-lived Google token through Workload Identity Federation
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            module: services/api
+          - service: pricing-bridge
+            module: services/pricing-bridge
+          - service: admin
+            module: apps/admin
+    env:
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/metaldesk-dev-${{ matrix.service }}/${{ matrix.service }}:${{ github.sha }}
+    steps:
+      - name: Is federation configured for this environment?
+        id: cfg
+        env:
+          WIF_PROVIDER: ${{ vars.WIF_PROVIDER }}
+          WIF_SERVICE_ACCOUNT: ${{ vars.WIF_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$WIF_SERVICE_ACCOUNT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workload Identity Federation is not configured for the dev environment yet; nothing is pushed."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.cfg.outputs.configured == 'true'
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        if: steps.cfg.outputs.configured == 'true'
+        id: auth
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          registry: ${{ vars.GCP_REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.cfg.outputs.configured == 'true'
+
+      # Tags are immutable, so pushing the same commit twice would fail. A re-run finds the tag and stops.
+      - name: Already pushed?
+        id: exists
+        if: steps.cfg.outputs.configured == 'true'
+        run: |
+          if docker buildx imagetools inspect "$IMAGE" >/dev/null 2>&1; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        if: steps.cfg.outputs.configured == 'true' && steps.exists.outputs.pushed != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/images/Dockerfile
+          build-args: MODULE=${{ matrix.module }}
+          tags: ${{ env.IMAGE }}
+          push: true
+          provenance: true
+          sbom: true
+          cache-from: type=gha,scope=image-${{ matrix.service }}
+
+  # Deploys the images just pushed to dev. The reusable deploy workflow does its own federation check, so this is a no-op
+  # until dev is configured. Other environments are deployed by hand from the Deploy workflow, behind a protected environment.
+  deploy-dev:
+    name: Deploy to dev
+    needs: push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev
+      sha: ${{ github.sha }}

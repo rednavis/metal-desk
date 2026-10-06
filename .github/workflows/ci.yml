@@ -1,0 +1,271 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A superseded run of the same pull request is cancelled; a master run never is, because it is the
+# only signal that master is broken.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Decides which parts of the repository a change affects. Build jobs (T-061, T-062) consume its
+  # outputs with `needs: changes`; none of them re-implements path matching. See workflows/README.md.
+  # Pull requests are filtered against their base; a push to master marks everything affected.
+  changes:
+    name: Detect affected modules
+    runs-on: ubuntu-latest
+    outputs:
+      libs-share: ${{ steps.affected.outputs.libs-share }}
+      libs-payments: ${{ steps.affected.outputs.libs-payments }}
+      libs-mail: ${{ steps.affected.outputs.libs-mail }}
+      libs-persistence: ${{ steps.affected.outputs.libs-persistence }}
+      libs-migrations: ${{ steps.affected.outputs.libs-migrations }}
+      services-api: ${{ steps.affected.outputs.services-api }}
+      services-pricing-bridge: ${{ steps.affected.outputs.services-pricing-bridge }}
+      apps-admin: ${{ steps.affected.outputs.apps-admin }}
+      jvm: ${{ steps.affected.outputs.jvm }}
+      jvm-modules: ${{ steps.affected.outputs.jvm-modules }}
+      frontend: ${{ steps.affected.outputs.frontend }}
+      frontend-apps: ${{ steps.affected.outputs.frontend-apps }}
+      docs: ${{ steps.affected.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - name: Self-test the filter
+        run: node --test .github/scripts/
+      - name: Compute affected modules
+        id: affected
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            node .github/scripts/affected.mjs "$BASE_SHA" HEAD
+          else
+            node .github/scripts/affected.mjs --all
+          fi
+
+  # One job per affected JVM module, driven by the `changes` job. Runs `:<module>:build` — Spotless,
+  # Checkstyle, SpotBugs, PMD, tests (Testcontainers, so Docker on the runner) and Jacoco. Building a
+  # module also builds the modules it depends on; that is expected, the filter only spares modules
+  # that are *unaffected*. When no JVM module is affected the job is skipped, not failed.
+  jvm-build:
+    name: JVM build ${{ matrix.module }}
+    needs: changes
+    if: needs.changes.outputs.jvm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.changes.outputs.jvm-modules) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate the Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      # The Java version is read from the version catalog, which metaldesk.java-conventions uses for
+      # the toolchain (ADR-0004), so a Java upgrade edits one file and CI follows.
+      - name: Read the Java version from the catalog
+        id: java
+        run: |
+          version=$(sed -n 's/^java = "\([0-9][0-9]*\)"$/\1/p' gradle/libs.versions.toml)
+          test -n "$version" || { echo "no java version in gradle/libs.versions.toml" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+      # Restores and saves the Gradle user home: the dependency cache and the local build cache
+      # (`~/.gradle/caches/build-cache-1`). It never touches `build/` directories — restoring those
+      # would mark tasks UP-TO-DATE against stale outputs. Only master writes the cache; pull requests
+      # (including from forks, which have no write token anyway) read it. This is the Actions cache,
+      # not a Gradle remote build-cache node. See workflows/README.md.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+      - name: Build ${{ matrix.module }}
+        env:
+          MODULE: ${{ matrix.module }}
+        run: ./gradlew --console=plain "$MODULE:build"
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-${{ strategy.job-index }}
+          path: |
+            **/build/reports/
+            **/build/test-results/
+          retention-days: 7
+
+  # The single, stable check name for branch protection (T-065). A matrix job is named per module and
+  # is skipped entirely on a frontend-only change, so requiring it directly would either track a
+  # changing set of names or block those pull requests. This job always runs and passes when the
+  # build succeeded or was legitimately skipped, and fails if `changes` or any module failed.
+  jvm-build-result:
+    name: JVM build
+    needs: [changes, jvm-build]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check the JVM build outcome
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          BUILD: ${{ needs.jvm-build.result }}
+        run: |
+          echo "changes=$CHANGES jvm-build=$BUILD"
+          [ "$CHANGES" = success ] && { [ "$BUILD" = success ] || [ "$BUILD" = skipped ]; }
+
+  # Builds, typechecks, lints and tests the pnpm apps. Skipped when no app is affected. Per-app
+  # filtering applies to the *build* only: typecheck, lint, format:check and test are root-scoped
+  # scripts that cover both apps, so they run once for any frontend change.
+  #
+  # EVERY COMMAND RUNS FROM THE REPOSITORY ROOT — never a `cd` into an app. CLAUDE.md: the ESLint flat
+  # config is root-scoped here, and running it from inside an app fails with an error that reads as
+  # a lint problem. Do not "simplify" this into per-app working directories.
+  frontend-build:
+    name: Frontend build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      # No `version:` — pnpm/action-setup reads `packageManager` from the root package.json, so
+      # there is one source of truth for the pnpm version.
+      - uses: pnpm/action-setup@v6
+      # Node's major matches `engines.node` (>=26). `cache: pnpm` keys the store on pnpm-lock.yaml.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: pnpm
+      # --frozen-lockfile fails if pnpm-lock.yaml does not match package.json, instead of silently
+      # re-resolving. It also makes minimumReleaseAge irrelevant: nothing is resolved.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build the affected apps
+        env:
+          APPS: ${{ needs.changes.outputs.frontend-apps }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$APPS")
+          pnpm "${filters[@]}" run build
+      - name: Typecheck
+        run: pnpm run typecheck
+      - name: Lint
+        run: pnpm run lint
+      - name: Check formatting
+        run: pnpm run format:check
+      - name: Test
+        run: pnpm run test
+
+  # The single, stable check name for branch protection (T-065), for the same reason as `JVM build`:
+  # `frontend-build` is skipped on a JVM-only change. Passes when it succeeded or was skipped.
+  frontend-build-result:
+    name: Frontend build result
+    needs: [changes, frontend-build]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check the frontend build outcome
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          BUILD: ${{ needs.frontend-build.result }}
+        run: |
+          echo "changes=$CHANGES frontend-build=$BUILD"
+          [ "$CHANGES" = success ] && { [ "$BUILD" = success ] || [ "$BUILD" = skipped ]; }
+
+  docs:
+    name: Build docs site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build Jekyll site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: docs
+          destination: docs/_site
+
+  # Never path-filtered: a secret can be committed in any file. TruffleHog stays the scanner (gitleaks
+  # needs a paid licence on organisation repositories, commit 5923005). The action runs a `git` scan
+  # of base..head and exits non-zero on a finding (`--fail`), so full history is fetched — a shallow
+  # checkout would scan nothing useful and miss a secret added in one commit and removed in the next.
+  # `version` pins the TruffleHog image too; the action's default is a floating `latest`.
+  secrets-scan:
+    name: Scan for committed secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: TruffleHog OSS scan of the pushed or pull-request commit range
+        uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85 # v3.97.9
+        with:
+          path: ./
+          version: 3.97.9
+          extra_args: --results=verified,unknown
+
+  # Fails a change that brings in a known-vulnerable dependency, for both ecosystems. Not path-filtered:
+  # a dependency can change in the version catalog, a lockfile or a build file. Gradle has no lockfile,
+  # so the resolved graph of all seven modules is exported as a CycloneDX SBOM and scanned together
+  # with pnpm-lock.yaml by OSV-Scanner (no account, no token). The severity policy, the suppression
+  # rules and what is NOT covered are in workflows/README.md; the policy itself is osv-gate.mjs.
+  dependency-scan:
+    name: Scan dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+      - name: Self-test the gate
+        run: node --test .github/scripts/
+      - name: Read the Java version from the catalog
+        id: java
+        run: |
+          version=$(sed -n 's/^java = "\([0-9][0-9]*\)"$/\1/p' gradle/libs.versions.toml)
+          test -n "$version" || { echo "no java version in gradle/libs.versions.toml" >&2; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ steps.java.outputs.version }}
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+      - name: Export the resolved JVM dependencies as an SBOM
+        run: ./gradlew --console=plain cyclonedxBom
+      # OSV-Scanner exits 1 when it finds anything and 0 when clean; any other code is a scanner error.
+      # Whether a finding blocks is decided by osv-gate.mjs, not by this exit code.
+      - name: Scan the SBOM and pnpm-lock.yaml
+        run: |
+          set +e
+          docker run --rm -v "$PWD":/src -w /src ghcr.io/google/osv-scanner:v2.6.0 scan source \
+            --config=osv-scanner.toml --format=json --output-file=osv-report.json \
+            -L build/reports/cyclonedx/bom.json -L pnpm-lock.yaml
+          code=$?
+          [ "$code" -eq 0 ] || [ "$code" -eq 1 ] || { echo "osv-scanner failed with exit code $code" >&2; exit "$code"; }
+      - name: Apply the severity policy
+        run: node .github/scripts/osv-gate.mjs osv-report.json osv-scanner.toml

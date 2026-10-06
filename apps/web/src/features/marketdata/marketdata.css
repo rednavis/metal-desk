@@ -1,0 +1,106 @@
+.md-prices {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-prices caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.md-prices th,
+.md-prices td {
+  text-align: left;
+  padding: 0.875rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.md-prices thead th {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--color-surface-2);
+}
+
+.md-prices thead th:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.md-prices thead th:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.md-prices tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.md-prices tbody th {
+  font-weight: 600;
+}
+
+/* Each metal gets its own swatch, so the list scans by colour as well as by name. */
+.md-prices tbody th::before {
+  content: "";
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.625rem;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+  background: var(--metal, var(--color-border-strong));
+  box-shadow: inset 0 -2px 3px rgb(0 0 0 / 0.2);
+}
+
+.md-prices[data-stale="true"] td {
+  opacity: 0.6;
+}
+
+.md-prices__unit {
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+
+.md-prices + .md-prices__unit {
+  margin: 0.75rem 0 0;
+}
+
+/* Direction is colour *and* glyph *and* text: colour alone fails colour-blind users. */
+.md-change > span[aria-hidden="true"] {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.md-change--up {
+  color: var(--color-up);
+}
+
+.md-change--up > span[aria-hidden="true"] {
+  background: color-mix(in srgb, var(--color-up) 12%, transparent);
+}
+
+.md-change--down {
+  color: var(--color-down);
+}
+
+.md-change--down > span[aria-hidden="true"] {
+  background: color-mix(in srgb, var(--color-down) 12%, transparent);
+}
+
+.md-change--unchanged,
+.md-change--unknown {
+  color: var(--color-muted);
+}
+
+.md-change--unchanged > span[aria-hidden="true"] {
+  background: var(--color-surface-2);
+}

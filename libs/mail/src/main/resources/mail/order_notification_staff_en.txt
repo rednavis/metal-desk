@@ -1,0 +1,7 @@
+Subject: New order {{orderNumber}}
+
+A new order has been placed.
+
+Order: {{orderNumber}}
+Customer: {{customerName}}
+Total: {{total}}

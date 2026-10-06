@@ -1,0 +1,27 @@
+# Local development infrastructure shared by services:api and apps:admin.
+# Start: docker compose up -d      Stop: docker compose down      Wipe data: docker compose down -v
+#
+# These credentials are for a throwaway local database only (ADR-0002: no real credentials in the
+# repository). The apps' default URI, mongodb://localhost:27017/metaldesk, carries none, so with
+# authentication on they need MONGODB_URI=mongodb://admin:admin@localhost:27017/metaldesk?authSource=admin
+services:
+  mongodb:
+    image: mongo:9
+    container_name: metaldesk-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: metaldesk
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb-data:

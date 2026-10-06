@@ -1,0 +1,19 @@
+{
+  "name": "redirect",
+  "request": {
+    "method": "POST",
+    "urlPath": "/v1/payments",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$[?(@.orderId == 'order-redirect')]"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "redirect.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

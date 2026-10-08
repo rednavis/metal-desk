@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "26"
       - name: Self-test the filter
@@ -151,7 +151,7 @@ jobs:
       # there is one source of truth for the pnpm version.
       - uses: pnpm/action-setup@v6
       # Node's major matches `engines.node` (>=26). `cache: pnpm` keys the store on pnpm-lock.yaml.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "26"
           cache: pnpm
@@ -236,7 +236,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "26"
       - name: Self-test the gate

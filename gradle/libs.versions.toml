@@ -1,21 +1,21 @@
 [versions]
 java = "25"
-springBoot = "4.1.1"
+springBoot = "4.1.2"
 # Security floors over what Spring Boot 4.1.1's BOM manages (it ships jackson 3.1.5 and Tomcat 11.0.24, which
 # carry high-severity advisories); no later Boot patch exists yet. Delete these, and the constraints in
 # metaldesk.spring-boot-conventions, once Boot manages versions at or above them.
 # jacksonFloor stays on Boot's 3.1 line: Jackson 3.2 changes deserialization behaviour (a body with a missing field now
 # reaches the tier validator instead of failing as request.invalid), and Boot 4.1 is not built against it. Dependabot is told
 # not to move it across a minor (.github/dependabot.yml); patch bumps are what it is for.
-jacksonFloor = "3.1.7"
-tomcatFloor = "11.0.26"
-spotless = "8.10.3"
+jacksonFloor = "3.1.8"
+tomcatFloor = "11.0.27"
+spotless = "8.10.4"
 checkstyle = "14.3.0"
 pmd = "7.28.0"
 spotbugs = "4.10.4"
 spotbugsGradlePlugin = "6.5.12"
-versionsPlugin = "0.64.0"
-cyclonedx = "3.4.1"
+versionsPlugin = "0.66.0"
+cyclonedx = "3.5.1"
 jacoco = "0.8.15"
 junit = "6.1.3"
 lombok = "1.18.48"
